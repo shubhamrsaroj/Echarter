@@ -3,18 +3,23 @@ import { Send, Mic, MicOff, HelpCircle } from "lucide-react";
 import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 
 export default function ItineraryInput({ onSearch }) {
-  const [text, setText] = useState("");
+  const [text, setText] = useState(() => localStorage.getItem('itineraryText') || "");
   const [isListening, setIsListening] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const recognizerRef = useRef(null);
   const tempTextRef = useRef("");
-  const timeoutRef = useRef(null); // Ref for timeout
+  const timeoutRef = useRef(null);
 
   const speechKey = import.meta.env.VITE_AZURE_SPEECH_KEY;
   const speechRegion = import.meta.env.VITE_AZURE_SPEECH_REGION;
 
   const speechConfig = sdk.SpeechConfig.fromSubscription(speechKey, speechRegion);
   speechConfig.speechRecognitionLanguage = "en-US";
+
+  // Save text to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('itineraryText', text);
+  }, [text]);
 
   const handleMicClick = () => {
     if (!isListening) {
@@ -60,10 +65,9 @@ export default function ItineraryInput({ onSearch }) {
     recognizer.sessionStarted = () => {
       console.log("Session started.");
       setIsListening(true);
-      // Set 1-minute timeout
       timeoutRef.current = setTimeout(() => {
         stopRecognition();
-      }, 30000); // 60,000 ms = 1 minute
+      }, 30000); // 30 seconds timeout
     };
 
     recognizer.sessionStopped = () => {
@@ -101,12 +105,12 @@ export default function ItineraryInput({ onSearch }) {
           recognizerRef.current?.close();
           recognizerRef.current = null;
           setIsListening(false);
-          clearTimeout(timeoutRef.current); // Clear timeout
+          clearTimeout(timeoutRef.current);
         },
         (err) => {
           console.error("Error stopping recognition:", err);
           setIsListening(false);
-          clearTimeout(timeoutRef.current); // Clear timeout on error
+          clearTimeout(timeoutRef.current);
         }
       );
     } else {
@@ -119,7 +123,7 @@ export default function ItineraryInput({ onSearch }) {
       if (recognizerRef.current) {
         stopRecognition();
       }
-      clearTimeout(timeoutRef.current); // Cleanup timeout on unmount
+      clearTimeout(timeoutRef.current);
     };
   }, []);
 

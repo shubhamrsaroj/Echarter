@@ -46,7 +46,7 @@ const MatchDetail = () => {
           <div className="flex justify-between items-start mb-3">
             <div className="flex items-center">
               {company.logo && company.logo.length > 0 ? (
-                <img src={company.logo[0]} alt={company.name} className="w-20 h-10 object-contain mr-3" />
+                <img src={company.logo[0]} alt={company.name} className="w-22 h-16 object-contain" />
               ) : (
                 <div className="w-9 h-9 flex items-center justify-center bg-gray-50 rounded-full mr-3">
                   <Plane size={18} className="text-gray-400" />
@@ -85,11 +85,7 @@ const MatchDetail = () => {
                   <span className="text-gray-600 text-xs">{cert.name || `C${index + 1}`}</span>
                 </div>
               ))
-            ) : (
-              <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-gray-600 text-xs">C1</span>
-              </div>
-            )}
+            ) : null}
           </div>
 
           {/* Main content */}

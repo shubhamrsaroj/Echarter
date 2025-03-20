@@ -68,9 +68,7 @@ const BrokerDetail = () => {
                       className="w-6 h-6 rounded-full"
                     />
                   ))
-                ) : (
-                  <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
-                )}
+                ) : null}
               </div>
             </div>
 
@@ -133,7 +131,7 @@ const BrokerDetail = () => {
           </div>
 
           {shouldShowFuelStopWarning(company) && (
-            <div className="text-red-500 text-xs mb-2">
+            <div className="text-red-500 text-md mb-2">
               One or more of these types may require a fuel stop.
             </div>
           )}

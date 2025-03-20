@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useItinerary } from '../../../context/itinerary/ItineraryContext';
 import { useNavigate } from 'react-router-dom';
 import { Plane, ArrowLeft } from 'lucide-react';
@@ -185,9 +185,7 @@ const BaseDetail = () => {
                       className="w-6 h-6 rounded-full"
                     />
                   ))
-                ) : (
-                  <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
-                )}
+                ) : null}
               </div>
             </div>
 

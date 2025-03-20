@@ -70,16 +70,19 @@ const ItineraryPage = () => {
               <div className="transition-all duration-300 hover:translate-y-1 hover:shadow-lg">
                 <MatchCard match={itineraryData.match} />
               </div>
+
+
+                {/* DateAdjustment */}
+                <h2 className="text-xl font-semibold mb-4 text-gray-800">Date Adjustment</h2>
+              <div className="transition-all duration-300 hover:translate-y-1 hover:shadow-lg">
+                <DateAdjustment adjustment={itineraryData.dateAdjustment} />
+              </div>
               
               {/* Itinerary Base (Aircraft Options) */}
               <h2 className="text-xl font-semibold mb-4 text-gray-800">Aircraft Options</h2>
               <BaseCard itineraryData={itineraryData} />
               
-              {/* DateAdjustment */}
-              <h2 className="text-xl font-semibold mb-4 text-gray-800">Date Adjustment</h2>
-              <div className="transition-all duration-300 hover:translate-y-1 hover:shadow-lg">
-                <DateAdjustment adjustment={itineraryData.dateAdjustment} />
-              </div>
+            
             </div>
           </div>
         )}
