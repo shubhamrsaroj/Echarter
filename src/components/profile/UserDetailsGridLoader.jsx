@@ -56,10 +56,10 @@ const UserDetailsGridLoader = () => {
         </div>
       </div>
 
-      {/* Delete Account Button Loader */}
+      {/* Delete Account Button Loader
       <div className="flex justify-start">
         <div className="w-1/4 h-10 bg-gray-300 rounded-lg"></div>
-      </div>
+      </div> */}
     </div>
   );
 };

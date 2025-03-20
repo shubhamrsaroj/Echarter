@@ -10,7 +10,7 @@ import {
   Trash2,
   Edit2 
 } from "lucide-react";
- import CurrencyDropdown from '../CurrencyDropdown/CurrencyDropdown'; 
+import CurrencyDropdown from '../CurrencyDropdown/CurrencyDropdown'; 
 import PhoneNumber from './PhoneNumber';
 import { AddressCard } from './AddressComponents';
 import { ToastContainer, toast } from 'react-toastify';
@@ -20,13 +20,19 @@ import 'react-toastify/dist/ReactToastify.css';
 const PersonalEditForm = ({ userDetails, editedCurrency, onCurrencyChange, onSave, onCancel }) => {
   const [firstName, setFirstName] = useState(userDetails?.normalizedName?.split(" ")[0] || "");
   const [lastName, setLastName] = useState(userDetails?.normalizedName?.split(" ")[1] || "");
+  const [isLoading, setIsLoading] = useState(false); // Added loading state
 
-  const handleSavePersonal = () => {
-    const updatedData = {
-      name: `${firstName} ${lastName}`.trim(),
-      currency: editedCurrency
-    };
-    onSave("personal", updatedData);
+  const handleSavePersonal = async () => {
+    try {
+      setIsLoading(true);
+      const updatedData = {
+        name: `${firstName} ${lastName}`.trim(),
+        currency: editedCurrency
+      };
+      await onSave("personal", updatedData);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -88,9 +94,15 @@ const PersonalEditForm = ({ userDetails, editedCurrency, onCurrencyChange, onSav
         </button>
         <button
           onClick={handleSavePersonal}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center transition-colors"
+          disabled={isLoading}
+          className={`px-4 py-2 flex items-center rounded-lg transition-all duration-200 ${
+            isLoading
+              ? "bg-blue-700 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600"
+          } text-white`}
         >
-          <Save className="mr-2 w-4 h-4" /> Save
+          <Save className="mr-2 w-4 h-4" /> 
+          {isLoading ? "Saving..." : "Save"}
         </button>
       </div>
     </div>
@@ -99,7 +111,7 @@ const PersonalEditForm = ({ userDetails, editedCurrency, onCurrencyChange, onSav
 
 const AboutMe = () => {
   const { userDetails, fetchUserDetails, updateUserDetails } = useUserDetails();
-  const { refreshAccessToken, logout } = useContext(AuthContext); // Use AuthContext
+  const { refreshAccessToken, logout } = useContext(AuthContext);
 
   const [editSection, setEditSection] = useState(null);
   const [editedCurrency, setEditedCurrency] = useState(userDetails?.currency || "");
@@ -122,27 +134,20 @@ const AboutMe = () => {
 
   const handleSave = async (section, updatedData) => {
     try {
-      // Step 1: Proceed with updating user details
       await updateUserDetails(updatedData);
-      
-      // Step 2: Get the newly refreshed token and proceed with the API call
       await refreshAccessToken();
       const accessToken = tokenHandler.getToken();
       if (!accessToken) {
         throw new Error('No access token available after refresh');
       }
-      
-      // Step 3: Refresh user details
       await fetchUserDetails();
       
-      // Show success toast
       toast.success(`${section.charAt(0).toUpperCase() + section.slice(1)} details updated successfully!`, {
         toastId: `${section}-success`,
       });
       
       setEditSection(null);
     } catch (err) {
-      // Check if the error is due to token refresh failure
       if (
         err.message.includes('No refresh token available') ||
         err.message.includes('Failed to refresh token') ||
@@ -152,8 +157,8 @@ const AboutMe = () => {
           toastId: `${section}-session-error`,
         });
         setTimeout(() => {
-          logout(); // Explicitly call logout after showing the toast
-        }, 2000); // Give the user time to see the toast
+          logout();
+        }, 2000);
       } else {
         toast.error(`Failed to update ${section} details. Please try again.`, {
           toastId: `${section}-error`,
@@ -161,7 +166,6 @@ const AboutMe = () => {
       }
     }
   };
-
 
   const handleCurrencyChange = (e) => {
     setEditedCurrency(e.target.value);
@@ -239,7 +243,6 @@ const AboutMe = () => {
         handleSave={handleSave}
       />
 
-      {/* Address Card */}
       <AddressCard 
         userDetails={userDetails || {}}
         editSection={editSection}
@@ -247,12 +250,6 @@ const AboutMe = () => {
         onSave={handleSave}
         onCancel={() => setEditSection(null)}
       />
-
-      <div className="flex justify-start">
-        <button className="w-1/4 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors text-sm flex items-center justify-center">
-          <Trash2 className="mr-2 w-4 h-4" /> Delete Account
-        </button>
-      </div>
     </div>
   );
 };
