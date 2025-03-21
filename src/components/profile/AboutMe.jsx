@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useState, useContext } from "react";
 import { useUserDetails } from "../../context/profile/UserDetailsContext";
 import { AuthContext } from "../../context/auth/AuthContext";
@@ -7,12 +9,12 @@ import {
   Mail, 
   Save, 
   X,
-  Trash2,
   Edit2 
 } from "lucide-react";
 import CurrencyDropdown from '../CurrencyDropdown/CurrencyDropdown'; 
 import PhoneNumber from './PhoneNumber';
 import { AddressCard } from './AddressComponents';
+import CompanyDetails from './CompanyDetails';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -110,7 +112,7 @@ const PersonalEditForm = ({ userDetails, editedCurrency, onCurrencyChange, onSav
 };
 
 const AboutMe = () => {
-  const { userDetails, fetchUserDetails, updateUserDetails } = useUserDetails();
+  const { userDetails, fetchUserDetails, updateUserDetails, fetchCompanyDetails } = useUserDetails();
   const { refreshAccessToken, logout } = useContext(AuthContext);
 
   const [editSection, setEditSection] = useState(null);
@@ -119,7 +121,8 @@ const AboutMe = () => {
 
   useEffect(() => {
     fetchUserDetails();
-  }, [fetchUserDetails]);
+    fetchCompanyDetails(); // Fetch company details when component mounts
+  }, [fetchUserDetails, fetchCompanyDetails]);
 
   useEffect(() => {
     if (userDetails) {
@@ -172,7 +175,7 @@ const AboutMe = () => {
   };
 
   return (
-    <div className="w-full max-w-3xl space-y-3 p-4">
+    <div className="w-full  space-y-3 p-4">
       <ToastContainer />
       {/* Personal Information Card */}
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm w-full">
@@ -250,8 +253,23 @@ const AboutMe = () => {
         onSave={handleSave}
         onCancel={() => setEditSection(null)}
       />
+      
+      {/* Company Details section placed after AddressCard */}
+      <CompanyDetails />
     </div>
   );
 };
 
 export default AboutMe;
+
+
+
+
+
+
+
+
+
+
+
+

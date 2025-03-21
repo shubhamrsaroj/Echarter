@@ -1,5 +1,5 @@
 
-
+import { tokenHandler } from '../../utils/tokenHandler';
 import api from '../axios.config';
 
 export const userService = {
@@ -43,5 +43,38 @@ export const userService = {
       console.error('Error verifying mobile OTP:', error);
       throw error;
     }
-  }
+  },
+
+  // Fetch company by ID
+  getCompanyById: async () => {
+    try {
+      // Retrieve token and user data safely
+      const token = tokenHandler.getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+  
+      const userData = tokenHandler.parseUserFromToken(token);
+      if (!userData || !userData.comId) {
+        throw new Error("Company ID not found in user token");
+      }
+  
+      // Fetch company details
+      const response = await api.get("/api/SinglePoint/GetCompaniesById", {
+        params: { id: userData.comId },
+      });
+  
+      // Validate response structure
+      if (response.data?.success && response.data.data) {
+        return response.data.data; // Return the company object directly
+      } else {
+        throw new Error("Invalid response format or no company data available");
+      }
+    } catch (error) {
+      console.error("Failed to fetch company:", error.message);
+      throw error;
+    }
+  },
+  
+
 };

@@ -1,18 +1,24 @@
+
+
+
 import React, { createContext, useState, useContext, useCallback } from 'react';
 import { userService } from '../../api/profile/user.service';
 import { tokenHandler } from '../../utils/tokenHandler';
 
 const UserDetailsContext = createContext({
   userDetails: null,
+  company: null,
   loading: false,
   error: null,
   fetchUserDetails: async () => {},
   updateUserDetails: async () => {},
+  fetchCompanyDetails: async () => {},
   clearUserDetails: () => {}
 });
 
 export const UserDetailsProvider = ({ children }) => {
   const [userDetails, setUserDetails] = useState(null);
+  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
@@ -80,14 +86,41 @@ export const UserDetailsProvider = ({ children }) => {
       setLoading(false);
     }
   }, []);
+
+  const fetchCompanyDetails = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const companyData = await userService.getCompanyById();
+      setCompany(companyData);
+      return companyData;
+    } catch (error) {
+      console.error('Failed to fetch company details:', error);
+      setError(error.message);
+      setCompany(null);
+      throw error; // Ensure errors are thrown for toast handling
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const clearUserDetails = useCallback(() => {
+    setUserDetails(null);
+    setCompany(null);
+    setError(null);
+  }, []);
   
   return (
     <UserDetailsContext.Provider value={{
       userDetails,
+      company,
       loading,
       error,
       fetchUserDetails,
       updateUserDetails,
+      fetchCompanyDetails,
+      clearUserDetails,
     }}>
       {children}
     </UserDetailsContext.Provider>

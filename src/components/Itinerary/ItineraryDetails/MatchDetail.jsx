@@ -35,10 +35,10 @@ const MatchDetail = () => {
   };
 
   const renderCompanyCard = (company) => {
-    const haves = company.haves && company.haves.length > 0 ? company.haves[0] : null;
+    const havesList = company.haves && company.haves.length > 0 ? company.haves.slice(0, 2) : []; // Take up to 2 haves
     const starRating = getStarRating(company.rankOverall);
     const rankLabel = getRankLabel(company.rankOverall);
-
+  
     return (
       <div key={company.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 w-full mb-3">
         <div className="flex flex-col">
@@ -53,11 +53,11 @@ const MatchDetail = () => {
                 </div>
               )}
             </div>
-
+  
             <div className="flex flex-col items-end">
               <h2 className="font-semibold text-base text-gray-800 mb-2">{company.name || 'Unnamed Company'}</h2>
               <p className="text-xs text-gray-600">{company.city}, {company.country || 'N/A'}</p>
-
+  
               {/* Rating section with stars, label, and bar */}
               <div className="flex flex-col items-end">
                 <StarRating rating={starRating} />
@@ -76,7 +76,7 @@ const MatchDetail = () => {
               </div>
             </div>
           </div>
-
+  
           {/* Certificate section */}
           <div className="flex space-x-2 mb-3">
             {company.certificates && company.certificates.length > 0 ? (
@@ -87,54 +87,62 @@ const MatchDetail = () => {
               ))
             ) : null}
           </div>
-
-          {/* Main content */}
-          <div className="flex items-start">
-            {/* Aircraft Image with price */}
-            {haves && haves.aircraftImage && (
-              <div className="mr-4 flex flex-col">
-                <img
-                  src={haves.aircraftImage}
-                  alt="Aircraft"
-                  className="w-36 h-32 object-cover rounded-md"
-                />
-                <div className="mt-2">
-                  <p className="text-sm font-semibold text-gray-700">Price from</p>
-                  <p className="text-base font-bold text-gray-800">
-                    {haves.currency || 'USD'} {formatPrice(haves.computedPrice || 0)}
-                  </p>
+  
+          {/* Main content - Render up to 2 haves */}
+          <div className="flex flex-col gap-4">
+            {havesList.length > 0 ? (
+              havesList.map((haves, index) => (
+                <div key={index} className="flex items-start">
+                  {/* Aircraft Image with price */}
+                  {haves && haves.aircraftImage && (
+                    <div className="mr-4 flex flex-col">
+                      <img
+                        src={haves.aircraftImage}
+                        alt="Aircraft"
+                        className="w-36 h-32 object-cover rounded-md"
+                      />
+                      <div className="mt-2">
+                        <p className="text-sm font-semibold text-gray-700">Price from</p>
+                        <p className="text-base font-bold text-gray-800">
+                          {haves.currency || 'USD'} {formatPrice(haves.computedPrice || 0)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+  
+                  {/* Aircraft and Route Details */}
+                  <div className="flex-1 ml-1">
+                    {haves && (
+                      <div>
+                        <h3 className="font-semibold text-md text-gray-800 mb-1">{haves.acType || 'Unknown Aircraft'}</h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {haves.availType || 'One Way'} - {haves.acCat || 'Unknown Category'}
+                        </p>
+                        <div className="flex items-center mb-2">
+                          <PlaneTakeoff className="w-4 h-4 text-gray-500 mr-2" />
+                          <span className="text-sm text-gray-700">{haves.fromCity || 'Unknown Departure'}</span>
+                          <span className="mx-2 text-gray-400">→</span>
+                          <PlaneLanding className="w-4 h-4 text-gray-500 mr-2" />
+                          <span className="text-sm text-gray-700">{haves.toCity || 'Unknown Destination'}</span>
+                        </div>
+                        <div className="flex items-center mb-2">
+                          <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                          <span className="text-sm text-gray-600">
+                            {haves.dateFrom ? new Date(haves.dateFrom).toLocaleDateString() : 'N/A'} -{' '}
+                            {haves.dateTo ? new Date(haves.dateTo).toLocaleDateString() : 'N/A'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-1">Seats: {haves.seats || 'N/A'}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-600">No aircraft available</p>
             )}
-
-            {/* Aircraft and Route Details */}
-            <div className="flex-1 ml-1">
-              {haves && (
-                <div>
-                  <h3 className="font-semibold text-md text-gray-800 mb-1">{haves.acType || 'Unknown Aircraft'}</h3>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {haves.availType || 'One Way'} - {haves.acCat || 'Unknown Category'}
-                  </p>
-                  <div className="flex items-center mb-2">
-                    <PlaneTakeoff className="w-4 h-4 text-gray-500 mr-2" />
-                    <span className="text-sm text-gray-700">{haves.fromCity || 'Unknown Departure'}</span>
-                    <span className="mx-2 text-gray-400">→</span>
-                    <PlaneLanding className="w-4 h-4 text-gray-500 mr-2" />
-                    <span className="text-sm text-gray-700">{haves.toCity || 'Unknown Destination'}</span>
-                  </div>
-                  <div className="flex items-center mb-2">
-                    <Calendar className="w-4 h-4 text-gray-500 mr-2" />
-                    <span className="text-sm text-gray-600">
-                      {haves.dateFrom ? new Date(haves.dateFrom).toLocaleDateString() : 'N/A'} -{' '}
-                      {haves.dateTo ? new Date(haves.dateTo).toLocaleDateString() : 'N/A'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-1">Seats: {haves.seats || 'N/A'}</p>
-                </div>
-              )}
-            </div>
           </div>
-
+  
           {/* Connect button */}
           <div className="mt-3 flex justify-end">
             <button className="bg-black text-white px-4 py-1.5 rounded text-sm font-medium">Connect</button>

@@ -5,16 +5,25 @@ import { useUserDetails } from "../../context/profile/UserDetailsContext";
 
 const UserProfilePage = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const { fetchUserDetails } = useUserDetails();
+  const { fetchUserDetails, fetchCompanyDetails } = useUserDetails();
 
   useEffect(() => {
-    fetchUserDetails().then(() => {
-      setIsLoading(false);
-    }).catch((err) => {
-      console.error("Failed to fetch user details:", err);
-      setIsLoading(false); // Still stop loading on error
-    });
-  }, [fetchUserDetails]);
+    const fetchAllDetails = async () => {
+      try {
+        // Fetch both user and company details concurrently
+        await Promise.all([
+          fetchUserDetails(),
+          fetchCompanyDetails()
+        ]);
+      } catch (err) {
+        console.error("Failed to fetch details:", err);
+      } finally {
+        setIsLoading(false); // Only set loading false after both requests complete
+      }
+    };
+
+    fetchAllDetails();
+  }, [fetchUserDetails, fetchCompanyDetails]);
 
   return (
     <div> 
