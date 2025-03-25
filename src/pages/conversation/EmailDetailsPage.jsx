@@ -1,8 +1,8 @@
-import React from 'react';
-import EmailsList from '../../components/conversation/ConversationDetail/EmailsList';
+// import React from 'react';
+// import EmailsList from '../../components/conversation/ConversationDetail/EmailsList';
 
-const EmailDetailsPage = () => {
-  return <EmailsList />;
-};
+// const EmailDetailsPage = () => {
+//   return <EmailsList />;
+// };
 
-export default EmailDetailsPage;
+// export default EmailDetailsPage;
