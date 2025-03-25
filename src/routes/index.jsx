@@ -9,15 +9,21 @@ import { ProtectedRouteWithLayout } from './ProtectedRouteWithLayout';
 import LoginPage from '../pages/auth/LoginPage';
 import SignupPage from '../pages/auth/SignupPage';
 import VerifyOtpPage from '../pages/auth/VerifyOtpPage';
-import ItineraryPage from '../pages/itinerary/ItineraryPage';
+
+import ItineraryInputPage from '../pages/itinerary/ItineraryInputPage';
+import ItineraryDetailPage from '../pages/itinerary/ItineraryDetailPage';
+
 import UserProfilePage from '../pages/profile/UserProfilePage';
 import BaseDetailPage from '../pages/itinerary/BaseDetailPage';
 import MatchDetailPage from '../pages/itinerary/MatchDetailPage';
 import DateAdjustmentDetailPage from '../pages/itinerary/DateAdjustmentDetailPage'
 import BrokerDetailPage from '../pages/itinerary/BrokerDetailPage'
+
+
 import ConversationPage from '../pages/conversation/ConversationPage'
 import EmailDetailsPage from '../pages/conversation/EmailDetailsPage'
 
+import SellerPage from '../pages/seller/SellerPage'
 
 
 // Layout imports
@@ -25,6 +31,7 @@ import ItineraryLayout from '../layouts/ItineraryLayout';
 import UserProfileLayout from '../layouts/UserProfileLayout';
 import ConversationLayout from '../layouts/ConversationLayout'
 
+import SellerLayout from '../layouts/SellerLayout'
 
 
 
@@ -44,11 +51,27 @@ export const routes = [
     element: (
       <ProtectedRouteWithLayout layout={ItineraryLayout}>
         <ItineraryProvider>
-          <ItineraryPage />
+          <ItineraryInputPage />
         </ItineraryProvider>
       </ProtectedRouteWithLayout>
     ),
   },
+
+
+ // Protected Routes with Itinerary Layout
+ {
+  path: "/itinerary-details",
+  element: (
+    <ProtectedRouteWithLayout layout={ItineraryLayout}>
+      <ItineraryProvider>
+        <ItineraryDetailPage />
+      </ItineraryProvider>
+    </ProtectedRouteWithLayout>
+  ),
+},
+
+
+
   
 //Broker Details Page
 {
@@ -104,6 +127,16 @@ export const routes = [
 
 
 
+  // Protected Routes with conversation Layout
+ {
+  path: "/seller",
+  element: (
+    <ProtectedRouteWithLayout layout={SellerLayout}>
+        <SellerPage />
+    </ProtectedRouteWithLayout>
+  ),
+},
+
 
 
  // Protected Routes with conversation Layout
@@ -111,9 +144,7 @@ export const routes = [
   path: "/conversation",
   element: (
     <ProtectedRouteWithLayout layout={ConversationLayout}>
-    
         <ConversationPage />
-    
     </ProtectedRouteWithLayout>
   ),
 },

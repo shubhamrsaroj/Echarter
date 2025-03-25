@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { ItineraryService } from '../../api/itinerary/ItineraryService';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const ItineraryContext = createContext();
 
@@ -70,7 +70,7 @@ export const ItineraryProvider = ({ children }) => {
           flights,
         });
       } else {
-        setError(response.message || 'Failed to get itinerary');
+        setError(response.data || 'Failed to get itinerary');
       }
       return response.data;
     } catch (error) {

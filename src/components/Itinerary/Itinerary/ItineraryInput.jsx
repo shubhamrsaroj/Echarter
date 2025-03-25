@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Mic, MicOff, HelpCircle } from "lucide-react";
+import { SendHorizontal, Mic, MicOff, CircleHelp } from "lucide-react";
 import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 
 export default function ItineraryInput({ onSearch }) {
@@ -63,7 +63,7 @@ export default function ItineraryInput({ onSearch }) {
       // Set 1-minute timeout
       timeoutRef.current = setTimeout(() => {
         stopRecognition();
-      }, 30000); // 60,000 ms = 1 minute
+      }, 30000); // 30,000 ms = 30 seconds
     };
 
     recognizer.sessionStopped = () => {
@@ -124,47 +124,47 @@ export default function ItineraryInput({ onSearch }) {
   }, []);
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-lg w-full relative">
-      <label className="block text-gray-600 mb-2">What's your Itinerary?</label>
-      <div className="flex items-center border-b border-black pb-1 relative">
+    <div className="-mt-6">
+      {isListening && (
+        <div className="mb-4 bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full shadow-sm inline-flex items-center animate-fade-in">
+          <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+          <span>Microphone Active - Listening...</span>
+        </div>
+      )}
+      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Search</h2>
+      <div className="flex items-center border-b-2 border-black pb-3 relative w-full">
         <input
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="flex-1 outline-none bg-transparent text-gray-700"
+          className="flex-1 outline-none bg-transparent text-black placeholder-gray-700 -mb-2"
           maxLength={180}
-          placeholder="Write or speak your itinerary..."
+          placeholder="What's your Itinerary?"
         />
-        <Send
-          className="text-black cursor-pointer hover:text-blue-600"
-          size={20}
+        <SendHorizontal
+          className="text-black cursor-pointer -mb-2"
+          size={25}
           onClick={handleSendClick}
         />
-        {isListening && (
-          <div className="absolute -top-8 left-0 bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full shadow-sm flex items-center animate-fade-in">
-            <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-            <span>Microphone Active - Listening...</span>
-          </div>
-        )}
       </div>
       <div className="text-right text-gray-400 text-sm mt-1">{text.length}/180</div>
 
       <div className="flex justify-end space-x-4 mt-4 relative">
         <button
           className={`p-2 rounded-full transition-colors ${
-            isListening ? "bg-green-600 text-white" : "bg-red-600 text-white"
+            isListening ? "bg-green-600 text-white" : " text-black"
           }`}
           onClick={handleMicClick}
         >
-          {isListening ? <Mic size={20} /> : <MicOff size={20} />}
+          {isListening ? <Mic size={25} /> : <MicOff size={25} />}
         </button>
 
         <div className="relative">
           <button
-            className="p-2 bg-black text-white rounded-full"
+            className="p-2 text-black rounded-full"
             onClick={() => setShowMessage(!showMessage)}
           >
-            <HelpCircle size={20} />
+            <CircleHelp size={25} />
           </button>
 
           {showMessage && (

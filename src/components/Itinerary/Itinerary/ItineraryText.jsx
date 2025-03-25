@@ -1,5 +1,5 @@
 import React from "react";
-import { FaMapMarkerAlt, FaCalendarAlt, FaUserFriends, FaPlane, FaRuler } from "react-icons/fa";
+import { PlaneTakeoff, PlaneLanding, ArrowRight } from "lucide-react";
 
 const ItineraryText = ({ itinerary }) => {
   if (!itinerary || itinerary.length === 0) {
@@ -10,61 +10,57 @@ const ItineraryText = ({ itinerary }) => {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
-      weekday: "short",
       year: "numeric",
-      month: "short",
+      month: "long",
       day: "numeric",
     });
   };
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-black">
-        Itinerary Details
+      <h2 className="text-2xl font-bold mb-4 text-black text-center">
+        Itinerary
       </h2>
 
       {itinerary.map((leg, index) => (
-        <div key={index} className="mb-6 p-4 border rounded-lg shadow-sm">
-          <div className="flex items-center text-lg font-semibold text-black mb-3">
-            <FaMapMarkerAlt className="mr-2" />
-            Leg {leg.leg_number}: {leg.dep_place} → {leg.arrv_place}
+        <div
+          key={index}
+          className="mb-4 p-4 border rounded-lg shadow-sm flex flex-col items-center"
+        >
+          {/* Date Positioned at the Center Top */}
+          <div className="text-center text-black font-medium mb-2">
+            {formatDate(leg.date)}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-black">
-            <div className="flex items-center gap-2">
-              <FaCalendarAlt />
-              <div>
-                <p className="text-sm text-gray-700">Date</p>
-                <p className="font-medium">{formatDate(leg.date)}</p>
+          <div className="flex items-center justify-between w-full">
+            {/* Departure Section */}
+            <div className="flex flex-col items-center">
+              <PlaneTakeoff className="text-gray-600 w-6 h-6" />
+              <span className="font-bold text-black mt-1">{leg.dep_place}</span>
+            </div>
+
+            {/* Arrow Section */}
+            <div className="flex-1 flex flex-col items-center">
+              <div className="flex items-center w-full justify-center">
+                <div className="border-t-2 border-gray-600 flex-1"></div>
+                <ArrowRight className="text-gray-600 w-8 h-8 mx-2" />
+                <div className="border-t-2 border-gray-600 flex-1"></div>
+              </div>
+
+              {/* Category and Passenger Below the Arrow */}
+              <div className="text-sm text-gray-600 mt-1 text-center">
+                {leg.flight_cat.charAt(0) +
+                  leg.flight_cat.slice(1).toLowerCase()}
+                , Passenger: {leg.pax}
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <FaUserFriends />
-              <div>
-                <p className="text-sm text-gray-700">Passengers</p>
-                <p className="font-medium">{leg.pax}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <FaPlane />
-              <div>
-                <p className="text-sm text-gray-700">Category</p>
-                <p className="font-medium">{leg.flight_cat}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <FaRuler />
-              <div>
-                <p className="text-sm text-gray-700">Distance</p>
-                <p className="font-medium">{leg.distance.toFixed(2)} km</p>
-              </div>
+            {/* Arrival Section */}
+            <div className="flex flex-col items-center">
+              <PlaneLanding className="text-gray-600 w-6 h-6" />
+              <span className="font-bold text-black mt-1">{leg.arrv_place}</span>
             </div>
           </div>
-
-          {index < itinerary.length - 1}
         </div>
       ))}
     </div>

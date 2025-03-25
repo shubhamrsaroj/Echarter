@@ -13,7 +13,7 @@ const PageContainer = ({ children }) => {
     <div className="max-w-7xl mx-auto p-6 bg-gray-50">
       <div className="mb-6 flex justify-between items-center">
         <button
-          onClick={() => navigate('/itinerary')}
+          onClick={() => navigate('/itinerary-details')}
           className="flex items-center text-blue-700 hover:text-blue-900 font-medium bg-white px-4 py-2 rounded-md shadow-sm border border-gray-100"
         >
           <ArrowLeft size={16} className="mr-2" />

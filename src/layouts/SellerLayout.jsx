@@ -1,13 +1,10 @@
 import React from 'react';
-
 import Sidebar from '../components/sidebar/Sidebar';
 
+const SellerLayout = ({ children }) => {
 
-const ItineraryLayout = ({ children }) => {
-  
-  
   return (
-    <div className="flex h-screen bg-gray-100 ">
+    <div className="flex h-screen bg-white ">
       <Sidebar />
         <main className="flex-1 overflow-y-auto p-6">
           {children}
@@ -17,4 +14,4 @@ const ItineraryLayout = ({ children }) => {
   );
 };
 
-export default ItineraryLayout;
+export default SellerLayout;
