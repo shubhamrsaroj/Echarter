@@ -20,8 +20,7 @@ import DateAdjustmentDetailPage from '../pages/itinerary/DateAdjustmentDetailPag
 import BrokerDetailPage from '../pages/itinerary/BrokerDetailPage'
 
 
-import ConversationPage from '../pages/conversation/ConversationPage'
-import EmailDetailsPage from '../pages/conversation/EmailDetailsPage'
+
 
 import SellerPage from '../pages/seller/SellerPage'
 
@@ -29,7 +28,7 @@ import SellerPage from '../pages/seller/SellerPage'
 // Layout imports
 import ItineraryLayout from '../layouts/ItineraryLayout';
 import UserProfileLayout from '../layouts/UserProfileLayout';
-import ConversationLayout from '../layouts/ConversationLayout'
+
 
 import SellerLayout from '../layouts/SellerLayout'
 
@@ -136,35 +135,6 @@ export const routes = [
     </ProtectedRouteWithLayout>
   ),
 },
-
-
-
- // Protected Routes with conversation Layout
-//  {
-//   path: "/conversation",
-//   element: (
-//     <ProtectedRouteWithLayout layout={ConversationLayout}>
-//         <ConversationPage />
-//     </ProtectedRouteWithLayout>
-//   ),
-// },
-
-
- // Protected Routes with conversation Layout
-//  {
-//   path: "/email-details",
-//   element: (
-//     <ProtectedRouteWithLayout layout={ConversationLayout}>
-    
-//         <EmailDetailsPage />
-    
-//     </ProtectedRouteWithLayout>
-//   ),
-// },
-
-
-
-
 
 
 
