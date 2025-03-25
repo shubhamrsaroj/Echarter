@@ -151,16 +151,16 @@ export const routes = [
 
 
  // Protected Routes with conversation Layout
- {
-  path: "/email-details",
-  element: (
-    <ProtectedRouteWithLayout layout={ConversationLayout}>
+//  {
+//   path: "/email-details",
+//   element: (
+//     <ProtectedRouteWithLayout layout={ConversationLayout}>
     
-        <EmailDetailsPage />
+//         <EmailDetailsPage />
     
-    </ProtectedRouteWithLayout>
-  ),
-},
+//     </ProtectedRouteWithLayout>
+//   ),
+// },
 
 
 
