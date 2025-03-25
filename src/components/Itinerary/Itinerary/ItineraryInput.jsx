@@ -124,7 +124,7 @@ export default function ItineraryInput({ onSearch }) {
   }, []);
 
   return (
-    <div className="-mt-6">
+    <div className="-mt-4 max-w-2xl "> 
       {isListening && (
         <div className="mb-4 bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full shadow-sm inline-flex items-center animate-fade-in">
           <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
