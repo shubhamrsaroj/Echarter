@@ -26,7 +26,7 @@ import SellerPage from '../pages/seller/SellerPage'
 
 
 // Layout imports
-import ItineraryLayout from '../layouts/ItineraryLayout';
+import ItineraryInputLayout from '../layouts/ItineraryInputLayout';
 import UserProfileLayout from '../layouts/UserProfileLayout';
 
 
@@ -34,7 +34,7 @@ import SellerLayout from '../layouts/SellerLayout'
 
 
 
-
+import { SellerProvider } from '../context/seller/SellerContext';
 import { ItineraryProvider } from '../context/itinerary/ItineraryContext';
 import { UserDetailsProvider } from '../context/profile/UserDetailsContext';
 
@@ -48,7 +48,7 @@ export const routes = [
   {
     path: "/itinerary",
     element: (
-      <ProtectedRouteWithLayout layout={ItineraryLayout}>
+      <ProtectedRouteWithLayout layout={ItineraryInputLayout}>
         <ItineraryProvider>
           <ItineraryInputPage />
         </ItineraryProvider>
@@ -61,7 +61,7 @@ export const routes = [
  {
   path: "/itinerary-details",
   element: (
-    <ProtectedRouteWithLayout layout={ItineraryLayout}>
+    <ProtectedRouteWithLayout layout={ItineraryInputLayout}>
       <ItineraryProvider>
         <ItineraryDetailPage />
       </ItineraryProvider>
@@ -76,7 +76,7 @@ export const routes = [
 {
   path: "/itinerary/broker-details",
   element: (
-    <ProtectedRouteWithLayout layout={ItineraryLayout}>
+    <ProtectedRouteWithLayout layout={ItineraryInputLayout}>
       <ItineraryProvider>
         <BrokerDetailPage/>
       </ItineraryProvider>
@@ -92,7 +92,7 @@ export const routes = [
   {
     path: "/itinerary/base-details",
     element: (
-      <ProtectedRouteWithLayout layout={ItineraryLayout}>
+      <ProtectedRouteWithLayout layout={ItineraryInputLayout}>
         <ItineraryProvider>
           <BaseDetailPage/>
         </ItineraryProvider>
@@ -104,7 +104,7 @@ export const routes = [
    {
     path: "/itinerary/match-details",
     element: (
-      <ProtectedRouteWithLayout layout={ItineraryLayout}>
+      <ProtectedRouteWithLayout layout={ItineraryInputLayout}>
         <ItineraryProvider>
           <MatchDetailPage/>
         </ItineraryProvider>
@@ -116,7 +116,7 @@ export const routes = [
   {
     path: "/itinerary/date-adjustment-details",
     element: (
-      <ProtectedRouteWithLayout layout={ItineraryLayout}>
+      <ProtectedRouteWithLayout layout={ItineraryInputLayout}>
         <ItineraryProvider>
           <DateAdjustmentDetailPage/>
         </ItineraryProvider>
@@ -131,7 +131,9 @@ export const routes = [
   path: "/seller",
   element: (
     <ProtectedRouteWithLayout layout={SellerLayout}>
+<SellerProvider>
         <SellerPage />
+        </SellerProvider>
     </ProtectedRouteWithLayout>
   ),
 },

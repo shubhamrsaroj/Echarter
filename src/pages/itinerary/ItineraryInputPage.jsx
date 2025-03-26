@@ -4,26 +4,31 @@ import { useItinerary } from '../../context/itinerary/ItineraryContext';
 import ItineraryInput from '../../components/Itinerary/Itinerary/ItineraryInput';
 import ErrorPrompt from '../../components/Itinerary/ItineraryDetails/ErrorPrompt';
 
-const ItineraryInputPage =  () => {
+const ItineraryInputPage = () => {
   const { loading, error, getItineraryByText } = useItinerary();
-  const [showError, setShowError] = useState(true);
+  const [showError, setShowError] = useState(false);
   const navigate = useNavigate();
 
   const handleItinerarySearch = async (itineraryText) => {
     try {
-      setShowError(true); // Reset error visibility on new search
-      await getItineraryByText(itineraryText);
-      // Only navigate if there's no error
-      if (!error.data) {
+      const response = await getItineraryByText(itineraryText);
+      console.log("API Response:", response);
+  
+      if (response?.itineraryResponseNewdata?.itinerary) {
+        console.log("Navigating to /itinerary-details");
         navigate('/itinerary-details');
+      } else {
+        setShowError(true);
       }
     } catch (err) {
       console.error('Failed to fetch itinerary:', err);
+      setShowError(true);
     }
   };
+  
 
   return (
-    <div >
+    <div>
       <div className="container mx-auto p-6 relative">
         {/* Error Handling - Positioned Top Right */}
         {error && showError && (
@@ -33,9 +38,8 @@ const ItineraryInputPage =  () => {
         )}
 
         {/* Itinerary Input Component */}
-          <ItineraryInput onSearch={handleItinerarySearch} />
-      
-      
+        <ItineraryInput onSearch={handleItinerarySearch} />
+
         {/* Loading Indicator */}
         {loading && (
           <div className="flex justify-center my-8">

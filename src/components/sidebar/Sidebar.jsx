@@ -29,7 +29,6 @@ const Sidebar = () => {
         const rolesArray = userData.role.split(',').map(role => role.trim());
         setUserRoles(rolesArray);
         
-        console.log('User roles:', rolesArray);
       }
     }
   }, []);

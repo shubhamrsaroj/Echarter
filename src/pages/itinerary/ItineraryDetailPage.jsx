@@ -14,7 +14,7 @@ const ItineraryDetailsPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="overflow-y-hidden">
+    <div className="overflow-y-hidden bg-gray-50">
       <div className="container mx-auto p-6 relative">
         {/* Back Button & Heading - Arrow Above the Heading */}
         <div className="flex flex-col items-start space-y-1 mb-6">

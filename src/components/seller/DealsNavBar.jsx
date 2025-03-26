@@ -3,7 +3,7 @@ import { tokenHandler } from '../../utils/tokenHandler';
 
 const DealsNavBar = ({ onButtonClick }) => {
   const [userRoles, setUserRoles] = useState([]);
-  const [activeButton, setActiveButton] = useState('Deals'); // Default to 'Deals' as active
+  const [activeButton, setActiveButton] = useState(''); // No default active button
 
   useEffect(() => {
     // Get the current token and extract user data on component mount
@@ -29,46 +29,21 @@ const DealsNavBar = ({ onButtonClick }) => {
 
   return (
     <div className="bg-gray-50 p-4 rounded-md shadow-md -mt-4">
-      {/* Main Title */}
-      <h2 className="text-left text-2xl font-bold text-gray-800">Seller's</h2>
-
       {/* Navigation Buttons */}
       <div className="flex justify-between max-w-3xl mx-auto py-3">
-        <button
-          className={`px-10 py-2 rounded-lg transition-colors duration-200 shadow-md font-medium ${
-            activeButton === 'Deals'
-              ? 'bg-white text-gray-900 border border-gray-300'
-              : 'bg-gray-900 text-white hover:bg-gray-700 focus:bg-gray-950'
-          }`}
-          onClick={() => handleButtonClick('Deals')}
-        >
-          Deals
-        </button>
-
-        {/* Only show Haves button if user has Operator role */}
-        {hasOperatorRole && (
-          <button
-            className={`px-10 py-2 rounded-lg transition-colors duration-200 shadow-md font-medium ${
-              activeButton === 'Haves'
-                ? 'bg-white text-gray-900 border border-gray-300'
-                : 'bg-gray-900 text-white hover:bg-gray-700 focus:bg-gray-950'
-            }`}
-            onClick={() => handleButtonClick('Haves')}
-          >
-            Haves
-          </button>
-        )}
-
-        <button
-          className={`px-10 py-2 rounded-lg transition-colors duration-200 shadow-md font-medium ${
-            activeButton === 'Needs'
-              ? 'bg-white text-gray-900 border border-gray-300'
-              : 'bg-gray-900 text-white hover:bg-gray-700 focus:bg-gray-950'
-          }`}
-          onClick={() => handleButtonClick('Needs')}
-        >
-          Needs
-        </button>
+        {['Deals', 'Haves', 'Needs'].map((buttonName) => (
+          (buttonName !== 'Haves' || hasOperatorRole) && (
+            <button
+              key={buttonName}
+              className={`px-10 py-2 rounded-lg transition-colors duration-200 shadow-md font-medium border border-gray-300 ${
+                activeButton === buttonName ? 'bg-white text-gray-900' : 'bg-gray-900 text-white hover:bg-gray-700 focus:bg-gray-950'
+              }`}
+              onClick={() => handleButtonClick(buttonName)}
+            >
+              {buttonName}
+            </button>
+          )
+        ))}
       </div>
 
       {/* Divider Line */}
