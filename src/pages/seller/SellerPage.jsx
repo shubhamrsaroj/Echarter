@@ -11,8 +11,6 @@ const SellerPage = () => {
     setActiveSection(section);
   };
 
- 
-
   return (
     <>
       <DealsNavBar onButtonClick={handleButtonClick} />

@@ -19,7 +19,7 @@ const MatchCard = ({ match = {} }) => {
         <h3 className="font-semibold text-lg text-gray-800">{match.title || 'Unknown Match'}</h3>
         <p className="text-sm text-gray-500">{match.message || 'No message available'}</p>
         <div className="flex items-center justify-end mt-2">
-          <Info className="text-blue-500 ml-1" size={16} />
+          <Info className="text-gray-700 ml-1" size={20} />
         </div>
       </div>
       
@@ -32,14 +32,14 @@ const MatchCard = ({ match = {} }) => {
       </div>
       
       <div className="flex items-center justify-between mt-10">
-        <div className="bg-[#ffde59] py-1 px-3 rounded-lg inline-block">
+        <div className="bg-[#c1ff72] py-1 px-3 rounded-lg inline-block">
           <span className="font-medium text-black text-sm">
             {match.count ? `${match.count} Nearby` : 'No Nearby Matches'}
           </span>
         </div>
         <button 
           onClick={handleMatchClick} 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition-all"
+          className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition-all"
         >
           {match.button || 'View Details'}
         </button>

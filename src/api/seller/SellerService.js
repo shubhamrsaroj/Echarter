@@ -22,6 +22,18 @@ export const SellerService = {
     } catch (error) {
       throw error;
     }
+  },
+  // New delete endpoint
+  deleteHave: async (haveId) => {
+    // eslint-disable-next-line no-useless-catch
+    try {
+      const response = await api.delete(`/api/SinglePoint/DeleteHaves`, {
+        params: { Id: haveId }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
   
 

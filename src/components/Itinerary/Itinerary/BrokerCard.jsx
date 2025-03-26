@@ -17,7 +17,7 @@ const BrokerCard = ({ broker = {} }) => {
         <h3 className="font-semibold text-lg text-gray-800">{broker.title || 'Unknown Broker'}</h3>
         <p className="text-sm text-gray-500">{broker.message || 'No message available'}</p>
         <div className="flex items-center justify-end mt-2">
-          <Info className="text-blue-500 ml-1" size={16} />
+          <Info className="text-gray-700 ml-1" size={20} />
         </div>
       </div>
       
@@ -37,7 +37,7 @@ const BrokerCard = ({ broker = {} }) => {
         </div>
         <button 
           onClick={handleBrokerClick} 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition-all"
+          className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition-all"
         >
           {broker.button || 'View Details'}
         </button>

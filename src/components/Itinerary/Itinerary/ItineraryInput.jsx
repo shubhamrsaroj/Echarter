@@ -124,7 +124,7 @@ export default function ItineraryInput({ onSearch }) {
   }, []);
 
   return (
-    <div className="-mt-4 max-w-2xl "> 
+    <div className="-mt-1 max-w-2xl "> 
       {isListening && (
         <div className="mb-4 bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full shadow-sm inline-flex items-center animate-fade-in">
           <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
@@ -132,7 +132,7 @@ export default function ItineraryInput({ onSearch }) {
         </div>
       )}
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">Search</h2>
-      <div className="flex items-center border-b-2 border-black pb-3 relative w-full">
+      <div className="flex items-center border-b-4 border-black pb-3 relative w-full">
         <input
           type="text"
           value={text}
@@ -143,11 +143,11 @@ export default function ItineraryInput({ onSearch }) {
         />
         <SendHorizontal
           className="text-black cursor-pointer -mb-2"
-          size={25}
+          size={30}
           onClick={handleSendClick}
         />
       </div>
-      <div className="text-right text-gray-400 text-sm mt-1">{text.length}/180</div>
+      <div className="text-right text-gray-600 text-sm mt-1">{text.length}/180</div>
 
       <div className="flex justify-end space-x-4 mt-4 relative">
         <button
@@ -156,7 +156,7 @@ export default function ItineraryInput({ onSearch }) {
           }`}
           onClick={handleMicClick}
         >
-          {isListening ? <Mic size={25} /> : <MicOff size={25} />}
+          {isListening ? <Mic size={35} /> : <MicOff size={35} />}
         </button>
 
         <div className="relative">
@@ -164,7 +164,7 @@ export default function ItineraryInput({ onSearch }) {
             className="p-2 text-black rounded-full"
             onClick={() => setShowMessage(!showMessage)}
           >
-            <CircleHelp size={25} />
+            <CircleHelp size={35} />
           </button>
 
           {showMessage && (
