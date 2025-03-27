@@ -5,10 +5,11 @@ import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 export default function ItineraryInput({ onSearch }) {
   const [text, setText] = useState("");
   const [isListening, setIsListening] = useState(false);
+  const [isSending, setIsSending] = useState(false); // Disable input & mic while sending
   const [showMessage, setShowMessage] = useState(false);
   const recognizerRef = useRef(null);
-  const tempTextRef = useRef("");
-  const timeoutRef = useRef(null); // Ref for timeout
+  const timeoutRef = useRef(null);
+  const accumulatedTextRef = useRef(""); // Store accumulated text
 
   const speechKey = import.meta.env.VITE_AZURE_SPEECH_KEY;
   const speechRegion = import.meta.env.VITE_AZURE_SPEECH_REGION;
@@ -26,65 +27,58 @@ export default function ItineraryInput({ onSearch }) {
 
   const handleSendClick = () => {
     if (text.trim()) {
-      onSearch(text.trim());
+      setIsSending(true); // Disable mic and input
+      stopRecognition();
+      onSearch(text.trim()).finally(() => {
+        setIsSending(false); // Re-enable mic and input after response
+      });
     }
   };
 
   const startRecognition = () => {
     if (recognizerRef.current) {
-      console.warn("Recognizer already running. Restarting...");
       stopRecognition();
     }
 
-    tempTextRef.current = "";
+    accumulatedTextRef.current = text; // Preserve previous text
     const audioConfig = sdk.AudioConfig.fromDefaultMicrophoneInput();
     const recognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
     recognizerRef.current = recognizer;
 
     recognizer.recognizing = (s, e) => {
       if (e.result.reason === sdk.ResultReason.RecognizingSpeech) {
-        tempTextRef.current = e.result.text;
-        setText(tempTextRef.current);
+        setText(accumulatedTextRef.current + " " + e.result.text); // Append instead of replace
       }
     };
 
     recognizer.recognized = (s, e) => {
       if (e.result.reason === sdk.ResultReason.RecognizedSpeech) {
         if (e.result.text.trim()) {
-          setText(e.result.text);
-          tempTextRef.current = e.result.text;
+          accumulatedTextRef.current += " " + e.result.text; // Append recognized text
+          setText(accumulatedTextRef.current.trim());
         }
       }
     };
 
     recognizer.sessionStarted = () => {
-      console.log("Session started.");
       setIsListening(true);
-      // Set 1-minute timeout
       timeoutRef.current = setTimeout(() => {
         stopRecognition();
-      }, 30000); // 30,000 ms = 30 seconds
+      }, 30000);
     };
 
     recognizer.sessionStopped = () => {
-      console.log("Session stopped.");
       setIsListening(false);
       stopRecognition();
     };
 
     recognizer.canceled = (s, e) => {
       console.error(`CANCELED: Reason=${e.reason}`);
-      if (e.reason === sdk.CancellationReason.Error) {
-        console.error(`Error details: ${e.errorDetails}`);
-      }
       stopRecognition();
     };
 
     recognizer.startContinuousRecognitionAsync(
-      () => {
-        console.log("Speech recognition started.");
-        setIsListening(true);
-      },
+      () => setIsListening(true),
       (err) => {
         console.error("Error starting recognition:", err);
         setIsListening(false);
@@ -94,76 +88,72 @@ export default function ItineraryInput({ onSearch }) {
 
   const stopRecognition = () => {
     if (recognizerRef.current) {
-      console.log("Stopping recognition...");
       recognizerRef.current.stopContinuousRecognitionAsync(
         () => {
-          console.log("Recognition stopped.");
           recognizerRef.current?.close();
           recognizerRef.current = null;
           setIsListening(false);
-          clearTimeout(timeoutRef.current); // Clear timeout
+          clearTimeout(timeoutRef.current);
         },
         (err) => {
           console.error("Error stopping recognition:", err);
           setIsListening(false);
-          clearTimeout(timeoutRef.current); // Clear timeout on error
+          clearTimeout(timeoutRef.current);
         }
       );
-    } else {
-      console.warn("Recognizer is already stopped or not initialized.");
     }
   };
 
   useEffect(() => {
     return () => {
-      if (recognizerRef.current) {
-        stopRecognition();
-      }
-      clearTimeout(timeoutRef.current); // Cleanup timeout on unmount
+      stopRecognition();
+      clearTimeout(timeoutRef.current);
     };
   }, []);
 
   return (
-    <div className="-mt-1 max-w-2xl "> 
+    <div className="-mt-1 max-w-2xl font-[Poppins]">
       {isListening && (
-        <div className="mb-4 bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full shadow-sm inline-flex items-center animate-fade-in">
+        <div className="mb-4 bg-gray-100 text-gray-800 text-sm px-4 py-2 rounded-full shadow-sm inline-flex items-center animate-fade-in">
           <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
           <span>Microphone Active - Listening...</span>
         </div>
       )}
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Search</h2>
-      <div className="flex items-center border-b-4 border-black pb-3 relative w-full">
+
+      <h2 className="text-[22px] font-semibold text-gray-900 mb-4">Search</h2>
+
+      <div className="flex items-center border-b-[3px] border-black pb-3 relative w-full">
         <input
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="flex-1 outline-none bg-transparent text-black placeholder-gray-700 -mb-2"
+          className="flex-1 outline-none bg-transparent text-black placeholder-gray-600 text-[16px] font-medium tracking-wide"
           maxLength={180}
-          placeholder="What's your Itinerary?"
+          placeholder="What's your itinerary?"
+          disabled={isSending}
         />
         <SendHorizontal
-          className="text-black cursor-pointer -mb-2"
+          className={`cursor-pointer text-gray-800 transition-opacity duration-200 ${isSending ? "opacity-50 cursor-not-allowed" : "hover:opacity-70"}`}
           size={30}
-          onClick={handleSendClick}
+          onClick={!isSending ? handleSendClick : undefined}
         />
       </div>
-      <div className="text-right text-gray-600 text-sm mt-1">{text.length}/180</div>
+
+      <div className="text-right text-gray-500 text-sm mt-1">{text.length}/180</div>
 
       <div className="flex justify-end space-x-4 mt-4 relative">
         <button
-          className={`p-2 rounded-full transition-colors ${
-            isListening ? "bg-green-600 text-white" : " text-black"
-          }`}
-          onClick={handleMicClick}
+          className={`p-2 rounded-full transition-all duration-200 ${
+            isListening ? "bg-gray-200 text-black" : "text-black hover:bg-gray-100"
+          } ${isSending ? "opacity-50 cursor-not-allowed" : ""}`}
+          onClick={!isSending ? handleMicClick : undefined}
+          disabled={isSending}
         >
           {isListening ? <Mic size={35} /> : <MicOff size={35} />}
         </button>
 
         <div className="relative">
-          <button
-            className="p-2 text-black rounded-full"
-            onClick={() => setShowMessage(!showMessage)}
-          >
+          <button className="p-2 text-black rounded-full hover:bg-gray-100 transition-all duration-200" onClick={() => setShowMessage(!showMessage)}>
             <CircleHelp size={35} />
           </button>
 

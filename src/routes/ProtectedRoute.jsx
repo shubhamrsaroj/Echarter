@@ -4,18 +4,17 @@ import { useAuth } from '../hooks/useAuth';
 export const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
+  // Bypass authentication during development
   // if (import.meta.env.VITE_BYPASS_AUTH === 'true') {
-  //   // During development, bypass authentication check
   //   return children;
   // }
-
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="w-10 h-10 border-4 border-gray-300 border-t-gray-500 rounded-full animate-spin"></div>
+      </div>
+    );
   }
 
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-
-  return children;
+  return user ? children : <Navigate to="/login" />;
 };

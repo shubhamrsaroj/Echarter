@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { useSellerContext } from "../../context/seller/SellerContext";
+import { useSellerContext } from "../../../context/seller/SellerContext";
 import { CheckCircle } from "lucide-react";
 
 const PostForm = ({ onClose }) => {
@@ -50,7 +50,7 @@ const PostForm = ({ onClose }) => {
       )}
 
       {/* Post Form UI */}
-      <div className="border border-black rounded-md p-4 w-[500px] max-w-full md:w-[500px] h-[400px] bg-white shadow-md mx-auto">
+      <div className="border border-black rounded-md p-4 w-[500px] max-w-full  h-[400px] bg-white shadow-md mx-auto ">
         <h3 className="text-center font-bold mb-2">Post</h3>
 
         {/* Editable div for user input */}

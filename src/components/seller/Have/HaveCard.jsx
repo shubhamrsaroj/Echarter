@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import PostForm from "./PostForm";
 import DeleteConfirmation from "./DeleteConfirmation";
-import { useSellerContext } from "../../context/seller/SellerContext";
+import { useSellerContext } from "../../../context/seller/SellerContext";
 import SkeletonHaveCard from "./SkeletonHaveCard";
 
 const HaveCard = () => {
@@ -28,10 +28,9 @@ const HaveCard = () => {
   } = useSellerContext();
 
   useEffect(() => {
-    fetchHaves(903); // Assuming 903 is the company ID
+    fetchHaves(903);
   }, [fetchHaves]);
 
-  // Auto-close success message after 3 seconds
   useEffect(() => {
     let timeoutId;
     if (deleteSuccess) {
@@ -62,7 +61,6 @@ const HaveCard = () => {
     if (selectedItem) {
       try {
         await deleteHave(selectedItem.id);
-        // The success message will be handled by the context and useEffect
       } catch (error) {
         console.error("Failed to delete have:", error);
       }
@@ -71,7 +69,6 @@ const HaveCard = () => {
 
   return (
     <div className="w-full max-w-8xl flex flex-col md:flex-row mt-6 relative">
-      {/* Success Message */}
       {deleteSuccess && (
         <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded flex items-center shadow-lg">
           <CheckCircle className="mr-2" />
@@ -79,7 +76,6 @@ const HaveCard = () => {
         </div>
       )}
 
-      {/* Left Section - Haves List */}
       <div className="md:w-1/2 w-full pr-2">
         <div className="flex items-center justify-between mb-2 relative">
           <div className="flex items-center space-x-2">
@@ -95,7 +91,6 @@ const HaveCard = () => {
           </button>
         </div>
 
-        {/* Loading Skeleton */}
         {loading ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, index) => (
@@ -105,47 +100,53 @@ const HaveCard = () => {
         ) : haves.length > 0 ? (
           haves.map((item) => (
             <div
-              key={item.id}
+              key={item?.id}
               className="bg-white p-3 rounded-md shadow-sm border border-gray-200 hover:shadow-md transition duration-200 mb-4 flex justify-between items-center relative overflow-hidden"
             >
-              <div className="flex flex-col min-w-0">
-                <h3 className="text-lg font-bold pr-6 truncate">{item.acType}</h3>
-                <div className="flex mt-2 flex-wrap">
-                  <div className="flex flex-col mr-6">
+              <div className="flex flex-col min-w-0 w-full">
+                <div className="break-words whitespace-normal text-lg font-bold pr-6">
+                  {item?.acType}
+                </div>
+                <div className="flex mt-2 flex-wrap justify-between items-start">
+                  <div className="flex flex-col mr-2">
                     <div className="flex items-center space-x-2">
-                      <p className="text-black text-sm font-bold truncate">{item.acCat}</p>
+                      <p className="text-black text-sm font-bold truncate max-w-full">{item?.acCat}</p>
                       <span className="text-black text-sm font-bold">-</span>
-                      <p className="text-black text-sm font-bold truncate">{item.availType}</p>
+                      <p className="text-black text-sm font-bold truncate max-w-full">{item?.availType}</p>
                     </div>
-                    <p className="text-black font-bold mt-2">USD {item.price}</p>
+                    <p className="text-black font-bold mt-2">USD {item?.price}</p>
                   </div>
-                  <div className="text-md text-gray-800 ml-12 min-w-0">
+                  <div className="text-md text-gray-800 min-w-0 flex-shrink-0">
                     <div className="flex items-center mb-1">
                       <PlaneTakeoff className="h-4 w-4 mr-1" />
-                      <span className="truncate">{item.fromCity}</span>
+                      <span className="truncate">{item?.fromCity}</span>
                     </div>
                     <div className="flex items-center mb-1">
                       <PlaneLanding className="h-4 w-4 mr-1" />
-                      <span className="truncate">{item.toCity}</span>
+                      <span className="truncate">{item?.toCity}</span>
                     </div>
                     <div className="flex items-center mb-1">
                       <TicketsPlane className="h-4 w-4 mr-1" />
-                      <span className="truncate">{item.seats}</span>
+                      <span className="truncate">{item?.seats}</span>
                     </div>
                     <div className="flex items-center">
                       <CalendarClock className="h-4 w-4 mr-1" />
                       <span className="truncate">
-                        {new Date(item.dateFrom).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}{" "}
+                        {item?.dateFrom
+                          ? new Date(item.dateFrom).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "N/A"}{" "}
                         -{" "}
-                        {new Date(item.dateTo).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {item?.dateTo
+                          ? new Date(item.dateTo).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : "N/A"}
                       </span>
                     </div>
                   </div>
@@ -170,14 +171,12 @@ const HaveCard = () => {
         )}
       </div>
 
-      {/* Right Section - Post Form */}
       {showPostForm && (
         <div className="md:w-1/2 w-full pl-2">
           <PostForm onClose={handleClosePostForm} />
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && (
         <DeleteConfirmation 
           onCancel={handleCancelDelete} 

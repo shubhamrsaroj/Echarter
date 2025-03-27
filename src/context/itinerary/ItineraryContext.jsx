@@ -23,26 +23,6 @@ export const ItineraryProvider = ({ children }) => {
 
   const navigate = useNavigate();
 
-  // Persist selectedCompanyDetails to localStorage
-
-
-  useEffect(() => {
-    if (selectedCompanyDetails) {
-      localStorage.setItem("selectedCompanyDetails", JSON.stringify(selectedCompanyDetails));
-  
-      // Set a timeout to remove the item after 2 minutes
-      const timer = setTimeout(() => {
-        localStorage.removeItem("selectedCompanyDetails");
-      }, 120000);
-  
-      // Cleanup function to clear the timeout if selectedCompanyDetails changes
-      return () => clearTimeout(timer);
-    }
-  }, [selectedCompanyDetails]);
-  
-
-
-
   const getItineraryByText = async (itineraryText) => {
     try {
       setLoading(true);

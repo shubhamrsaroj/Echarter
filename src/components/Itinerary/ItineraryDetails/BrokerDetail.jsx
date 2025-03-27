@@ -1,7 +1,7 @@
 import React from 'react';
 import { useItinerary } from '../../../context/itinerary/ItineraryContext';
 import { useNavigate } from 'react-router-dom';
-import { Plane, PlaneTakeoff, PlaneLanding, CalendarClock, ArrowLeft ,TicketsPlane ,Info} from 'lucide-react';
+import { Plane, ArrowLeft,Info} from 'lucide-react';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErrorDisplay from '../common/ErrorDisplay';
 

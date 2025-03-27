@@ -22,8 +22,7 @@ const BaseCard = ({ itineraryData = {} }) => {
         itineraryData.base.map((option, index) => (
           <div
             key={index}
-            className="bg-white rounded-xl shadow-md p-6 transition-transform transform hover:shadow-lg relative"
-          >
+            className="bg-white rounded-xl border border-b-3 p-6 relative">
             <div className="absolute top-4 right-4 text-right">
               <h3 className="font-semibold text-lg text-gray-800">{option.category || 'Unknown Category'}</h3>
               <p className="text-sm text-gray-500 mr-6">{option.message || 'No description available'}</p>

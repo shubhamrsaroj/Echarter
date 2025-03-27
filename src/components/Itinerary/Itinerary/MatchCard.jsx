@@ -14,7 +14,7 @@ const MatchCard = ({ match = {} }) => {
 
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 transition-transform transform hover:shadow-lg relative">
+    <div className="bg-white rounded-xl border border-b-3 p-6 relative">
       <div className="absolute top-4 right-4 text-right">
         <h3 className="font-semibold text-lg text-gray-800">{match.title || 'Unknown Match'}</h3>
         <p className="text-sm text-gray-500">{match.message || 'No message available'}</p>

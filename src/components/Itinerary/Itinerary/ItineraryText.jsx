@@ -17,7 +17,7 @@ const ItineraryText = ({ itinerary }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-white rounded-xl border border-b-3 p-6 relative">
       <h2 className="text-2xl font-bold mb-4 text-black text-center">
         Itinerary
       </h2>

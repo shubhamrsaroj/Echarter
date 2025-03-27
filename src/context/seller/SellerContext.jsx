@@ -1,21 +1,33 @@
-import React, { createContext, useState, useContext, useCallback } from 'react';
+import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
 import { SellerService } from '../../api/seller/SellerService';
+import { tokenHandler } from '../../utils/tokenHandler';
 
-// Create the context
 const SellerContext = createContext();
 
-// Create a provider component
 export const SellerProvider = ({ children }) => {
   const [haves, setHaves] = useState([]);
+  const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [postSuccess, setPostSuccess] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  const fetchHaves = useCallback(async (companyId) => {
+  // Initialize user data from token on context creation
+  useEffect(() => {
+    const token = tokenHandler.getToken();
+    if (token) {
+      const userData = tokenHandler.parseUserFromToken(token);
+      setCurrentUser(userData);
+    }
+  }, []);
+
+  const fetchHaves = useCallback(async () => {
+    if (!currentUser?.comId) return;
+
     setLoading(true);
     try {
-      const data = await SellerService.getCompanyHaves(companyId);
+      const data = await SellerService.getCompanyHaves(currentUser.comId);
       setHaves(Array.isArray(data.data?.haves) ? data.data.haves : []);
       setError(null);
     } catch (err) {
@@ -24,7 +36,23 @@ export const SellerProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUser]);
+
+  const fetchDeals = useCallback(async () => {
+    if (!currentUser?.comId) return;
+
+    setLoading(true);
+    try {
+      const data = await SellerService.getCompanyDeals(currentUser.comId);
+      setDeals(Array.isArray(data.data) ? data.data : []);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      setDeals([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser]);
 
   const createHaves = useCallback(async (text) => {
     setLoading(true);
@@ -48,14 +76,9 @@ export const SellerProvider = ({ children }) => {
     setDeleteSuccess(false);
     try {
       const response = await SellerService.deleteHave(haveId);
-      
-      // Remove the deleted item from the haves array
       setHaves(prevHaves => prevHaves.filter(have => have.id !== haveId));
-      
-      // Set success message from API response
       setDeleteSuccess(response.message || "Successfully deleted!");
       setError(null);
-      
       return response;
     } catch (err) {
       setError(err.message);
@@ -66,7 +89,6 @@ export const SellerProvider = ({ children }) => {
     }
   }, []);
 
-  // Reset success messages
   const resetSuccessMessages = useCallback(() => {
     setPostSuccess(false);
     setDeleteSuccess(false);
@@ -75,11 +97,14 @@ export const SellerProvider = ({ children }) => {
   return (
     <SellerContext.Provider value={{
       haves,
+      deals,
       loading,
       error,
+      currentUser,
       postSuccess,
       deleteSuccess,
       fetchHaves,
+      fetchDeals,
       createHaves,
       deleteHave,
       resetSuccessMessages
@@ -89,7 +114,6 @@ export const SellerProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use the seller context
 export const useSellerContext = () => {
   const context = useContext(SellerContext);
   if (!context) {

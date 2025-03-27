@@ -12,10 +12,7 @@ const ItineraryInputPage = () => {
   const handleItinerarySearch = async (itineraryText) => {
     try {
       const response = await getItineraryByText(itineraryText);
-      console.log("API Response:", response);
-  
       if (response?.itineraryResponseNewdata?.itinerary) {
-        console.log("Navigating to /itinerary-details");
         navigate('/itinerary-details');
       } else {
         setShowError(true);

@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  GoogleMap,
-  Polyline,
-  Marker,
-  useLoadScript,
-} from '@react-google-maps/api';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { GoogleMap, Polyline, Marker, useLoadScript,OverlayView  } from '@react-google-maps/api';
 
-const RouteMap = ({ itineraryData }) => {
+const RouteMap = ({ itineraryData, hoveredFlightCoords }) => {
   const [map, setMap] = useState(null);
   const [flightPaths, setFlightPaths] = useState([]);
+  const [hoveredPath, setHoveredPath] = useState(null);
   const [bounds, setBounds] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const hoveredPathRef = useRef(null);
+  const hoveredFromMarkerRef = useRef(null);
+  const hoveredToMarkerRef = useRef(null);
 
   const googleMapsApiKey = import.meta.env.VITE_GOOGLE_API_KEY;
 
   const mapContainerStyle = {
     width: '100%',
-    height: '300px', // Slightly increased height for better visibility
+    height: '300px',
   };
 
   const { isLoaded, loadError } = useLoadScript({
@@ -35,8 +35,6 @@ const RouteMap = ({ itineraryData }) => {
       const dx = end.lat - start.lat;
       const dy = end.lng - start.lng;
       const straightDistance = Math.sqrt(dx * dx + dy * dy);
-      
-      // Adjusting curve height for more elegant arcs
       const curveHeight = straightDistance * 0.15;
 
       const perpX = -dy;
@@ -63,20 +61,17 @@ const RouteMap = ({ itineraryData }) => {
 
       return pathPoints;
     } catch (error) {
-      console.error('Error in calculateCurvedPath:', error);
       return [];
     }
   }, []);
 
   const processFlightPaths = useCallback(() => {
     if (!itineraryData?.flights?.length) {
-      console.log('No flight data available');
       return;
     }
 
     try {
       if (!window.google) {
-        console.error('Google Maps not loaded');
         setError('Google Maps failed to load');
         return;
       }
@@ -91,7 +86,6 @@ const RouteMap = ({ itineraryData }) => {
           !flight.toCoordinates?.lat ||
           !flight.toCoordinates?.long
         ) {
-          console.error('Invalid coordinates for flight:', flight);
           return;
         }
 
@@ -105,12 +99,8 @@ const RouteMap = ({ itineraryData }) => {
           lng: Number(flight.toCoordinates.long),
         };
 
-        newBounds.extend(
-          new window.google.maps.LatLng(fromCoords.lat, fromCoords.lng)
-        );
-        newBounds.extend(
-          new window.google.maps.LatLng(toCoords.lat, toCoords.lng)
-        );
+        newBounds.extend(new window.google.maps.LatLng(fromCoords.lat, fromCoords.lng));
+        newBounds.extend(new window.google.maps.LatLng(toCoords.lat, toCoords.lng));
 
         const pathPoints = calculateCurvedPath(fromCoords, toCoords);
 
@@ -127,12 +117,10 @@ const RouteMap = ({ itineraryData }) => {
       setFlightPaths(paths);
       setBounds(newBounds);
 
-      // Add padding to the bounds for better aesthetics
       if (map && newBounds) {
         map.fitBounds(newBounds, { padding: { top: 30, right: 30, bottom: 30, left: 30 } });
       }
     } catch (error) {
-      console.error('Error processing flight paths:', error);
       setError('Error processing flight data');
     } finally {
       setIsLoading(false);
@@ -145,8 +133,54 @@ const RouteMap = ({ itineraryData }) => {
     }
   }, [isLoaded, itineraryData, processFlightPaths]);
 
+  useEffect(() => {
+    if (hoveredPathRef.current) {
+      hoveredPathRef.current.setMap(null);
+      hoveredPathRef.current = null;
+    }
+    if (hoveredFromMarkerRef.current) {
+      hoveredFromMarkerRef.current.setMap(null);
+      hoveredFromMarkerRef.current = null;
+    }
+    if (hoveredToMarkerRef.current) {
+      hoveredToMarkerRef.current.setMap(null);
+      hoveredToMarkerRef.current = null;
+    }
+
+    if (hoveredFlightCoords) {
+      const fromCoords = {
+        lat: Number(hoveredFlightCoords.fromLat),
+        lng: Number(hoveredFlightCoords.fromLong),
+      };
+      const toCoords = {
+        lat: Number(hoveredFlightCoords.toLat),
+        lng: Number(hoveredFlightCoords.toLong),
+      };
+
+      if (
+        isNaN(fromCoords.lat) ||
+        isNaN(fromCoords.lng) ||
+        isNaN(toCoords.lat) ||
+        isNaN(toCoords.lng)
+      ) {
+        setHoveredPath(null);
+        return;
+      }
+
+      const pathPoints = calculateCurvedPath(fromCoords, toCoords);
+      setHoveredPath({
+        points: pathPoints,
+        from: fromCoords,
+        to: toCoords,
+        fromCode: hoveredFlightCoords.fromCity,
+        toCode: hoveredFlightCoords.toCity,
+      });
+    } else {
+      setHoveredPath(null);
+    }
+  }, [hoveredFlightCoords, calculateCurvedPath]);
+
   const onMapLoad = useCallback((mapInstance) => {
-    console.log('Map loaded');
     setMap(mapInstance);
     setIsLoading(false);
   }, []);
@@ -178,12 +212,12 @@ const RouteMap = ({ itineraryData }) => {
     </div>
   );
 
-
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4 w-full">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Flight Route</h2>
+      <h2 className="text-xl font-semibold mb-4 text-gray-800">Flight Route</h2>
       <div className="relative rounded-md overflow-hidden">
         <GoogleMap
+          key={hoveredPath ? `map-hovered-${JSON.stringify(hoveredPath.from)}-${JSON.stringify(hoveredPath.to)}` : 'map-default'}
           mapContainerStyle={mapContainerStyle}
           zoom={4}
           onLoad={onMapLoad}
@@ -192,43 +226,43 @@ const RouteMap = ({ itineraryData }) => {
             zoomControl: true,
             styles: [
               {
-                featureType: "all",
-                elementType: "labels.text.fill",
-                stylers: [{ color: "#000000" }]
+                featureType: 'all',
+                elementType: 'labels.text.fill',
+                stylers: [{ color: '#000000' }],
               },
               {
-                featureType: "administrative",
-                elementType: "geometry.stroke",
-                stylers: [{ color: "#000000" }, { weight: 0.5 }]
+                featureType: 'administrative',
+                elementType: 'geometry.stroke',
+                stylers: [{ color: '#000000' }, { weight: 0.5 }],
               },
               {
-                featureType: "landscape",
-                elementType: "geometry",
-                stylers: [{ color: "#f5f5f5" }]
+                featureType: 'landscape',
+                elementType: 'geometry',
+                stylers: [{ color: '#f5f5f5' }],
               },
               {
-                featureType: "water",
-                elementType: "geometry",
-                stylers: [{ color: "#76b6c4" }]
+                featureType: 'water',
+                elementType: 'geometry',
+                stylers: [{ color: '#76b6c4' }],
               },
               {
-                featureType: "road",
-                elementType: "geometry",
-                stylers: [{ color: "#dddddd" }]
+                featureType: 'road',
+                elementType: 'geometry',
+                stylers: [{ color: '#dddddd' }],
               },
               {
-                featureType: "poi",
-                stylers: [{ visibility: "off" }]
+                featureType: 'poi',
+                stylers: [{ visibility: 'off' }],
               },
               {
-                featureType: "transit",
-                stylers: [{ visibility: "off" }]
-              }
-            ]
+                featureType: 'transit',
+                stylers: [{ visibility: 'off' }],
+              },
+            ],
           }}
         >
           {flightPaths.map((path) => (
-            <React.Fragment key={path.index}>  
+            <React.Fragment key={path.index}>
               <Polyline
                 path={path.points}
                 options={{
@@ -236,60 +270,160 @@ const RouteMap = ({ itineraryData }) => {
                   strokeWeight: 2,
                   strokeOpacity: 0.8,
                   geodesic: false,
-                  icons: [{
-                    icon: {
-                      path: window.google?.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                      scale: 3,
+                  icons: [
+                    {
+                      icon: {
+                        path: window.google?.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        scale: 3,
+                        fillColor: '#000000',
+                        fillOpacity: 1,
+                        strokeColor: '#000000',
+                        strokeWeight: 1,
+                      },
+                      offset: '50%',
+                      repeat: null,
+                    },
+                  ],
+                }}
+              />
+              {/* Only render the default marker if this path is NOT the hovered path */}
+              {(!hoveredPath || 
+                (JSON.stringify(hoveredPath.from) !== JSON.stringify(path.from) && 
+                 JSON.stringify(hoveredPath.to) !== JSON.stringify(path.to))) && (
+                <>
+                  <Marker
+                    position={path.from}
+                    icon={{
+                      path: window.google.maps.SymbolPath.CIRCLE,
+                      scale: 5,
                       fillColor: '#000000',
                       fillOpacity: 1,
-                      strokeColor: '#000000',
-                      strokeWeight: 1,
-                    },
-                    offset: '50%',
-                    repeat: null 
-                  }]
-                }}
-              />
-              {/* Add markers for airports with custom styling */}
-              <Marker
-                position={path.from}
-                icon={{
-                  path: window.google.maps.SymbolPath.CIRCLE,
-                  scale: 5,
-                  fillColor: '#000000',
-                  fillOpacity: 1,
-                  strokeColor: '#ffffff',
-                  strokeWeight: 2
-                }}
-                title={path.fromCode}
-                label={{
-                  text: path.fromCode,
-                  color: '#000000',
-                  fontWeight: 'bold',
-                  fontSize: '12px'
-                }}
-              />
-              <Marker
-                position={path.to}
-                icon={{
-                  path: window.google.maps.SymbolPath.CIRCLE,
-                  scale: 5,
-                  fillColor: '#000000',
-                  fillOpacity: 1,
-                  strokeColor: '#ffffff',
-                  strokeWeight: 2
-                }}
-                title={path.toCode}
-                label={{
-                  text: path.toCode,
-                  color: '#000000',
-                  fontWeight: 'bold',
-                  fontSize: '12px'
-                }}
-              />
+                      strokeColor: '#ffffff',
+                      strokeWeight: 2,
+                    }}
+                  
+                  />
+                  <Marker
+                    position={path.to}
+                    icon={{
+                      path: window.google.maps.SymbolPath.CIRCLE,
+                      scale: 5,
+                      fillColor: '#000000',
+                      fillOpacity: 1,
+                      strokeColor: '#ffffff',
+                      strokeWeight: 2,
+                    }}
+                   
+                  />
+                </>
+              )}
             </React.Fragment>
           ))}
-        </GoogleMap>
+
+{hoveredPath && (
+        <React.Fragment key={`hovered-path-${JSON.stringify(hoveredPath.from)}-${JSON.stringify(hoveredPath.to)}`}>
+          {/* Polyline for the path */}
+          <Polyline
+            path={hoveredPath.points}
+            options={{
+              strokeColor: "#FF6200",
+              strokeWeight: 3,
+              strokeOpacity: 1,
+              geodesic: false,
+              icons: [
+                {
+                  icon: {
+                    path: window.google?.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                    scale: 4,
+                    fillColor: "#FF6200",
+                    fillOpacity: 1,
+                    strokeColor: "#FF6200",
+                    strokeWeight: 1,
+                  },
+                  offset: "50%",
+                  repeat: null,
+                },
+              ],
+            }}
+            onLoad={(polyline) => {
+              hoveredPathRef.current = polyline;
+            }}
+          />
+
+          {/* From Marker */}
+          <Marker
+            position={hoveredPath.from}
+            icon={{
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 5,
+              fillColor: "#FF6200",
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 2,
+            }}
+            title={hoveredPath.fromCode}
+            onLoad={(marker) => {
+              hoveredFromMarkerRef.current = marker;
+            }}
+          />
+          <OverlayView
+            position={hoveredPath.from}
+            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+          >
+            <div style={{
+              position: "absolute",
+              transform: "translate(-50%, -150%)",
+              fontSize: "12px",
+              fontWeight: "bold",
+              color: "#FF6200",
+              backgroundColor: "white",
+              padding: "2px 5px",
+              borderRadius: "4px",
+              border: "1px solid #FF6200",
+              whiteSpace: "nowrap"
+            }}>
+              {hoveredPath.fromCode}
+            </div>
+          </OverlayView>
+
+          {/* To Marker */}
+          <Marker
+            position={hoveredPath.to}
+            icon={{
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 5,
+              fillColor: "#FF6200",
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 2,
+            }}
+            title={hoveredPath.toCode}
+            onLoad={(marker) => {
+              hoveredToMarkerRef.current = marker;
+            }}
+          />
+          <OverlayView
+            position={hoveredPath.to}
+            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+          >
+            <div style={{
+              position: "absolute",
+              transform: "translate(-100%, -40%)",
+              fontSize: "12px",
+              fontWeight: "bold",
+              color: "#FF6200",
+              backgroundColor: "white",
+              padding: "2px 5px",
+              borderRadius: "4px",
+              border: "1px solid #FF6200",
+              whiteSpace: "nowrap"
+            }}>
+              {hoveredPath.toCode}
+            </div>
+          </OverlayView>
+        </React.Fragment>
+      )}
+    </GoogleMap>
       </div>
     </div>
   );

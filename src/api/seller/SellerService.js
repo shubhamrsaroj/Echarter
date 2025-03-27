@@ -34,7 +34,19 @@ export const SellerService = {
     } catch (error) {
       throw error;
     }
-  }
+  },
   
+  // New endpoint for fetching company deals
+  getCompanyDeals: async (companyId) => {
+    // eslint-disable-next-line no-useless-catch
+    try {
+      const response = await api.get(`/api/SinglePoint/GetCompanyDeals`, {
+        params: { companyId }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 
 };
