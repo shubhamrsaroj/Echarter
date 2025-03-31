@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import DateAdjustmentDetail from '../../components/Itinerary/ItineraryDetails/DateAdjustmentDetail';
 import { useItinerary } from '../../context/itinerary/ItineraryContext';
 import RouteMap from '../../components/Itinerary/Itinerary/RouteMap';
@@ -6,6 +6,8 @@ import ItineraryText from '../../components/Itinerary/Itinerary/ItineraryText';
 
 const DateAdjustmentDetailPage = () => {
   const { itineraryData, loading } = useItinerary();
+  const [hoveredFlightCoords, setHoveredFlightCoords] = useState(null);
+
 
   return (
     <div className="min-h-screen">
@@ -14,7 +16,7 @@ const DateAdjustmentDetailPage = () => {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Column: DateAdjustmentDetail */}
           <div className="lg:w-3/5">
-            <DateAdjustmentDetail />
+            <DateAdjustmentDetail setHoveredFlightCoords={setHoveredFlightCoords} />
           </div>
 
           {/* Right Column: Map and Itinerary Text - Sticky without scrolling */}
@@ -23,7 +25,7 @@ const DateAdjustmentDetailPage = () => {
               {itineraryData.itineraryResponseNewdata && (
                 <ItineraryText itinerary={itineraryData.itineraryResponseNewdata.itinerary} />
               )}
-              <RouteMap itineraryData={itineraryData} />
+              <RouteMap itineraryData={itineraryData} hoveredFlightCoords={hoveredFlightCoords} />
             </div>
           )}
         </div>

@@ -1,10 +1,9 @@
 import React from 'react';
 import { useItinerary } from '../../../context/itinerary/ItineraryContext';
-import { Plane, PlaneTakeoff, PlaneLanding, CalendarClock, ArrowLeft ,TicketsPlane ,Info} from 'lucide-react';
+import { Plane, PlaneTakeoff, PlaneLanding, CalendarClock, ArrowLeft, TicketsPlane, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErrorDisplay from '../common/ErrorDisplay';
-
 
 const PageContainer = ({ children }) => {
   const navigate = useNavigate();
@@ -12,11 +11,9 @@ const PageContainer = ({ children }) => {
   return (
     <div className="max-w-7xl mx-auto p-6 bg-gray-50">
       <div className="mb-6 flex justify-between items-center">
-      <button
-    onClick={() => navigate('/itinerary-details')}
-  >
-    <ArrowLeft className="w-6 h-6" />
-  </button>
+        <button onClick={() => navigate('/itinerary-details')}>
+          <ArrowLeft className="w-6 h-6" />
+        </button>
       </div>
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
         {children}
@@ -25,17 +22,32 @@ const PageContainer = ({ children }) => {
   );
 };
 
-const DateAdjustmentDetail = () => {
+const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
   const { selectedCompanyDetails, loading, error } = useItinerary();
 
   const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
+  const handleMouseEnter = (haves) => {
+    const coords = {
+      fromLat: haves.fromLat,
+      fromLong: haves.fromLong,
+      toLat: haves.toLat,
+      toLong: haves.toLong,
+      fromCity: haves.fromCity || 'Unknown Departure',
+      toCity: haves.toCity || 'Unknown Destination',
+    };
+    setHoveredFlightCoords(coords);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredFlightCoords(null);
+  };
+
   const renderCompanyCard = (company) => {
-    const havesList = company.haves && company.haves.length > 0 ? company.haves.slice(0, 2) : []; // Take up to 2 haves
-   
-  
+    const havesList = company.haves && company.haves.length > 0 ? company.haves.slice(0, 2) : [];
+
     return (
       <div key={company.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 w-full mb-3">
         <div className="flex flex-col">
@@ -88,7 +100,12 @@ const DateAdjustmentDetail = () => {
           <div className="flex flex-col gap-4">
             {havesList.length > 0 ? (
               havesList.map((haves, index) => (
-                <div key={index} className="flex items-start">
+                <div
+                  key={index}
+                  className="flex items-start hover:bg-gray-200 p-2 rounded-md"
+                  onMouseEnter={() => handleMouseEnter(haves)}
+                  onMouseLeave={handleMouseLeave}
+                >
                   {/* Left Section */}
                   <div className="flex-1 flex items-start">
                     <div className="mr-4">
@@ -104,7 +121,7 @@ const DateAdjustmentDetail = () => {
                         </div>
                       )}
                     </div>
-                    <div className="flex-1  flex flex-col ">
+                    <div className="flex-1 flex flex-col">
                       {haves && (
                         <div>
                           <div className="flex flex-col mb-2">
@@ -124,9 +141,21 @@ const DateAdjustmentDetail = () => {
                           <div className="flex items-center mt-1">
                             <CalendarClock className="w-5 h-5 text-gray-700 mr-2" />
                             <span className="text-sm text-gray-700">
-                              {haves.dateFrom ? new Date(haves.dateFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                              {haves.dateFrom
+                                ? new Date(haves.dateFrom).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                  })
+                                : 'N/A'}
                               {' - '}
-                              {haves.dateTo ? new Date(haves.dateTo).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                              {haves.dateTo
+                                ? new Date(haves.dateTo).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                  })
+                                : 'N/A'}
                             </span>
                           </div>
                         </div>
