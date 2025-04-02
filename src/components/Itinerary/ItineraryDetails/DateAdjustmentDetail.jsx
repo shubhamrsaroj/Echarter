@@ -1,34 +1,25 @@
 import React from 'react';
 import { useItinerary } from '../../../context/itinerary/ItineraryContext';
-import { Plane, PlaneTakeoff, PlaneLanding, CalendarClock, ArrowLeft, TicketsPlane, Info } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Plane, PlaneTakeoff, PlaneLanding, CalendarClock, ArrowLeft, TicketsPlane, Info,ListCollapse } from 'lucide-react';
+
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErrorDisplay from '../common/ErrorDisplay';
 
 const PageContainer = ({ children }) => {
-  const navigate = useNavigate();
-
+    
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-50">
-      <div className="mb-6 flex justify-between items-center">
-        <button onClick={() => navigate('/itinerary-details')}>
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-      </div>
+    <div className="max-w-6xl mx-auto p-6 bg-white -mt-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
         {children}
       </div>
     </div>
   );
-};
+}
 
 const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
   const { selectedCompanyDetails, loading, error } = useItinerary();
 
-  const formatPrice = (price) => {
-    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  };
-
+ 
   const handleMouseEnter = (haves) => {
     const coords = {
       fromLat: haves.fromLat,
@@ -47,154 +38,126 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
 
   const renderCompanyCard = (company) => {
     const havesList = company.haves && company.haves.length > 0 ? company.haves.slice(0, 2) : [];
-
+  
     return (
-      <div key={company.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 w-full mb-3">
+      <div key={company.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 w-full mb-4">
         <div className="flex flex-col">
-          {/* Header section */}
-          <div className="flex justify-between items-start mb-3">
-            <div className="flex items-center">
-              {company.logo && company.logo.length > 0 ? (
-                <img src={company.logo[0]} alt={company.name} className="w-22 h-16 object-contain" />
-              ) : (
-                <div className="w-9 h-9 flex items-center justify-center bg-gray-50 rounded-full">
-                  <Plane size={18} className="text-gray-400" />
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-col items-end">
-              <h2 className="font-semibold text-base text-gray-800 mb-2">{company.name || 'Unnamed Company'}</h2>
-              <p className="text-xs text-gray-700">{company.city}, {company.country || 'N/A'}</p>
-
-              {/* Rating section */}
-              <div className="flex flex-col items-end">
-                <div className="flex items-center space-x-2 mt-1">
-                  <div className="w-24 h-3 bg-gray-200 rounded-full overflow-hidden">
+          {/* Header section with hero image/aircraft */}
+          <div className="w-full mb-3">
+            <div className="h-48 w-full bg-cover bg-center rounded-lg overflow-hidden relative border border-gray-300">
+            {havesList.length > 0 && havesList[0].aircraftImage ? (
+           <img
+              src={havesList[0].aircraftImage}
+              alt={company.name}
+              className="w-full h-full object-cover"
+               />
+             ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-lg">
+                <span className="text-gray-400">No image</span>
+               </div>
+             )}
+              
+              {/* Overlay for Company Info - Top right */}
+              <div className="absolute top-0 right-0 p-3 text-right">
+                <h2 className="font-bold text-base text-black">{company.name || 'NA'}</h2>
+                <p className="text-sm text-black mt-1">{company.city || 'NA'}, {company.country || 'NA'}</p>
+                <div className="flex items-center space-x-1 mt-1 justify-end">
+                  <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
                       className="bg-yellow-500 h-full rounded-full"
                       style={{ width: `${company.rankOverall || 0}%` }}
                     />
                   </div>
-                  <p className="text-xs font-semibold">{company.rankOverall}</p>
+                  <p className="text-xs font-semibold text-black">{company.rankOverall}</p>
                 </div>
-                <div className="flex items-center space-x-1 text-xs text-gray-700">
+                <div className="flex items-center space-x-1 text-xs text-black justify-end mt-1">
                   <p>Trust Score</p>
-                  <Info className="w-4 h-4" />
+                  <Info className="w-3 h-3" />
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Certificate section */}
-          <div className="flex space-x-2 mb-3">
-            {company.certificates?.length > 0 &&
-              company.certificates.map((cert, index) => (
-                <div key={index} className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-gray-600 text-xs">{cert.name || `C${index + 1}`}</span>
-                </div>
-              ))}
+  
+          {/* Certificate section with Details button */}
+          <div className="flex justify-between items-center mb-3">
+            {/* Certificates on the left */}
+            <div className="flex space-x-1">
+              {company.certificates?.length > 0 &&
+                company.certificates.map((cert, index) => (
+                  <div key={index} className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+                    <span className="text-gray-600 text-xs">{cert.name || `C${index + 1}`}</span>
+                  </div>
+                ))}
+            </div>
+            
+            {/* Details button */}
+              <div className="text-xs flex flex-col items-center">
+               <ListCollapse className="w-4 h-4 text-black" />
+              <p className="text-black">Details</p>
+            </div>
           </div>
-
-          {/* Main content - Render up to 2 haves */}
-          <div className="flex flex-col gap-4">
-            {havesList.length > 0 ? (
+  
+          {/* Aircraft details cards - TALLER VERSION */}
+          <div className="flex flex-col gap-2 w-full">
+            {havesList.length > 0 &&
               havesList.map((haves, index) => (
                 <div
                   key={index}
-                  className="flex items-start hover:bg-gray-200 p-2 rounded-md"
+                  className="flex items-start bg-gray-100 hover:bg-gray-100 p-4 rounded-md w-full"
                   onMouseEnter={() => handleMouseEnter(haves)}
                   onMouseLeave={handleMouseLeave}
                 >
-                  {/* Left Section */}
-                  <div className="flex-1 flex items-start">
-                    <div className="mr-4">
-                      {haves && haves.aircraftImage ? (
-                        <img
-                          src={haves.aircraftImage}
-                          alt="Aircraft"
-                          className="w-36 h-32 object-cover rounded-md"
-                        />
-                      ) : (
-                        <div className="w-36 h-32 bg-gray-100 rounded-md flex items-center justify-center">
-                          <span className="text-gray-500 text-sm">No Image Available</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 flex flex-col">
-                      {haves && (
-                        <div>
-                          <div className="flex flex-col mb-2">
-                            <div className="flex items-center">
-                              <PlaneTakeoff className="w-5 h-5 text-gray-700 mr-2" />
-                              <span className="text-sm text-gray-700">{haves.fromCity || 'Unknown Departure'}</span>
-                            </div>
-                            <div className="flex items-center mt-1">
-                              <PlaneLanding className="w-5 h-5 text-gray-700 mr-2" />
-                              <span className="text-sm text-gray-700">{haves.toCity || 'Unknown Destination'}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center mt-1">
-                            <TicketsPlane className="w-5 h-5 text-gray-700 mr-2" />
-                            <span className="text-sm text-gray-700">Seats: {haves.seats || 'N/A'}</span>
-                          </div>
-                          <div className="flex items-center mt-1">
-                            <CalendarClock className="w-5 h-5 text-gray-700 mr-2" />
-                            <span className="text-sm text-gray-700">
-                              {haves.dateFrom
-                                ? new Date(haves.dateFrom).toLocaleDateString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric',
-                                  })
-                                : 'N/A'}
-                              {' - '}
-                              {haves.dateTo
-                                ? new Date(haves.dateTo).toLocaleDateString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric',
-                                  })
-                                : 'N/A'}
-                            </span>
-                          </div>
-                        </div>
-                      )}
+                  {/* Left Section: Aircraft type */}
+                  <div className="w-1/3 flex flex-col items-start mr-8">
+                    <div className="text-left">
+                      <h3 className="font-bold text-sm text-black">{haves.acType}</h3>
+                      <p className="text-sm font-bold  text-black mt-2">
+                        {haves.availType || 'One Way'} - {haves.acCat || 'Unknown'}
+                      </p>
                     </div>
                   </div>
-
-                  {/* Right Section */}
-                  <div className="w-1/3 flex flex-col items-end">
-                    {haves && (
-                      <div className="text-right">
-                        <h3 className="font-semibold text-md text-gray-800 mb-1">{haves.acType}</h3>
-                        <p className="text-sm text-gray-600 mb-2">
-                          {haves.availType || 'One Way'} - {haves.acCat || 'Unknown Category'}
-                        </p>
-                        <div className="mt-2">
-                          <p className="text-sm font-semibold text-gray-700">Price from</p>
-                          <p className="text-base font-bold text-gray-800">
-                            {haves.currency || 'USD'} {formatPrice(haves.computedPrice || 0)}
-                          </p>
+  
+                  {/* Right Section: Flight details */}
+                  <div className="flex-1 flex flex-col ml-4">
+                    <div>
+                      <div className="flex flex-col mb-2">
+                        <div className="flex items-center">
+                          <PlaneTakeoff className="w-4 h-4 text-gray-700 mr-1" />
+                          <span className="text-xs text-gray-700">{haves.fromCity || 'Unknown Departure'}</span>
+                        </div>
+                        <div className="flex items-center mt-2">
+                          <PlaneLanding className="w-4 h-4 text-gray-700 mr-1" />
+                          <span className="text-xs text-gray-700">{haves.toCity || 'Unknown Destination'}</span>
                         </div>
                       </div>
-                    )}
+                      <div className="flex items-center mt-2">
+                        <TicketsPlane className="w-4 h-4 text-gray-700 mr-1" />
+                        <span className="text-xs text-gray-700">Seats: {haves.seats || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center mt-2">
+                        <CalendarClock className="w-4 h-4 text-gray-700 mr-1" />
+                        <span className="text-xs text-gray-700">
+                          {haves.dateFrom ? new Date(haves.dateFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'N/A'}
+                          {' - '}
+                          {haves.dateTo ? new Date(haves.dateTo).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-600">No aircraft available</p>
-            )}
+              ))}
           </div>
-
+  
           {/* Connect button */}
-          <div className="mt-3 flex justify-end">
-            <button className="bg-black text-white px-6 py-2 rounded-sm text-sm">Connect</button>
+          <div className="mt-4 flex justify-end">
+            <button className="bg-black text-white px-4 py-1 rounded text-md" style={{ borderRadius: '3px' }}>Connect</button>
           </div>
         </div>
       </div>
     );
   };
+
+
 
   if (loading) {
     return (
@@ -215,7 +178,7 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
   if (!selectedCompanyDetails || selectedCompanyDetails.length === 0) {
     return (
       <PageContainer>
-        <div className="text-center py-4 text-sm">No date adjustment companies found</div>
+        <div className="text-center py-4 text-sm">No Flexi Legs found</div>
       </PageContainer>
     );
   }
@@ -224,9 +187,9 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
     <PageContainer>
       <div>
         <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
-          <h1 className="font-bold text-2xl text-gray-800">Date Adjustment Companies</h1>
+        <h1 className="font-bold text-3xl text-black">Flexi Legs</h1>
           <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-md">
-            Showing {selectedCompanyDetails.length} companies
+            Showing {selectedCompanyDetails.length} Flexi_Legs
           </div>
         </div>
         <div className="flex flex-col gap-3">

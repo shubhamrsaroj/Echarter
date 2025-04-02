@@ -63,7 +63,7 @@ const AILoadingIndicator = () => {
   );
 };
 
-// Inline styles
+// Inline styles with gray color scheme
 const styles = {
   container: {
     display: 'flex',
@@ -84,7 +84,7 @@ const styles = {
     left: '50%',
     width: '20px',
     height: '20px',
-    backgroundColor: '#4F46E5', // Indigo-600 equivalent
+    backgroundColor: '#6B7280', // gray-500
     borderRadius: '50%',
     transform: 'translate(-50%, -50%)',
   },
@@ -94,7 +94,7 @@ const styles = {
     left: '50%',
     width: '60px',
     height: '60px',
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#6B7280', // gray-500
     borderRadius: '50%',
     transform: 'translate(-50%, -50%)',
     opacity: 0,
@@ -102,17 +102,17 @@ const styles = {
   text: {
     fontSize: '1.25rem', // text-xl
     fontWeight: 500, // medium
-    color: '#111827', // gray-900
+    color: '#1F2937', // gray-800
     letterSpacing: '0.025em',
   },
   dots: {
-    color: '#4F46E5', // indigo-600
+    color: '#4B5563', // gray-600
     marginLeft: '4px',
   },
   subText: {
     marginTop: '8px',
     fontSize: '0.875rem', // text-sm
-    color: '#6B7280', // gray-600
+    color: '#9CA3AF', // gray-400
   },
 };
 

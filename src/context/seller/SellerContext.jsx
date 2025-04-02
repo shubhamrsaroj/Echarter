@@ -43,16 +43,18 @@ export const SellerProvider = ({ children }) => {
 
     setLoading(true);
     try {
-      const data = await SellerService.getCompanyDeals(currentUser.comId);
-      setDeals(Array.isArray(data.data) ? data.data : []);
-      setError(null);
+        const data = await SellerService.getCompanyDeals(currentUser.comId);
+
+        // Adjusting to correctly handle the 'data' structure
+        setDeals(Array.isArray(data?.data?.newResponse) ? data.data.newResponse : []);
+        setError(null);
     } catch (err) {
-      setError(err.message);
-      setDeals([]);
+        setError(err.message);
+        setDeals([]);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  }, [currentUser]);
+}, [currentUser]);
 
   const createHaves = useCallback(async (text) => {
     setLoading(true);

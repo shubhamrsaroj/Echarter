@@ -1,60 +1,54 @@
 import React, { useState, useEffect } from "react";
-import { ShieldQuestion, Trash2, CalendarClock, Copy, MessagesSquare , ThumbsDown } from "lucide-react";
-import { useSellerContext } from '../../../context/seller/SellerContext';
+import { ShieldQuestion, Trash2, CalendarClock, Copy, MessagesSquare, ThumbsDown, Info } from "lucide-react";
+import { useSellerContext } from "../../../context/seller/SellerContext";
+import SkeletonDealCard from "./SkeletonDealCard"; // Import the skeleton component
 
 const DealCard = () => {
   const { deals, fetchDeals, loading, currentUser } = useSellerContext();
-
-  // State to track initiated deals
   const [initiatedDeals, setInitiatedDeals] = useState({});
 
-  // Fetch deals when component mounts or user changes
   useEffect(() => {
     if (currentUser?.comId) {
       fetchDeals();
     }
   }, [currentUser, fetchDeals]);
 
-  // Handler for the Initiate/Open button click
   const handleInitiateClick = (dealId) => {
-    setInitiatedDeals(prev => ({
+    setInitiatedDeals((prev) => ({
       ...prev,
-      [dealId]: true
+      [dealId]: true,
     }));
   };
 
-  // Optional: Handle case when no user or no deals
-  
+  // Show skeleton loader when loading
   if (loading) {
-    return <div>Loading deals...</div>;
+    return <SkeletonDealCard />;
   }
 
-  if (deals.length === 0) {
+  if (!deals || deals.length === 0) {
     return <div>No deals available</div>;
   }
 
   return (
     <div className="flex flex-col w-full max-w-lg mt-6">
-      {/* Header */}
-      <div className="text-2xl font-bold pb-2">Your Deals</div>
-
+      <div className="flex items-center space-x-1 text-2xl font-bold pb-2">
+        <span>Your Deals</span>
+        <Info size={25} className="text-gray-400 cursor-pointer ml-4" />
+      </div>
       {deals.map((deal) => (
-        <div key={deal.id} className="border border-gray-200 rounded-lg relative p-4 bg-white mb-4">
-          {/* Ribbon */}
+        <div
+          key={deal.conversationId || deal.threadId || deal.itineraryId}
+          className="border border-gray-200 rounded-lg relative p-4 bg-white mb-4"
+        >
           <div className="absolute -right-1 -top-1">
             <div className="w-8 h-12 bg-yellow-500 rounded-sm"></div>
           </div>
-
-          {/* Deal Information */}
           <div className="pb-4">
             <div className="text-xl font-semibold">{deal.buyerName}</div>
-            <div className="text-gray-600">{deal.itineraryText}</div>
-            <div className="text-gray-600">{deal.message}</div>
+            <div className="text-gray-600 mt-2">{deal.itineraryFromTo}</div>
+            <div className="text-gray-600">{deal.message || "No additional details available."}</div>
           </div>
-
-          {/* Action Buttons */}
           <div className="flex justify-between items-center">
-            {/* Left-side Icons */}
             <div className="flex space-x-3">
               <div className="p-2">
                 <Trash2 size={20} className="text-gray-500" />
@@ -69,29 +63,23 @@ const DealCard = () => {
                 <Copy size={20} className="text-gray-500" />
               </div>
             </div>
-
-            {/* Right-side Buttons */}
-            <div className="flex space-x-3 items-start">
-              {/* Initiate/Open Button */}
-              <div className="flex flex-col items-center -mt-2">
+            {/* Adjusted Right-side Buttons */}
+            <div className="flex space-x-6 items-start -translate-y-8 -translate-x-4">
+              <div className="flex flex-col items-center">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 cursor-pointer ${
-                    initiatedDeals[deal.id] ? "bg-green-200" : "bg-yellow-400"
+                    initiatedDeals[deal.conversationId] ? "bg-green-200" : "bg-yellow-400"
                   }`}
-                  onClick={() => handleInitiateClick(deal.id)}
+                  onClick={() => handleInitiateClick(deal.conversationId)}
                 >
-                  <MessagesSquare 
+                  <MessagesSquare
                     size={18}
-                    className={initiatedDeals[deal.id] ? "text-green-700" : "text-black"}
+                    className={initiatedDeals[deal.conversationId] ? "text-green-700" : "text-black"}
                   />
                 </div>
-                <div className="text-xs">
-                  {initiatedDeals[deal.id] ? "Open" : "Initiate"}
-                </div>
+                <div className="text-xs">{initiatedDeals[deal.conversationId] ? "Open" : "Initiate"}</div>
               </div>
-
-              {/* Decline Button - Shifted slightly up */}
-              <div className="flex flex-col items-center -mt-2">
+              <div className="flex flex-col items-center">
                 <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center mb-1">
                   <ThumbsDown size={18} className="text-white" />
                 </div>
