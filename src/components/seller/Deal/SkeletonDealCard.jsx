@@ -3,6 +3,7 @@ import React from "react";
 const SkeletonDealCard = () => {
   return (
     <div className="flex flex-col md:flex-row w-full -mt-4">
+      {/* Left Side: Deal List */}
       <div className="w-full md:w-1/2 p-4">
         <div className="flex items-center space-x-1 text-2xl font-bold pb-2 text-black">
           <div className="h-8 bg-gray-200 rounded w-32 animate-pulse"></div>
@@ -17,12 +18,16 @@ const SkeletonDealCard = () => {
             </div>
             
             <div className="pb-4">
+              {/* Buyer Name */}
               <div className="h-6 bg-gray-200 rounded w-40 mb-2 animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-56 mb-2 animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-full max-w-md animate-pulse"></div>
+              {/* Itinerary From/To */}
+              <div className="h-4 bg-gray-200 rounded w-56 mt-2 animate-pulse"></div>
+              {/* Message */}
+              <div className="h-4 bg-gray-200 rounded w-full max-w-md mt-2 animate-pulse"></div>
             </div>
             
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center relative">
+              {/* Action Icons */}
               <div className="flex space-x-3">
                 {[1, 2, 3, 4].map((icon) => (
                   <div key={icon} className="p-2">
@@ -31,15 +36,16 @@ const SkeletonDealCard = () => {
                 ))}
               </div>
               
+              {/* Chat and Decline Buttons */}
               <div className="flex items-center space-x-4 mt-2 sm:mt-0 sm:absolute sm:right-12 sm:-top-20">
                 <div className="flex items-center space-x-5">
-                  {/* Open button placeholder */}
+                  {/* Open/Initiate Chat Button */}
                   <div className="flex flex-col items-center">
                     <div className="w-12 h-12 bg-gray-200 rounded-full mb-1 animate-pulse"></div>
                     <div className="h-3 bg-gray-200 rounded w-12 animate-pulse"></div>
                   </div>
                   
-                  {/* Decline button placeholder */}
+                  {/* Decline Button */}
                   <div className="flex flex-col items-center w-12 min-w-[48px]">
                     <div className="w-12 h-12 bg-gray-200 rounded-full mb-1 animate-pulse"></div>
                     <div className="h-3 bg-gray-200 rounded w-12 animate-pulse"></div>
@@ -51,9 +57,9 @@ const SkeletonDealCard = () => {
         ))}
       </div>
       
-      {/* Right side placeholder for potential content */}
+      {/* Right Side: Placeholder for Itinerary/Review/Chat */}
       <div className="w-full md:w-1/2 p-4 mt-4 md:mt-8">
-        <div className="h-64 bg-gray-100 rounded-lg animate-pulse opacity-40"></div>
+        <div className="h-[calc(100vh-12rem)] bg-gray-100 rounded-lg animate-pulse opacity-40"></div>
       </div>
     </div>
   );

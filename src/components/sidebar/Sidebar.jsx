@@ -17,12 +17,21 @@ const Sidebar = () => {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
-  const navLinks = [
-    { name: 'Search', path: '/itinerary', icon: <Search size={30} /> },
-    { name: 'Sellers', path: '/seller', icon: <Gem size={30} /> },
-    { name: 'Activity', path: '/conversation', icon: <MessagesSquare size={30} /> },
+  // Get user role from token
+  const token = tokenHandler.getToken();
+  const userData = token ? tokenHandler.parseUserFromToken(token) : null;
+  const userRole = userData?.role || '';
+  const canSeeSellers = userRole === 'Broker' || userRole === 'Operator';
 
+  const baseNavLinks = [
+    { name: 'Search', path: '/itinerary', icon: <Search size={30} /> },
+    { name: 'Activity', path: '/conversation', icon: <MessagesSquare size={30} /> },
   ];
+
+  // Add Sellers link conditionally
+  const navLinks = canSeeSellers 
+    ? [...baseNavLinks.slice(0, 1), { name: 'Sellers', path: '/seller', icon: <Gem size={30} /> }, ...baseNavLinks.slice(1)]
+    : baseNavLinks;
 
   const logo = import.meta.env.VITE_LOGO;
 
