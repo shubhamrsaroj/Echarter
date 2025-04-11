@@ -90,10 +90,29 @@ const HaveCard = () => {
   const handleConfirmDelete = async () => {
     if (selectedItem) {
       try {
-        await deleteHave(selectedItem.id);
+        const result = await deleteHave(selectedItem.id);
+        if (result.success) {
+          // Close the confirmation dialog immediately on success
+          setShowDeleteConfirmation(false);
+          setSelectedItem(null);
+          // Show success toast
+          toast.success(result.message || "Successfully deleted!", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        } else {
+          // Show error toast
+          toast.error(result.message || "Failed to delete item", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
       } catch (error) {
         console.error("Failed to delete have:", error);
-        // Error is now handled in the context and will show as a notification
+        toast.error("Failed to delete item. Please try again.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
       }
     }
   };
@@ -126,7 +145,7 @@ const HaveCard = () => {
         </div>
       )}
 
-      <div className="md:w-1/2 w-full pr-2">
+      <div className="md:w-1/2 w-full pr-2 ">
         <div className="flex items-center justify-between mb-2 relative">
           <div className="flex items-center space-x-2">
             <h2 className="text-xl font-bold">Haves</h2>
@@ -136,7 +155,7 @@ const HaveCard = () => {
               onClick={handleInfoClick}
             />
           </div>
-          <div className="flex items-center space-x-4 absolute right-8">
+          <div className="flex items-center space-x-4 absolute right-8 ">
             <button
               onClick={handleCalendarClick}
               className="bg-white text-black p-1 rounded-full h-9 w-9 flex items-center justify-center transition duration-200 border border-gray-200 shadow-sm"
@@ -164,7 +183,7 @@ const HaveCard = () => {
           haves.map((item) => (
             <div
               key={item?.id}
-              className="bg-white p-3 rounded-md shadow-sm border border-gray-200 hover:shadow-md transition duration-200 mb-4 flex justify-between items-center relative overflow-hidden"
+              className="bg-white p-3 rounded-md shadow-sm border border-gray-200 hover:shadow-md transition duration-200 mb-4 flex justify-between items-center relative overflow-hidden mt-4"
             >
               <div className="flex flex-col min-w-0 w-full ">
                 <div className="break-words whitespace-normal text-lg font-bold pr-6">
@@ -226,10 +245,9 @@ const HaveCard = () => {
             </div>
           ))
         ) : (
-          <div className="space-y-4">
-            {[...Array(2)].map((_, index) => (
-              <SkeletonHaveCard key={index} />
-            ))}
+          <div className="text-center py-8 bg-gray-50 rounded-md border border-gray-200 mt-4">
+            <p className="text-red-600 mb-2">{haves?.message || "No data found."}</p>
+            <p className="text-sm text-black">To create a new entry, please click the + button above.</p>
           </div>
         )}
       </div>
@@ -244,7 +262,7 @@ const HaveCard = () => {
         <DeleteConfirmation 
           onCancel={handleCancelDelete} 
           onConfirm={handleConfirmDelete} 
-          isError={!!deleteError}
+          isLoading={loading}
         />
       )}
 

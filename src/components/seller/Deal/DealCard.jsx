@@ -318,14 +318,14 @@ const DealCard = () => {
               </div>
             )}
 
-            <div className="pb-4">
-              <div className="text-xl font-semibold text-black">{deal.buyerName}</div>
-              <div className="text-black mt-2">{deal.itineraryFromTo}</div>
-              <div className="text-black">{deal.message || "No additional details available."}</div>
+            <div className="pb-4 pr-24">
+              <div className="text-xl font-semibold text-black truncate">{deal.buyerName}</div>
+              <div className="text-black mt-2 break-words">{deal.itineraryFromTo}</div>
+              <div className="text-black break-words">{deal.message || "No additional details available."}</div>
             </div>
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center relative">
-              <div className="flex space-x-3">
+              <div className="flex space-x-3 mb-2 sm:mb-0">
                 {deal.allowDelete !== false && (
                   <div className="p-2" onClick={() => handleDeleteClick(deal.conversationId || deal.threadId || deal.itineraryId)}>
                     <Trash2 size={20} className="text-black cursor-pointer hover:text-gray-700" />
@@ -342,7 +342,7 @@ const DealCard = () => {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4 mt-2 sm:mt-0 sm:absolute sm:right-12 sm:-top-20">
+              <div className="flex items-center space-x-4 sm:absolute sm:right-0 sm:top-[-5.5rem]">
                 {/* Container to ensure consistent alignment */}
                 <div className="flex items-center space-x-5">
                   {/* For "Open" button */}

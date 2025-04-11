@@ -6,7 +6,7 @@ import {
   createAzureCommunicationCallAdapter
 } from '@azure/communication-react';
 import { AzureCommunicationTokenCredential } from '@azure/communication-common';
-import { Calendar, FileText, Paperclip, UserRoundPlus, Phone, X } from 'lucide-react';
+import { Calendar, FileText, Paperclip, UserRoundPlus, Phone, X, Minimize2, Maximize2 } from 'lucide-react';
 
 
 // Add the utility functions for creating call adapter locators
@@ -54,13 +54,23 @@ const callSessionRegistry = {
   }
 };
 
-const ChatUI = ({ chatData, onClose }) => {
-
+const ChatUI = ({ chatData, onClose, onMinimizeChange }) => {
   const [chatAdapter, setChatAdapter] = useState(null);
   const [callAdapter, setCallAdapter] = useState(null);
   const [error, setError] = useState(null);
   const [isInCall, setIsInCall] = useState(false);
   const [isTransitioningCall, setIsTransitioningCall] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [position, setPosition] = useState({ x: window.innerWidth - 380, y: window.innerHeight - 100 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  // Add effect to notify parent of minimize state changes
+  useEffect(() => {
+    if (onMinimizeChange) {
+      onMinimizeChange(isMinimized);
+    }
+  }, [isMinimized, onMinimizeChange]);
 
   useEffect(() => {
     if (!chatData?.threadId || !chatData?.token || !chatData?.acsUserId) {
@@ -161,9 +171,49 @@ const ChatUI = ({ chatData, onClose }) => {
     setIsTransitioningCall(false);
   };
 
+  const handleMouseDown = (e) => {
+    if (isMinimized && e.button === 0) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.clientX - position.x,
+        y: e.clientY - position.y
+      });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      const newX = e.clientX - dragStart.x;
+      const newY = e.clientY - dragStart.y;
+      
+      // Keep window within viewport bounds
+      const maxX = window.innerWidth - 300;  // 300px is minimized width
+      const maxY = window.innerHeight - 60;  // 60px is minimized height
+      
+      setPosition({
+        x: Math.min(Math.max(0, newX), maxX),
+        y: Math.min(Math.max(0, newY), maxY)
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragStart]);
+
   if (error) {
     return (
-      <div className="p-4 h-full">
+      <div className="p-4">
         <div className="bg-red-50 text-red-700 p-4 rounded-md border border-red-200">
           <p className="font-medium">Error</p>
           <p>{error}</p>
@@ -174,7 +224,7 @@ const ChatUI = ({ chatData, onClose }) => {
 
   if (!chatAdapter) {
     return (
-      <div className="p-4 h-full flex items-center justify-center">
+      <div className="p-4 flex items-center justify-center">
         <div className="flex items-center gap-3">
           <div className="h-5 w-5 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"></div>
           <div>Initializing chat...</div>
@@ -183,84 +233,134 @@ const ChatUI = ({ chatData, onClose }) => {
     );
   }
 
+  const containerStyle = isMinimized ? {
+    position: 'fixed',
+    left: `${position.x}px`,
+    top: `${position.y}px`,
+    width: '300px',
+    height: '60px',
+    zIndex: 1000,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    transition: isDragging ? 'none' : 'all 0.3s ease',
+    cursor: isDragging ? 'grabbing' : 'grab',
+    background: '#fff',
+    borderRadius: '8px',
+  } : {
+    position: 'absolute',
+    inset: 0,
+    background: 'transparent',
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
   return (
-    <div className="h-full flex flex-col bg-white over">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        {/*  Info*/}
-        <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-800">
-            {chatData.message}
-          </h2>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              aria-label="Close chat"
-            >
-              <X className="w-5 h-5 text-gray-700" />
-            </button>
+    <div 
+      className="absolute inset-0 bg-transparent"
+      style={{ pointerEvents: isMinimized ? 'none' : 'auto' }}
+    >
+      <div 
+        className={`${isMinimized ? '' : 'absolute inset-0 flex flex-col bg-transparent'}`}
+        style={containerStyle}
+      >
+        {/* Header */}
+        <div 
+          className={`bg-white border-b border-gray-200 ${isMinimized ? 'rounded-t-xl' : 'rounded-t-xl'}`}
+          onMouseDown={handleMouseDown}
+          style={{ pointerEvents: 'auto' }}
+        >
+          {/* Info */}
+          <div className="px-4 py-3 flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              {isMinimized && isInCall && (
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              )}
+              <h2 className="text-lg font-semibold text-gray-800 truncate" style={{ maxWidth: isMinimized ? '180px' : 'none' }}>
+                {chatData.message}
+              </h2>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setIsMinimized(!isMinimized)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
+              >
+                {isMinimized ? <Maximize2 className="w-5 h-5 text-gray-700" /> : <Minimize2 className="w-5 h-5 text-gray-700" />}
+              </button>
+              {!isMinimized && onClose && (
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="Close chat"
+                >
+                  <X className="w-5 h-5 text-gray-700" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          {!isMinimized && (
+            <div className="px-4 py-2 flex justify-between items-center bg-white">
+              <div className="flex space-x-6">
+                <button className="flex flex-col items-center text-gray-600">
+                  <Calendar className="w-5 h-5" />
+                  <span className="text-xs mt-1">Itinerary</span>
+                </button>
+                <button className="flex flex-col items-center text-gray-600">
+                  <FileText className="w-5 h-5" />
+                  <span className="text-xs mt-1">Files</span>
+                </button>
+                <button className="flex flex-col items-center text-gray-600">
+                  <Paperclip className="w-5 h-5" />
+                  <span className="text-xs mt-1">Attach</span>
+                </button>
+                <button className="flex flex-col items-center text-gray-600">
+                  <UserRoundPlus className="w-5 h-5" />
+                  <span className="text-xs mt-1">People</span>
+                </button>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={handleCallToggle}
+                  disabled={isTransitioningCall}
+                  className={`p-2 rounded-full flex items-center ${isInCall ? 'bg-green-100 text-green-600' : 'text-gray-600 hover:bg-gray-100'}`}
+                >
+                  <Phone className="w-6 h-6" />
+                  {isInCall && <span className="ml-1 text-xs font-medium">Switch to Chat</span>}
+                </button>
+              </div>
+            </div>
           )}
         </div>
         
-        {/* Action Buttons */}
-        <div className="px-4 py-2 flex justify-between items-center">
-          <div className="flex space-x-6">
-            <button className="flex flex-col items-center text-gray-600">
-              <Calendar className="w-5 h-5" />
-              <span className="text-xs mt-1">Itinerary</span>
-            </button>
-            <button className="flex flex-col items-center text-gray-600">
-              <FileText className="w-5 h-5" />
-              <span className="text-xs mt-1">Files</span>
-            </button>
-            <button className="flex flex-col items-center text-gray-600">
-              <Paperclip className="w-5 h-5" />
-              <span className="text-xs mt-1">Attach</span>
-            </button>
-            <button className="flex flex-col items-center text-gray-600">
-              <UserRoundPlus className="w-5 h-5" />
-              <span className="text-xs mt-1">People</span>
-            </button>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={handleCallToggle}
-              disabled={isTransitioningCall}
-              className={`p-2 rounded-full flex items-center ${isInCall ? 'bg-green-100 text-green-600' : 'text-gray-600 hover:bg-gray-100'}`}
-            >
-              <Phone className="w-6 h-6" />
-              {isInCall && <span className="ml-1 text-xs font-medium">Switch to Chat</span>}
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      {/* Chat Area */}
-      <div className="flex-1 relative overflow-auto">
-        <div className={`h-full ${isInCall ? 'hidden' : ''}`}>
-          <ChatComposite
-            adapter={chatAdapter}
-          />
-        </div>
-        {isInCall && callAdapter && (
-          <div className="absolute inset-0">
-            <CallComposite
-              adapter={callAdapter}
-              options={{
-                autoFocus: true,
-              }}
-              fluentTheme={{
-                components: {
-                  callControls: {
-                    root: {
-                      backgroundColor: '#ffffff'
+        {/* Chat Area */}
+        {!isMinimized && (
+          <div className="flex-1 relative overflow-hidden bg-white rounded-b-xl pb-4" style={{ pointerEvents: 'auto' }}>
+            <div className={`h-full ${isInCall ? 'hidden' : ''}`}>
+              <ChatComposite
+                adapter={chatAdapter}
+              />
+            </div>
+            {isInCall && callAdapter && (
+              <div className="absolute inset-0">
+                <CallComposite
+                  adapter={callAdapter}
+                  options={{
+                    autoFocus: true,
+                  }}
+                  fluentTheme={{
+                    components: {
+                      callControls: {
+                        root: {
+                          backgroundColor: '#ffffff'
+                        }
+                      }
                     }
-                  }
-                }
-              }}
-            />
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

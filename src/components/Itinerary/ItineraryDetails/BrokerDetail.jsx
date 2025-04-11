@@ -31,6 +31,7 @@ const BrokerDetail = () => {
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [recommendationData, setRecommendationData] = useState(null);
   const [userIsPremium, setUserIsPremium] = useState(false);
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
 
   useEffect(() => {
     // Get user premium status from token
@@ -498,7 +499,7 @@ const BrokerDetail = () => {
       <PageContainer>
         <div className="relative">
           {/* Main content (companies list) */}
-          <div>
+          <div className={`transition-all duration-300 ${!isChatMinimized ? 'blur-[2px]' : ''}`}>
             <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
               <h1 className="font-bold text-3xl text-black">{broker.title}</h1>
               <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-md">
@@ -512,11 +513,15 @@ const BrokerDetail = () => {
           </div>
           
           {/* Chat overlay */}
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl h-[80vh] relative animate-scaleIn overflow-hidden flex flex-col">
+          <div className="fixed inset-0 pointer-events-none">
+            <div className="w-full max-w-3xl h-[80vh] relative overflow-hidden pointer-events-auto">
               {/* Chat content */}
-              <div className="flex-grow overflow-hidden">
-                <ChatUI chatData={chatData} onClose={handleCloseChat} />
+              <div className="h-full">
+                <ChatUI 
+                  chatData={chatData} 
+                  onClose={handleCloseChat} 
+                  onMinimizeChange={setIsChatMinimized}
+                />
               </div>
             </div>
           </div>

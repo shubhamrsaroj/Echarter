@@ -16,7 +16,7 @@ export const SellerService = {
   createHaves: async (text) => {
     // eslint-disable-next-line no-useless-catch
     try {
-      const response = await api.post(`/api/SinglePoint/CreateHaves`, { text }); // moved text to body
+      const response = await api.post(`/api/SinglePoint/CreateHaves`, { text }); 
       return response.data;
     } catch (error) {
       throw error;

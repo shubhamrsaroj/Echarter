@@ -50,7 +50,11 @@ export const SellerProvider = ({ children }) => {
     setLoading(true);
     try {
       const data = await SellerService.getCompanyHaves(currentUser.comId);
-      setHaves(Array.isArray(data.data?.haves) ? data.data.haves : []);
+      if (!data || !data.data) {
+        setHaves([]);
+      } else {
+        setHaves(Array.isArray(data.data?.haves) ? data.data.haves : []);
+      }
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -145,7 +149,11 @@ export const SellerProvider = ({ children }) => {
     setPostSuccess(false);
     try {
       const response = await SellerService.createHaves(text);
-      setPostSuccess(response?.message); // Use API message directly
+      if (response?.success) {
+        setPostSuccess(response?.message); // Use API message directly
+        // Fetch updated haves immediately after successful creation
+        await fetchHaves();
+      }
       setError(null);
       return response;
     } catch (err) {
@@ -155,7 +163,7 @@ export const SellerProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchHaves]);
   
   
 
@@ -165,15 +173,20 @@ export const SellerProvider = ({ children }) => {
     setDeleteError(null);
     try {
       const response = await SellerService.deleteHave(haveId);
-      setHaves(prevHaves => prevHaves.filter(have => have.id !== haveId));
-      setDeleteSuccess(response.message || "Successfully deleted!");
-      setError(null);
-      return response;
+      if (response?.success) {
+        // Update the local state immediately
+        setHaves(prevHaves => prevHaves.filter(have => have.id !== haveId));
+        setDeleteSuccess(response.message || "Successfully deleted!");
+        setError(null);
+        return { success: true, message: response.message };
+      } else {
+        throw new Error(response?.message || "Failed to delete item");
+      }
     } catch (err) {
       setDeleteError(err.message || "Failed to delete item. Please try again.");
       setError(err.message);
       setDeleteSuccess(false);
-      throw err;
+      return { success: false, message: err.message };
     } finally {
       setLoading(false);
     }

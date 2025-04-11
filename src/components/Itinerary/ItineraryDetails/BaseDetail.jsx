@@ -42,6 +42,7 @@ const BaseDetail = () => {
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [recommendationData, setRecommendationData] = useState(null);
   const [userIsPremium, setUserIsPremium] = useState(false);
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
 
   useEffect(() => {
     // Get user premium status from token
@@ -755,7 +756,7 @@ const BaseDetail = () => {
       <PageContainer>
         <div className="relative">
           {/* Main content (companies list) */}
-          <div>
+          <div className={`transition-all duration-300 ${!isChatMinimized ? 'blur-[2px]' : ''}`}>
             <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
               <h1 className="font-bold text-2xl text-gray-800">
                 {selectedBaseOption?.category || "Available Options"}
@@ -772,12 +773,17 @@ const BaseDetail = () => {
             {totalPages > 1 && renderPaginationControls()}
           </div>
           
-          {/* Chat overlay */}
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl h-[80vh] relative animate-scaleIn overflow-hidden flex flex-col">
-              {/* Chat content */}
-              <div className="flex-grow overflow-hidden">
-                <ChatUI chatData={chatData} onClose={handleCloseChat} />
+          {/* Chat component - Always rendered when active */}
+          <div className={`fixed inset-0 z-50 pointer-events-none transition-all duration-300 ${!isChatMinimized ? 'bg-black/20' : ''}`}>
+            <div className="w-full h-full flex items-center justify-center p-4">
+              <div className="w-full max-w-3xl h-[80vh] relative">
+                <div className="h-full pointer-events-auto">
+                  <ChatUI 
+                    chatData={chatData} 
+                    onClose={handleCloseChat}
+                    onMinimizeChange={setIsChatMinimized}
+                  />
+                </div>
               </div>
             </div>
           </div>
