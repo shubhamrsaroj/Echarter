@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { ItineraryService } from '../../api/itinerary/ItineraryService';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +7,10 @@ const ItineraryContext = createContext();
 export const useItinerary = () => useContext(ItineraryContext);
 
 export const ItineraryProvider = ({ children }) => {
-  const [itineraryData, setItineraryData] = useState(null);
+  const [itineraryData, setItineraryData] = useState(() => {
+    const saved = localStorage.getItem('itineraryData');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCompanyDetails, setSelectedCompanyDetails] = useState(() => {
@@ -24,6 +26,19 @@ export const ItineraryProvider = ({ children }) => {
   const [selectedBaseOption, setSelectedBaseOption] = useState(null);
 
   const navigate = useNavigate();
+
+  // Sync itineraryData and selectedCompanyDetails with localStorage
+  useEffect(() => {
+    if (itineraryData) {
+      localStorage.setItem('itineraryData', JSON.stringify(itineraryData));
+    }
+  }, [itineraryData]);
+
+  useEffect(() => {
+    if (selectedCompanyDetails) {
+      localStorage.setItem('selectedCompanyDetails', JSON.stringify(selectedCompanyDetails));
+    }
+  }, [selectedCompanyDetails]);
 
   const getItineraryByText = async (itineraryText) => {
     try {
@@ -41,8 +56,9 @@ export const ItineraryProvider = ({ children }) => {
           toCoordinates: { lat: leg.arrv_lat, long: leg.arrv_long },
         }));
 
-        setItineraryData({ ...response.data, flights });
-        return response.data;
+        const newItineraryData = { ...response.data, flights };
+        setItineraryData(newItineraryData);
+        return newItineraryData;
       } else {
         setError(
           response.data && typeof response.data === 'object'
@@ -114,8 +130,11 @@ export const ItineraryProvider = ({ children }) => {
       setError(null);
 
       const ids = itineraryData?.match?.ids ?? [];
-      const payload = { path: 'match', itineraryId: itineraryData?.itineraryId };
-      ids.forEach((id, index) => (payload[`Ids[${index}]`] = id));
+      const payload = {
+        path: 'match',
+        itineraryId: itineraryData?.itineraryId,
+        ids: ids
+      };
 
       const response = await ItineraryService.getCompaniesByCategory(payload);
 
@@ -142,8 +161,11 @@ export const ItineraryProvider = ({ children }) => {
       setError(null);
 
       const ids = itineraryData?.dateAdjustment?.ids ?? [];
-      const payload = { path: 'dateAdjustment', itineraryId: itineraryData?.itineraryId };
-      ids.forEach((id, index) => (payload[`Ids[${index}]`] = id));
+      const payload = {
+        path: 'dateAdjustment',
+        itineraryId: itineraryData?.itineraryId,
+        ids: ids
+      };
 
       const response = await ItineraryService.getCompaniesByCategory(payload);
 
@@ -170,8 +192,11 @@ export const ItineraryProvider = ({ children }) => {
       setError(null);
 
       const ids = itineraryData?.broker?.ids ?? [];
-      const payload = { path: 'broker', itineraryId: itineraryData?.itineraryId };
-      ids.forEach((id, index) => (payload[`Ids[${index}]`] = id));
+      const payload = {
+        path: 'broker',
+        itineraryId: itineraryData?.itineraryId,
+        ids: ids
+      };
 
       const response = await ItineraryService.getCompaniesByCategory(payload);
 
@@ -204,8 +229,26 @@ export const ItineraryProvider = ({ children }) => {
     }
   };
 
+  const resetItineraryState = () => {
+    setItineraryData(null);
+    setSelectedCompanyDetails(null);
+    setCurrentPage(1);
+    setPageSize(20);
+    setCurrentCategory('');
+    setCurrentFlight(null);
+    setTotalCount(0);
+    setTotalPages(1);
+    setSelectedBaseOption(null);
+    setError(null);
+    setLoading(false);
+    localStorage.removeItem('itineraryData');
+    localStorage.removeItem('selectedCompanyDetails');
+    localStorage.removeItem('SelectedBaseOption');
+  };
+
   const value = {
     itineraryData,
+    setItineraryData, 
     loading,
     error,
     selectedCompanyDetails,
@@ -223,7 +266,8 @@ export const ItineraryProvider = ({ children }) => {
     getCompaniesByBroker,
     changePage,
     setPageSize,
-    setLoading, // Expose setLoading for resetting
+    setLoading,
+    resetItineraryState,
   };
 
   return <ItineraryContext.Provider value={value}>{children}</ItineraryContext.Provider>;

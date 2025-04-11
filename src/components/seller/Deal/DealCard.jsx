@@ -1,11 +1,44 @@
 import React, { useState, useEffect } from "react";
-import { ShieldQuestion, Trash2, CalendarClock, Copy, MessagesSquare, ThumbsDown, Info } from "lucide-react";
+import { ShieldQuestion, Trash2, CalendarClock, Copy, MessagesSquare, MessageSquareDot, ThumbsDown, Info } from "lucide-react";
 import { useSellerContext } from "../../../context/seller/SellerContext";
-import SkeletonDealCard from "./SkeletonDealCard"; // Import the skeleton component
+import { useNavigate } from "react-router-dom";
+import SkeletonDealCard from "./SkeletonDealCard";
+import DealItinerary from "./DealItinerary";
+import ReviewDecline from "../Review/ReviewDecline";
+import ReviewDelete from "../Review/ReviewDelete";
+import { toast } from "react-toastify";
+import RibbonIcon from "../../../assets/icons.png"; 
+import ChatUI from "../../../components/chat/ChatUI"; 
+import { AcsService } from "../../../api/Acs/AcsService"; 
+import InfoModal from "../../../components/common/InfoModal";
+import { getInfoContent } from "../../../api/infoService";
 
 const DealCard = () => {
-  const { deals, fetchDeals, loading, currentUser } = useSellerContext();
-  const [initiatedDeals, setInitiatedDeals] = useState({});
+  const {
+    deals,
+    fetchDeals,
+    loading,
+    currentUser,
+    fetchItinerary,
+    itineraries,
+    loadingItinerary,
+    itineraryError,
+    resetItineraryState,
+    deleteConversationWithReview,
+  } = useSellerContext();
+
+  const navigate = useNavigate();
+
+  const [visibleItineraryId, setVisibleItineraryId] = useState(null);
+  const [declineDealId, setDeclineDealId] = useState(null);
+  const [deleteDealId, setDeleteDealId] = useState(null);
+  const [declineInProgress, setDeclineInProgress] = useState(false);
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
+  const [apiResponse, setApiResponse] = useState(null);
+  const [chatData, setChatData] = useState(null); // Added for chat
+  const [isChatOpen, setIsChatOpen] = useState(false); // Added for chat
+  const [isConnecting, setIsConnecting] = useState(false); // Added for button feedback
+  const [infoUrl, setInfoUrl] = useState(null);
 
   useEffect(() => {
     if (currentUser?.comId) {
@@ -13,14 +46,228 @@ const DealCard = () => {
     }
   }, [currentUser, fetchDeals]);
 
-  const handleInitiateClick = (dealId) => {
-    setInitiatedDeals((prev) => ({
-      ...prev,
-      [dealId]: true,
-    }));
+  const handleCalendarClick = (itineraryId) => {
+    if (itineraryId) {
+      setDeclineDealId(null);
+      setDeleteDealId(null);
+      if (visibleItineraryId === itineraryId) {
+        setVisibleItineraryId(null);
+      } else {
+        setVisibleItineraryId(itineraryId);
+        if (!itineraries[itineraryId]) {
+          fetchItinerary(itineraryId);
+        }
+      }
+    }
   };
 
-  // Show skeleton loader when loading
+  const handleCopyClick = (itineraryText) => {
+    if (itineraryText) {
+      navigator.clipboard.writeText(itineraryText)
+        .then(() => {
+          toast.success("Itinerary text copied to clipboard", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+          navigate('/itinerary', { state: { copiedText: itineraryText } });
+        })
+        .catch((error) => {
+          console.error("Failed to copy text: ", error);
+          toast.error("Failed to copy text", {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        });
+    } else {
+      toast.warning("No itinerary text available to copy", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+  
+  const handleCloseItinerary = () => {
+    setVisibleItineraryId(null);
+  };
+
+  const handleDeclineClick = (dealId) => {
+    setVisibleItineraryId(null);
+    setDeleteDealId(null);
+    setDeclineDealId(dealId);
+  };
+
+  const handleDeleteClick = (dealId) => {
+    setVisibleItineraryId(null);
+    setDeclineDealId(null);
+    setDeleteDealId(dealId);
+  };
+
+  const handleCloseDecline = () => {
+    setDeclineDealId(null);
+    setApiResponse(null);
+  };
+
+  const handleCloseDelete = () => {
+    setDeleteDealId(null);
+    setApiResponse(null);
+  };
+
+  const handleSubmitDecline = async (data) => {
+    if (!currentUser || !declineDealId) {
+      return;
+    }
+
+    try {
+      setDeclineInProgress(true);
+      const response = await deleteConversationWithReview(declineDealId, {
+        rating: data.rating,
+        feedback: data.feedback,
+        reason: data.reason,
+      });
+      setApiResponse(response.data || response);
+    } catch (error) {
+      setApiResponse({ error: error.message || "Failed to decline deal. Please try again." });
+    } finally {
+      setDeclineInProgress(false);
+    }
+  };
+
+  const handleSubmitDelete = async (data) => {
+    if (!currentUser || !deleteDealId) {
+      return;
+    }
+
+    try {
+      setDeleteInProgress(true);
+      const response = await deleteConversationWithReview(deleteDealId, {
+        rating: data.rating,
+        feedback: data.feedback,
+        worked: data.worked,
+      });
+      setApiResponse(response.data || response);
+    } catch (error) {
+      setApiResponse({ error: error.message || "Failed to delete deal. Please try again." });
+    } finally {
+      setDeleteInProgress(false);
+    }
+  };
+
+  // New function for "Open" button
+  const handleOpenConnect = async (dealId) => {
+    const deal = deals.find(
+      (d) =>
+        d.conversationId === dealId ||
+        d.threadId === dealId ||
+        d.itineraryId === dealId
+    );
+    if (!deal || !deal.threadId || !deal.acsUserId || !deal.accessToken) return;
+
+    try {
+      setIsConnecting(true);
+      const chatData = {
+        threadId: deal.threadId,
+        acsUserId: deal.acsUserId,
+        token: deal.accessToken, 
+        // displayName: deal.buyerName 
+      };
+      // Navigate to chat page with chatData
+      navigate('/chat', { state: { chatData } });
+    } catch (error) {
+      console.error('Error opening chat:', error);
+      toast.error("Failed to open chat", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  // Original function for "Initiate" button (updated to navigate)
+  const handleConnect = async (dealId) => {
+    const deal = deals.find(
+      (d) =>
+        d.conversationId === dealId || d.threadId === dealId || d.itineraryId === dealId
+    );
+    if (!deal) return;
+
+    try {
+      setIsConnecting(true); 
+      const data = await AcsService.getChatThread({
+        itineraryId: deal.itineraryId,
+        companyId: currentUser?.comId, 
+        needs: false,
+        isBuyer: false, 
+        source: 'easycharter',
+        conversationId: deal.conversationId || '', 
+      });
+      console.log('AcsService.getChatThread returned:', data);
+      if (!data.threadId) {
+        throw new Error('No threadId returned from chat service');
+      }
+      // Navigate to chat page with chatData
+      navigate('/chat', { state: { chatData: data } });
+    } catch (error) {
+      console.error('Error connecting to chat:', error);
+      toast.error("Failed to initiate chat", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    } finally {
+      setIsConnecting(false); 
+    }
+  };
+
+  const handleCloseChat = () => {
+    setIsChatOpen(false);
+    setChatData(null);
+  };
+
+  const handleInfoClick = async () => {
+    try {
+      const url = await getInfoContent('deals', 'info');
+      setInfoUrl(url);
+    } catch (error) {
+      console.error('Error loading info content:', error);
+      toast.info(error.message || "Failed to load information", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  const handleCloseInfo = () => {
+    setInfoUrl(null);
+  };
+
+  useEffect(() => {
+    if (apiResponse) {
+      if (apiResponse.error) {
+        toast.error(apiResponse.error, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } else if (apiResponse.message) {
+        toast.success(apiResponse.message, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
+    }
+  }, [apiResponse]);
+
+  useEffect(() => {
+    return () => {
+      setVisibleItineraryId(null);
+      setDeclineDealId(null);
+      setDeleteDealId(null);
+      resetItineraryState();
+      setApiResponse(null);
+      setIsChatOpen(false); // Cleanup chat state
+      setChatData(null);
+    };
+  }, [resetItineraryState]);
+
   if (loading) {
     return <SkeletonDealCard />;
   }
@@ -29,66 +276,186 @@ const DealCard = () => {
     return <div>No deals available</div>;
   }
 
+  const declinedDeal = declineDealId
+    ? deals.find(
+        (deal) =>
+          deal.conversationId === declineDealId ||
+          deal.threadId === declineDealId ||
+          deal.itineraryId === declineDealId
+      )
+    : null;
+
+  const deletedDeal = deleteDealId
+    ? deals.find(
+        (deal) =>
+          deal.conversationId === deleteDealId ||
+          deal.threadId === deleteDealId ||
+          deal.itineraryId === deleteDealId
+      )
+    : null;
+
   return (
-    <div className="flex flex-col w-full max-w-lg mt-6">
-      <div className="flex items-center space-x-1 text-2xl font-bold pb-2">
-        <span>Your Deals</span>
-        <Info size={25} className="text-gray-400 cursor-pointer ml-4" />
-      </div>
-      {deals.map((deal) => (
-        <div
-          key={deal.conversationId || deal.threadId || deal.itineraryId}
-          className="border border-gray-200 rounded-lg relative p-4 bg-white mb-4"
-        >
-          <div className="absolute -right-1 -top-1">
-            <div className="w-8 h-12 bg-yellow-500 rounded-sm"></div>
-          </div>
-          <div className="pb-4">
-            <div className="text-xl font-semibold">{deal.buyerName}</div>
-            <div className="text-gray-600 mt-2">{deal.itineraryFromTo}</div>
-            <div className="text-gray-600">{deal.message || "No additional details available."}</div>
-          </div>
-          <div className="flex justify-between items-center">
-            <div className="flex space-x-3">
-              <div className="p-2">
-                <Trash2 size={20} className="text-gray-500" />
-              </div>
-              <div className="p-2">
-                <ShieldQuestion size={20} className="text-gray-500" />
-              </div>
-              <div className="p-2">
-                <CalendarClock size={20} className="text-gray-500" />
-              </div>
-              <div className="p-2">
-                <Copy size={20} className="text-gray-500" />
-              </div>
-            </div>
-            {/* Adjusted Right-side Buttons */}
-            <div className="flex space-x-6 items-start -translate-y-8 -translate-x-4">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 cursor-pointer ${
-                    initiatedDeals[deal.conversationId] ? "bg-green-200" : "bg-yellow-400"
-                  }`}
-                  onClick={() => handleInitiateClick(deal.conversationId)}
-                >
-                  <MessagesSquare
-                    size={18}
-                    className={initiatedDeals[deal.conversationId] ? "text-green-700" : "text-black"}
-                  />
-                </div>
-                <div className="text-xs">{initiatedDeals[deal.conversationId] ? "Open" : "Initiate"}</div>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center mb-1">
-                  <ThumbsDown size={18} className="text-white" />
-                </div>
-                <div className="text-xs">Decline</div>
-              </div>
-            </div>
-          </div>
+    <div className="flex flex-col md:flex-row w-full -mt-4">
+      {/* Left Side: Deal List */}
+      <div className="w-full md:w-1/2 p-4">
+        <div className="flex items-center space-x-1 text-2xl font-bold pb-2 text-black">
+          <span>Your Deals</span>
+          <Info 
+            size={25} 
+            className="text-black cursor-pointer ml-4 hover:text-gray-700" 
+            onClick={handleInfoClick}
+          />
         </div>
-      ))}
+        {deals.map((deal) => (
+          <div
+            key={deal.conversationId || deal.threadId || deal.itineraryId}
+            className="border border-black rounded-lg relative p-4 bg-white mb-4 overflow-hidden"
+          >
+            {/* Ribbon Icon */}
+            {deal.buyerTag && (
+              <div className="absolute -right-1 -top-10">
+                <img src={RibbonIcon} alt="Ribbon Icon" className="w-22 h-28" />
+              </div>
+            )}
+
+            <div className="pb-4">
+              <div className="text-xl font-semibold text-black">{deal.buyerName}</div>
+              <div className="text-black mt-2">{deal.itineraryFromTo}</div>
+              <div className="text-black">{deal.message || "No additional details available."}</div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center relative">
+              <div className="flex space-x-3">
+                {deal.allowDelete !== false && (
+                  <div className="p-2" onClick={() => handleDeleteClick(deal.conversationId || deal.threadId || deal.itineraryId)}>
+                    <Trash2 size={20} className="text-black cursor-pointer hover:text-gray-700" />
+                  </div>
+                )}
+                <div className="p-2">
+                  <ShieldQuestion size={20} className="text-black" />
+                </div>
+                <div className="p-2" onClick={() => handleCalendarClick(deal.itineraryId)}>
+                  <CalendarClock size={20} className="text-black cursor-pointer hover:text-gray-700" />
+                </div>
+                <div className="p-2" onClick={() => handleCopyClick(deal.itineraryText)}>
+                  <Copy size={20} className="text-black cursor-pointer hover:text-gray-700" />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-4 mt-2 sm:mt-0 sm:absolute sm:right-12 sm:-top-20">
+                {/* Container to ensure consistent alignment */}
+                <div className="flex items-center space-x-5">
+                  {/* For "Open" button */}
+                  {deal.threadId !== null && deal.sellerInitiation === false && (
+                    <div className="flex flex-col items-center">
+                      <div
+                        onClick={() => handleOpenConnect(deal.conversationId || deal.threadId || deal.itineraryId)}
+                        className="w-12 h-12 rounded-full flex items-center justify-center mb-1 cursor-pointer bg-[#c1ff72]"
+                      >
+                        <MessagesSquare size={22} className="text-black" />
+                      </div>
+                      <div className="text-xs font-medium text-black">Open</div>
+                    </div>
+                  )}
+
+                  {/* For "Initiate" button */}
+                  {deal.threadId === null && deal.sellerInitiation === true && (
+                    <div className="flex flex-col items-center">
+                      <div
+                        onClick={() => handleConnect(deal.conversationId || deal.threadId || deal.itineraryId)}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 cursor-pointer transition-colors ${
+                          isConnecting ? 'bg-gray-400' : 'bg-yellow-400 hover:bg-yellow-500'
+                        }`}
+                      >
+                        {isConnecting ? (
+                          <svg
+                            className="animate-spin h-6 w-6 text-black"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                        ) : (
+                          <MessageSquareDot size={22} className="text-black" />
+                        )}
+                      </div>
+                      <div className="text-xs font-medium text-black">{isConnecting ? 'Connecting...' : 'Initiate'}</div>
+                    </div>
+                  )}
+
+                  {/* Decline button - Space is reserved even if not rendered */}
+                  <div className="flex flex-col items-center w-12 min-w-[48px]">
+                    {deal.allowDecline !== false ? (
+                      <>
+                        <div
+                          className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mb-1 cursor-pointer hover:bg-red-900"
+                          onClick={() => handleDeclineClick(deal.conversationId || deal.threadId || deal.itineraryId)}
+                        >
+                          <ThumbsDown size={22} className="text-white" />
+                        </div>
+                        <div className="text-xs font-medium text-black">Decline</div>
+                      </>
+                    ) : (
+                      /* Empty div to maintain spacing */
+                      <div className="w-12 h-12"></div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Right Side: Itinerary, ReviewDecline, ReviewDelete, or Chat Display */}
+      <div className="w-full md:w-1/2 p-4 mt-4 md:mt-8">
+        {visibleItineraryId && (
+          <DealItinerary
+            itinerary={itineraries[visibleItineraryId] || []}
+            loading={loadingItinerary}
+            error={itineraryError}
+            onClose={handleCloseItinerary}
+          />
+        )}
+  
+        {declineDealId && declinedDeal && (
+          <ReviewDecline
+            dealBuyerName={declinedDeal.buyerName}
+            onClose={handleCloseDecline}
+            onSubmit={handleSubmitDecline}
+            isSubmitting={declineInProgress}
+          />
+        )}
+  
+        {deleteDealId && deletedDeal && (
+          <ReviewDelete
+            dealBuyerName={deletedDeal.buyerName}
+            onClose={handleCloseDelete}
+            onSubmit={handleSubmitDelete}
+            isSubmitting={deleteInProgress}
+          />
+        )}
+
+        {isChatOpen && chatData && (
+          <ChatUI chatData={chatData} onClose={handleCloseChat} />
+        )}
+      </div>
+
+      {/* Info Modal */}
+      <InfoModal url={infoUrl} onClose={handleCloseInfo} />
     </div>
   );
 };

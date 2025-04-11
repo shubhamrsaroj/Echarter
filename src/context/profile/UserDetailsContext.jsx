@@ -1,6 +1,3 @@
-
-
-
 import React, { createContext, useState, useContext, useCallback } from 'react';
 import { userService } from '../../api/profile/user.service';
 import { tokenHandler } from '../../utils/tokenHandler';
@@ -13,7 +10,7 @@ const UserDetailsContext = createContext({
   fetchUserDetails: async () => {},
   updateUserDetails: async () => {},
   fetchCompanyDetails: async () => {},
-  clearUserDetails: () => {}
+  clearUserDetails: () => {},
 });
 
 export const UserDetailsProvider = ({ children }) => {
@@ -21,67 +18,68 @@ export const UserDetailsProvider = ({ children }) => {
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   const fetchUserDetails = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const token = tokenHandler.getToken();
       if (!token || !tokenHandler.isTokenValid()) {
         throw new Error('No valid authentication token found');
       }
-      
+
       const user = tokenHandler.parseUserFromToken(token);
       if (!user || !user.id) {
         throw new Error('Unable to extract user ID from token');
       }
-      
+
       const details = await userService.getUserDetailsById(user.id);
       setUserDetails(details);
+      return details; // Return the details for use in components
     } catch (error) {
       console.error('Failed to fetch user details:', error);
       setError(error.message);
       setUserDetails(null);
-      throw error; // Ensure errors are thrown for toast handling
+      throw error; // Propagate the error for toast handling
     } finally {
       setLoading(false);
     }
   }, []);
-  
+
   const updateUserDetails = useCallback(async (updatedData) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const token = tokenHandler.getToken();
       if (!token || !tokenHandler.isTokenValid()) {
         throw new Error('No valid authentication token found');
       }
-      
+
       const user = tokenHandler.parseUserFromToken(token);
       if (!user || !user.id) {
         throw new Error('Unable to extract user ID from token');
       }
-      
+
       const profileUpdatePayload = {
         id: user.id,
-        ...updatedData
+        ...updatedData,
       };
-      
+
       const updatedDetails = await userService.updateUserProfile(profileUpdatePayload);
-      
-      // Update local state immediately with the server response
-      setUserDetails(prevDetails => ({
+
+      // Update local state with the server response
+      setUserDetails((prevDetails) => ({
         ...prevDetails,
-        ...updatedDetails // Use the full updated details from the server response
+        ...updatedDetails.data, // Use the updated data from the server response
       }));
-      
-      return updatedDetails;
+
+      return updatedDetails; // Return the full response for toast messages
     } catch (error) {
       console.error('Failed to update user details:', error);
       setError(error.message);
-      throw error; // Ensure errors are thrown for toast handling
+      throw error; // Propagate the error for toast handling
     } finally {
       setLoading(false);
     }
@@ -90,7 +88,7 @@ export const UserDetailsProvider = ({ children }) => {
   const fetchCompanyDetails = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const companyData = await userService.getCompanyById();
       setCompany(companyData);
@@ -99,7 +97,7 @@ export const UserDetailsProvider = ({ children }) => {
       console.error('Failed to fetch company details:', error);
       setError(error.message);
       setCompany(null);
-      throw error; // Ensure errors are thrown for toast handling
+      throw error; // Propagate the error for toast handling
     } finally {
       setLoading(false);
     }
@@ -110,18 +108,20 @@ export const UserDetailsProvider = ({ children }) => {
     setCompany(null);
     setError(null);
   }, []);
-  
+
   return (
-    <UserDetailsContext.Provider value={{
-      userDetails,
-      company,
-      loading,
-      error,
-      fetchUserDetails,
-      updateUserDetails,
-      fetchCompanyDetails,
-      clearUserDetails,
-    }}>
+    <UserDetailsContext.Provider
+      value={{
+        userDetails,
+        company,
+        loading,
+        error,
+        fetchUserDetails,
+        updateUserDetails,
+        fetchCompanyDetails,
+        clearUserDetails,
+      }}
+    >
       {children}
     </UserDetailsContext.Provider>
   );

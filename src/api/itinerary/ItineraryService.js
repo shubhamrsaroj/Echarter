@@ -1,4 +1,3 @@
-
 import api from '../axios.config';
 
 export const ItineraryService = {
@@ -15,8 +14,10 @@ export const ItineraryService = {
   getCompaniesByCategory: async (payload) => {
     // eslint-disable-next-line no-useless-catch
     try {
-      const response = await api.get('/api/SinglePoint/GetCompaniesByCategory', { 
-        params: payload 
+      const response = await api.post('/api/SinglePoint/GetCompaniesByCategory', payload, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       return response.data;
     } catch (error) {

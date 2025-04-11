@@ -5,7 +5,6 @@ import {
   CircleUserRound,
   LogOut,
   MessagesSquare,
-  Activity,
   Gem,
   User,
   CircleHelp
@@ -20,9 +19,9 @@ const Sidebar = () => {
 
   const navLinks = [
     { name: 'Search', path: '/itinerary', icon: <Search size={30} /> },
-    { name: 'Chats', path: '/conversation', icon: <MessagesSquare size={30} /> },
     { name: 'Sellers', path: '/seller', icon: <Gem size={30} /> },
-    { name: 'Activity', path: '/activity', icon: <Activity size={30} /> },
+    { name: 'Activity', path: '/conversation', icon: <MessagesSquare size={30} /> },
+
   ];
 
   const logo = import.meta.env.VITE_LOGO;
@@ -40,12 +39,11 @@ const Sidebar = () => {
     navigate('/profile');
     setProfileDropdownOpen(false);
   };
-  
   return (
     <div className="hidden md:flex flex-col w-60 bg-gray-50 border-r border-gray-200 shadow-sm">
       {/* Logo Section */}
       <div className="flex items-center justify-center h-20 p-4">
-        <img src={logo} alt="EasyCharter Logo" className="h-25 w-auto rounded-2xl " />
+        <img src={logo} alt="EasyCharter Logo" className="h-25 w-auto rounded-2xl" />
       </div>
 
       {/* Navigation Links */}
@@ -56,12 +54,12 @@ const Sidebar = () => {
             to={item.path}
             className={({ isActive }) =>
               `flex flex-col items-center px-4 py-2 text-sm font-medium rounded-md transition ${
-                isActive ? "bg-gray-100 text-black" : "text-gray-800 hover:bg-gray-200"
+                isActive ? "bg-gray-100" : "hover:bg-gray-200"
               }`
             }
           >
             <span className="text-black mb-1">{item.icon}</span>
-            <span className="text-xs">{item.name}</span>
+            <span className="text-black text-xs">{item.name}</span>
           </NavLink>
         ))}
       </nav>
@@ -71,27 +69,27 @@ const Sidebar = () => {
         <div className="relative">
           <button
             onClick={toggleProfileDropdown}
-            className="flex flex-col items-center w-full px-4 py-3 text-sm font-medium text-gray-800 rounded-md hover:bg-gray-200 transition"
+            className="flex flex-col items-center w-full px-4 py-3 text-sm font-medium rounded-md hover:bg-gray-200 transition"
           >
             <CircleUserRound size={30} className="text-black mb-1" />
-            <span className="text-xs">Profile</span>
+            <span className="text-black text-xs">Profile</span>
           </button>
 
           {profileDropdownOpen && (
             <div className="absolute bottom-full left-0 w-full bg-white border border-gray-300 rounded-lg shadow-md z-10 mb-2">
               <button
                 onClick={handleViewProfile}
-                className="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-200"
+                className="flex items-center w-full px-4 py-3 text-sm font-medium hover:bg-gray-200"
               >
                 <User size={30} className="mr-3 text-black" />
-                <span>View Profile</span>
+                <span className="text-black">View Profile</span>
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-800 hover:bg-gray-200"
+                className="flex items-center w-full px-4 py-3 text-sm font-medium hover:bg-gray-200"
               >
                 <LogOut size={30} className="mr-3 text-black" />
-                <span>Logout</span>
+                <span className="text-black">Logout</span>
               </button>
             </div>
           )}
@@ -102,17 +100,16 @@ const Sidebar = () => {
           to="/help"
           className={({ isActive }) =>
             `flex flex-col items-center px-4 py-3 text-sm font-medium rounded-md mt-3 transition ${
-              isActive ? "bg-gray-200 text-black" : "text-gray-800 hover:bg-gray-200"
+              isActive ? "bg-gray-200" : "hover:bg-gray-200"
             }`
           }
         >
           <CircleHelp size={30} className="text-black mb-1" />
-          <span className="text-xs">Help</span>
+          <span className="text-black text-xs">Help</span>
         </NavLink>
       </div>
     </div>
   );
 };
-
 
 export default Sidebar;

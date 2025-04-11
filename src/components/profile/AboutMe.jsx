@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState, useContext } from "react";
 import { useUserDetails } from "../../context/profile/UserDetailsContext";
 import { AuthContext } from "../../context/auth/AuthContext";
@@ -175,101 +173,99 @@ const AboutMe = () => {
   };
 
   return (
-    <div className="w-full  space-y-3 p-4">
+    <div className="w-full p-4">
       <ToastContainer />
-      {/* Personal Information Card */}
-      <div className="bg-white border border-gray-200 rounded-lg shadow-sm w-full">
-        <div className="p-5 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-            <User className="mr-2 w-5 h-5" /> Personal
-          </h2>
-          <Edit2
-            className="w-4 h-4 text-gray-500 cursor-pointer hover:text-blue-500 transition-colors"
-            onClick={() => handleEditClick("personal")}
-          />
-        </div>
+      {/* Two-column layout */}
+      <div className="flex flex-col md:flex-row w-full gap-4">
+        {/* Left column - Personal Information */}
+        <div className="w-full md:w-1/2 space-y-3">
+          {/* Personal Information Card */}
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm w-full">
+            <div className="p-5 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                <User className="mr-2 w-5 h-5" /> Personal
+              </h2>
+              <Edit2
+                className="w-4 h-4 text-gray-500 cursor-pointer hover:text-blue-500 transition-colors"
+                onClick={() => handleEditClick("personal")}
+              />
+            </div>
 
-        {editSection === "personal" ? (
-          <PersonalEditForm 
+            {editSection === "personal" ? (
+              <PersonalEditForm 
+                userDetails={userDetails || {}}
+                editedCurrency={editedCurrency}
+                onCurrencyChange={handleCurrencyChange}
+                onSave={handleSave}
+                onCancel={() => setEditSection(null)}
+              />
+            ) : (
+              <div className="flex p-5">
+                <div className="mr-6">
+                  {userDetails?.profileImage ? (
+                    <img
+                      src={userDetails.profileImage.split(",")[0]}
+                      alt="Profile"
+                      className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center border-2 border-gray-200">
+                      <User className="w-12 h-12 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 flex-grow">
+                  <div className="flex items-start">
+                    <User className="mr-2 text-gray-500 w-5 h-5 mt-1" />
+                    <div>
+                      <div className="text-sm text-gray-600">Name</div>
+                      <div className="text-gray-800 font-medium">{userDetails?.normalizedName || "Not set"}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <Mail className="mr-2 text-gray-500 w-5 h-5 mt-1" />
+                    <div>
+                      <div className="text-sm text-gray-600">Email</div>
+                      <div className="text-gray-800">{userDetails?.email || "Not set"}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start ml-6">
+                    <div>
+                      <div className="text-sm text-gray-600">Currency</div>
+                      <div className="text-gray-800">{userDetails?.currency || "Not set"}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Phone Number Component */}
+          <PhoneNumber 
             userDetails={userDetails || {}}
-            editedCurrency={editedCurrency}
-            onCurrencyChange={handleCurrencyChange}
+            editSection={editSection}
+            setEditSection={setEditSection}
+            handleSave={handleSave}
+          />
+
+          {/* Address Card Component */}
+          <AddressCard 
+            userDetails={userDetails || {}}
+            editSection={editSection}
+            onEditClick={() => handleEditClick("address")}
             onSave={handleSave}
             onCancel={() => setEditSection(null)}
           />
-        ) : (
-          <div className="flex p-5">
-            <div className="mr-6">
-              {userDetails?.profileImage ? (
-                <img
-                  src={userDetails.profileImage.split(",")[0]}
-                  alt="Profile"
-                  className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
-                />
-              ) : (
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center border-2 border-gray-200">
-                  <User className="w-12 h-12 text-gray-400" />
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 flex-grow">
-              <div className="flex items-start">
-                <User className="mr-2 text-gray-500 w-5 h-5 mt-1" />
-                <div>
-                  <div className="text-sm text-gray-600">Name</div>
-                  <div className="text-gray-800 font-medium">{userDetails?.normalizedName || "Not set"}</div>
-                </div>
-              </div>
-              <div className="flex items-start">
-                <Mail className="mr-2 text-gray-500 w-5 h-5 mt-1" />
-                <div>
-                  <div className="text-sm text-gray-600">Email</div>
-                  <div className="text-gray-800">{userDetails?.email || "Not set"}</div>
-                </div>
-              </div>
-              <div className="flex items-start ml-6">
-                <div>
-                  <div className="text-sm text-gray-600">Currency</div>
-                  <div className="text-gray-800">{userDetails?.currency || "Not set"}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
+        
+        {/* Right column - Company Details */}
+        <div className="w-full md:w-1/2 h-full">
+          <CompanyDetails />
+        </div>
       </div>
-
-      <PhoneNumber 
-        userDetails={userDetails || {}}
-        editSection={editSection}
-        setEditSection={setEditSection}
-        handleSave={handleSave}
-      />
-
-      <AddressCard 
-        userDetails={userDetails || {}}
-        editSection={editSection}
-        onEditClick={() => handleEditClick("address")}
-        onSave={handleSave}
-        onCancel={() => setEditSection(null)}
-      />
-      
-      {/* Company Details section placed after AddressCard */}
-      <CompanyDetails />
     </div>
   );
 };
 
 export default AboutMe;
-
-
-
-
-
-
-
-
-
-
-
-

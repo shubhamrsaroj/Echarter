@@ -1,7 +1,7 @@
 import React from 'react';
 import Sidebar from '../components/sidebar/Sidebar';
 
-const SellerLayout = ({ children }) => {
+const CommonLayout = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-white ">
@@ -14,4 +14,4 @@ const SellerLayout = ({ children }) => {
   );
 };
 
-export default SellerLayout;
+export default CommonLayout;

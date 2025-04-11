@@ -7,44 +7,69 @@ import {
   TicketsPlane,
   Calendar,
   Info,
-  CheckCircle
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
 import PostForm from "./PostForm";
 import DeleteConfirmation from "./DeleteConfirmation";
 import CalendarView from "./CalendarView";
 import { useSellerContext } from "../../../context/seller/SellerContext";
 import SkeletonHaveCard from "./SkeletonHaveCard";
+import InfoModal from "../../../components/common/InfoModal";
+import { getInfoContent } from "../../../api/infoService";
+import { toast } from "react-toastify";
 
 const HaveCard = () => {
   const [showPostForm, setShowPostForm] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showCalendarView, setShowCalendarView] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [infoUrl, setInfoUrl] = useState(null);
   const { 
     haves, 
     fetchHaves, 
     deleteHave, 
     loading, 
     deleteSuccess,
+    deleteError,
     resetSuccessMessages 
   } = useSellerContext();
 
   useEffect(() => {
-    fetchHaves(903);
+    fetchHaves();
   }, [fetchHaves]);
+
+  const handleInfoClick = async () => {
+    try {
+      const url = await getInfoContent('haves', 'info');
+      setInfoUrl(url);
+    } catch (error) {
+      console.error('Error loading info content:', error);
+      toast.info(error.message || "Failed to load information", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  const handleCloseInfo = () => {
+    setInfoUrl(null);
+  };
 
   useEffect(() => {
     let timeoutId;
-    if (deleteSuccess) {
+    if (deleteSuccess || deleteError) {
       timeoutId = setTimeout(() => {
         resetSuccessMessages();
-        setShowDeleteConfirmation(false);
+        if (deleteSuccess) {
+          setShowDeleteConfirmation(false);
+        }
       }, 3000);
     }
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [deleteSuccess, resetSuccessMessages]);
+  }, [deleteSuccess, deleteError, resetSuccessMessages]);
 
   const handlePlusClick = () => setShowPostForm(true);
   const handleClosePostForm = () => setShowPostForm(false);
@@ -68,6 +93,7 @@ const HaveCard = () => {
         await deleteHave(selectedItem.id);
       } catch (error) {
         console.error("Failed to delete have:", error);
+        // Error is now handled in the context and will show as a notification
       }
     }
   };
@@ -84,6 +110,7 @@ const HaveCard = () => {
 
   return (
     <div className="w-full max-w-8xl flex flex-col md:flex-row mt-6 relative">
+      {/* Success notification */}
       {deleteSuccess && (
         <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded flex items-center shadow-lg">
           <CheckCircle className="mr-2" />
@@ -91,11 +118,23 @@ const HaveCard = () => {
         </div>
       )}
 
+      {/* Error notification */}
+      {deleteError && (
+        <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded flex items-center shadow-lg">
+          <AlertCircle className="mr-2" />
+          <span>{deleteError}</span>
+        </div>
+      )}
+
       <div className="md:w-1/2 w-full pr-2">
         <div className="flex items-center justify-between mb-2 relative">
           <div className="flex items-center space-x-2">
             <h2 className="text-xl font-bold">Haves</h2>
-            <Info size={25} className="text-gray-400 cursor-pointer ml-4" />
+            <Info 
+              size={25} 
+              className="text-gray-400 cursor-pointer ml-4 hover:text-gray-600" 
+              onClick={handleInfoClick}
+            />
           </div>
           <div className="flex items-center space-x-4 absolute right-8">
             <button
@@ -145,7 +184,7 @@ const HaveCard = () => {
                       <PlaneTakeoff className="h-4 w-4 mr-1" />
                       <span className="truncate">{item?.fromCity}</span>
                     </div>
-                    <div className="flex items-center(mb-1">
+                    <div className="flex items-center mb-1">
                       <PlaneLanding className="h-4 w-4 mr-1" />
                       <span className="truncate">{item?.toCity}</span>
                     </div>
@@ -205,8 +244,12 @@ const HaveCard = () => {
         <DeleteConfirmation 
           onCancel={handleCancelDelete} 
           onConfirm={handleConfirmDelete} 
+          isError={!!deleteError}
         />
       )}
+
+      {/* Info Modal */}
+      <InfoModal url={infoUrl} onClose={handleCloseInfo} />
     </div>
   );
 };
