@@ -25,8 +25,6 @@ export const BuyerProvider = ({ children }) => {
   }, []);
 
   const fetchDeals = useCallback(async () => {
-    if (!currentUser?.comId) return;
-
     setLoading(true);
     try {
       const data = await BuyerService.getCompanyDeals();
@@ -44,7 +42,7 @@ export const BuyerProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [currentUser]);
+  }, []);
 
   const fetchItinerary = useCallback(async (itineraryId) => {
     if (!itineraryId) {
