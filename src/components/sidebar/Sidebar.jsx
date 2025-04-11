@@ -20,8 +20,8 @@ const Sidebar = () => {
   // Get user role from token
   const token = tokenHandler.getToken();
   const userData = token ? tokenHandler.parseUserFromToken(token) : null;
-  const userRole = userData?.role || '';
-  const canSeeSellers = userRole === 'Broker' || userRole === 'Operator';
+  const userRoles = (userData?.role || '').split(',').map(role => role.trim());
+  const canSeeSellers = userRoles.some(role => ['Broker', 'Operator'].includes(role));
 
   const baseNavLinks = [
     { name: 'Search', path: '/itinerary', icon: <Search size={30} /> },

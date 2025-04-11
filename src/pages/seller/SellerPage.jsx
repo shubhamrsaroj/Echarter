@@ -13,8 +13,8 @@ const SellerPage = () => {
   // Get user role from token
   const token = tokenHandler.getToken();
   const userData = token ? tokenHandler.parseUserFromToken(token) : null;
-  const userRole = userData?.role || '';
-  const isOperator = userRole === 'Operator';
+  const userRoles = (userData?.role || '').split(',').map(role => role.trim());
+  const isOperator = userRoles.includes('Operator');
 
   const handleButtonClick = (section) => {
     setActiveSection(section);
