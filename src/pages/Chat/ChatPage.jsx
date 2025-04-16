@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import ChatUI from '../../components/chat/ChatUI';
+import NeedChat from '../../components/seller/Need/NeedChat';
 import { ArrowLeft, MessageSquare } from 'lucide-react';
 
 const ChatPage = () => {
@@ -75,7 +75,7 @@ const ChatPage = () => {
   }
 
   return (
-    <div className="bg-gray-50 flex flex-col overflow-y-hidden">
+    <div className="flex flex-col overflow-y-hidden">
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -99,7 +99,7 @@ const ChatPage = () => {
       <div className="flex-grow flex overflow-y-hidden">
         <div className="container mx-auto p-6">
           <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-[75vh]">
-            <ChatUI 
+            <NeedChat 
               chatData={chatData}
               options={chatOptions}
               fluentTheme={chatTheme}

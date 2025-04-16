@@ -151,7 +151,7 @@ const HaveCard = () => {
             <h2 className="text-xl font-bold">Haves</h2>
             <Info 
               size={25} 
-              className="text-gray-400 cursor-pointer ml-4 hover:text-gray-600" 
+              className="text-gray-500 cursor-pointer ml-4 hover:text-gray-700" 
               onClick={handleInfoClick}
             />
           </div>
@@ -183,7 +183,7 @@ const HaveCard = () => {
           haves.map((item) => (
             <div
               key={item?.id}
-              className="bg-white p-3 rounded-md shadow-sm border border-gray-200 hover:shadow-md transition duration-200 mb-4 flex justify-between items-center relative overflow-hidden mt-4"
+              className="bg-white p-3 rounded-md shadow-sm border border-black hover:shadow-md transition duration-200 mb-4 flex justify-between items-center relative overflow-hidden mt-4"
             >
               <div className="flex flex-col min-w-0 w-full ">
                 <div className="break-words whitespace-normal text-lg font-bold pr-6">
@@ -198,7 +198,7 @@ const HaveCard = () => {
                     </div>
                     <p className="text-black font-bold mt-2"> {item?.price}</p>
                   </div>
-                  <div className="text-md text-gray-800 min-w-0 flex-shrink-0">
+                  <div className="text-md text-black min-w-0 flex-shrink-0">
                     <div className="flex items-center mb-1">
                       <PlaneTakeoff className="h-4 w-4 mr-1" />
                       <span className="truncate">{item?.fromCity}</span>

@@ -1,4 +1,3 @@
-
 import api from '../axios.config';
 
 export const AcsService = {
@@ -19,46 +18,65 @@ export const AcsService = {
       });
       
       if (response.status === 200 && response.data.success) {
-        const { threadId, accessToken, acsUserId } = response.data.data;
+        const { threadId, accessToken, acsUserId, channel } = response.data.data;
         
-        // Extract the message from the response if it exists
-        const message = response.data.message ;
+        // Get the success message from response
+        const message = response.data.data.message || response.data.message;
         
         const result = { 
           threadId, 
           acsUserId, 
           token: accessToken,
+          channel,
           message: message,
         };
         return result;
       }
-      throw new Error('Failed to get chat thread');
+      // If status is 200 but success is false, throw error with the response message
+      throw new Error(response.data.message || 'Failed to get chat thread');
     } catch (error) {
       console.error('Error in AcsService.getChatThread:', error);
-      throw new Error(error.response?.data?.message || 'Failed to get chat thread');
+      // If it's an API error response, use its message, otherwise use the error message or default
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
     }
   },
 
-  uploadFiles: async (files, folderName, config = {}) => {
-    const formData = new FormData();
-    files.forEach(file => {
-      formData.append('files', file);
-    });
-
+  validateAndRefreshToken: async (token, createdDate) => {
     try {
-      const response = await api.post('/api/SinglePoint/UploadFile', formData, {
-        params: { folderName },
-        headers: { 'Content-Type': 'multipart/form-data' },
-        ...config
+      // Check if more than 1 hour has passed since creation
+      const creationTime = new Date(createdDate).getTime();
+      const currentTime = new Date().getTime();
+      const oneHourInMs = 60 * 60 * 1000;
+      const isExpired = (currentTime - creationTime) > oneHourInMs;
+
+      // If less than an hour has passed, token is still valid
+      if (!isExpired) {
+        return {
+          isValid: true,
+          token: token
+        };
+      }
+
+      // If more than an hour, refresh the token
+      const response = await api.get('/api/SinglePoint/GetRefreshedAcsToken', {
+        params: { token }
       });
 
-      if (response.status === 200) {
-        return response.data;
+      if (response.status === 200 && response.data.success) {
+        const { accessToken, acsUserId } = response.data.data;
+        return {
+          isValid: true,
+          token: accessToken,
+          acsUserId
+        };
       }
-      throw new Error('Upload failed');
+      return { isValid: false };
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Upload failed');
+      console.error('Error in AcsService.validateAndRefreshToken:', error);
+      return { isValid: false, error: error.message };
     }
   },
-
 };

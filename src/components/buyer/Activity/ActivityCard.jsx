@@ -4,10 +4,10 @@ import { toast } from "react-toastify";
 import ReviewDelete from "../Review/ReviewDelete";
 import { useBuyerContext } from "../../../context/buyer/BuyerContext";
 import BuyerItinerary from "../Itinerary/BuyerItinerary";
-import { useNavigate } from "react-router-dom";
-import SkeletonActivityCard from "./SkeletonActivityCard";
+import CommonChat from "../../../components/common/CommonChat";
 import InfoModal from "../../../components/common/InfoModal";
 import { getInfoContent } from "../../../api/infoService";
+import SkeletonActivityCard from "./SkeletonActivityCard";
 
 const ActivityCard = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -15,7 +15,8 @@ const ActivityCard = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoUrl, setInfoUrl] = useState('');
-  const navigate = useNavigate();
+  const [chatData, setChatData] = useState(null);
+  const [activeCardId, setActiveCardId] = useState(null);
   const { 
     loading, 
     deleteConversationWithReview, 
@@ -30,7 +31,7 @@ const ActivityCard = () => {
   } = useBuyerContext();
 
   // Check if right panel has content
-  const hasRightContent = showDeleteModal || showItinerary;
+  const hasRightContent = showDeleteModal || showItinerary || chatData;
 
   useEffect(() => {
     fetchDeals();
@@ -39,38 +40,48 @@ const ActivityCard = () => {
   const handleDeleteClick = (deal) => {
     setSelectedDeal(deal);
     setShowDeleteModal(true);
-    // Close itinerary view if open
+    setActiveCardId(deal.conversationId);
+    // Close other panels
     if (showItinerary) {
       fetchItinerary(null);
     }
+    setChatData(null);
   };
 
   const handleCloseDelete = () => {
     setShowDeleteModal(false);
     setSelectedDeal(null);
+    setActiveCardId(null);
     resetSuccessMessages();
   };
 
-  const handleCalendarClick = (itineraryId) => {
+  const handleCalendarClick = (itineraryId, deal) => {
     if (itineraryId) {
-      // Close delete modal if open
+      // Close other panels
       if (showDeleteModal) {
         setShowDeleteModal(false);
         setSelectedDeal(null);
       }
+      setChatData(null);
       
       if (showItinerary === itineraryId) {
-        // If the same itinerary is already showing, close it
-        fetchItinerary(null); // Reset the itinerary
+        fetchItinerary(null);
+        setActiveCardId(null);
       } else {
-        // Show a different itinerary
         fetchItinerary(itineraryId);
+        setActiveCardId(deal.conversationId);
       }
     }
   };
 
   const handleCloseItinerary = () => {
-    fetchItinerary(null); // Reset the itinerary
+    fetchItinerary(null);
+    setActiveCardId(null);
+  };
+
+  const handleCloseChat = () => {
+    setChatData(null);
+    setActiveCardId(null);
   };
 
   const handleSubmitDelete = async (data) => {
@@ -86,7 +97,7 @@ const ActivityCard = () => {
       
       if (response.success) {
         toast.success(response.message || "Activity deleted successfully");
-        fetchDeals(); // Refresh the deals list
+        fetchDeals();
         setShowDeleteModal(false);
         setSelectedDeal(null);
       } else {
@@ -109,15 +120,24 @@ const ActivityCard = () => {
 
     try {
       setIsConnecting(true);
-      const chatData = {
+      const newChatData = {
         threadId: deal.threadId,
         acsUserId: deal.acsUserId,
         token: deal.accessToken,
+        message: deal.message || deal.sellerName
       };
 
-      console.log(chatData);
+      // Close other panels
+      if (showDeleteModal) {
+        setShowDeleteModal(false);
+        setSelectedDeal(null);
+      }
+      if (showItinerary) {
+        fetchItinerary(null);
+      }
 
-      navigate('/chat', { state: { chatData } });
+      setChatData(newChatData);
+      setActiveCardId(deal.conversationId);
     } catch (error) {
       console.error('Error opening chat:', error);
       toast.error("Failed to open chat", {
@@ -132,8 +152,6 @@ const ActivityCard = () => {
   const handleInfoClick = async () => {
     try {
       const url = await getInfoContent('Activity', 'info');
-      
-      // If we successfully got a URL, show the modal
       setInfoUrl(url);
       setShowInfoModal(true);
     } catch (error) {
@@ -157,7 +175,7 @@ const ActivityCard = () => {
           <div className="flex justify-between items-center">
             <div className="flex items-center -mt-2">
               <h1 className="text-xl font-bold text-black">Activity</h1>
-              <Info className="w-5 h-5 ml-2 cursor-pointer text-black" onClick={handleInfoClick} />
+              <Info className=" ml-2 cursor-pointer  text-gray-500 hover:text-gray-700" size={25} onClick={handleInfoClick} />
             </div>
             <List className="text-2xl cursor-pointer text-black" size={24} />
           </div>
@@ -165,7 +183,11 @@ const ActivityCard = () => {
         
         <div className="px-4 lg:px-6 pb-4">
           {deals.map((deal) => (
-            <div key={deal.conversationId || deal.threadId} className="border border-black rounded-lg p-4 lg:p-6 bg-white w-full mb-4">
+            <div key={deal.conversationId || deal.threadId} className={`border border-black rounded-lg p-4 lg:p-6 bg-white w-full mb-4 ${
+              activeCardId === deal.conversationId
+                ? 'ring-2 ring-blue-500 shadow-lg transform scale-[1.02] transition-all'
+                : ''
+            }`}>
               <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0">
                 <div className="w-full sm:w-auto">
                   <h2 className="text-xl font-bold mb-1 text-black">{deal?.sellerName}</h2>
@@ -205,7 +227,7 @@ const ActivityCard = () => {
                 <CalendarClock 
                   size={22} 
                   className="text-black cursor-pointer hover:text-gray-700" 
-                  onClick={() => handleCalendarClick(deal.itineraryId)}
+                  onClick={() => handleCalendarClick(deal.itineraryId, deal)}
                 />
               </div>
             </div>
@@ -220,7 +242,7 @@ const ActivityCard = () => {
         </div>
       </div>
 
-      {/* Right half of the page - Only shown when needed */}
+      {/* Right half of the page */}
       {hasRightContent && (
         <div className="w-full lg:w-1/2 px-4 lg:px-6 py-4 flex items-start overflow-hidden">
           {showDeleteModal && (
@@ -243,6 +265,76 @@ const ActivityCard = () => {
                 error={itineraryError}
                 onClose={handleCloseItinerary}
               />
+            </div>
+          )}
+
+          {chatData && (
+            <div className="bg-white rounded-lg border border-gray-200 w-full h-[calc(100vh-140px)] overflow-hidden relative">
+              <div className="absolute inset-0">
+                <CommonChat 
+                  chatData={chatData}
+                  onClose={handleCloseChat}
+                  options={{
+                    autoFocus: true,
+                    topic: chatData.message,
+                    sendBox: {
+                      singleLineMode: false
+                    }
+                  }}
+                  fluentTheme={{
+                    components: {
+                      sendBox: {
+                        root: {
+                          backgroundColor: '#ffffff',
+                          borderTop: '1px solid #e5e7eb',
+                          padding: '16px'
+                        },
+                        input: {
+                          backgroundColor: '#f9fafb',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          padding: '12px',
+                          fontSize: '14px',
+                          color: '#374151'
+                        }
+                      },
+                      sendButton: {
+                        root: {
+                          backgroundColor: '#000000',
+                          color: '#ffffff',
+                          borderRadius: '6px',
+                          padding: '8px 16px',
+                          '&:hover': {
+                            backgroundColor: '#1f2937'
+                          }
+                        }
+                      },
+                      messageThread: {
+                        container: {
+                          backgroundColor: '#ffffff',
+                          padding: '20px'
+                        },
+                        messageContainer: {
+                          margin: '8px 0'
+                        },
+                        message: {
+                          bubble: {
+                            backgroundColor: '#f3f4f6',
+                            borderRadius: '12px',
+                            padding: '10px 16px'
+                          },
+                          mine: {
+                            bubble: {
+                              backgroundColor: '#000000',
+                              color: '#ffffff'
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
             </div>
           )}
         </div>

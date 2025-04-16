@@ -47,7 +47,7 @@ const ReviewDecline = ({ dealBuyerName, onClose, onSubmit, isSubmitting = false 
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg p-6 bg-white shadow-md sticky top-10">
+    <div className="border border-gray-200 rounded-lg p-6 bg-white shadow-md sticky top-2">
       <div className="flex justify-between items-center mb-2">
         <button onClick={onClose} disabled={isSubmitting}>
           <div className="rounded-full border border-gray-300 p-1">

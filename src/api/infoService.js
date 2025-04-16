@@ -11,8 +11,11 @@ export const getInfoContent = async (topic, category = 'info') => {
 
     if (response.data.success) {
       // For info category, return url as before
-      if (category === 'info' && response.data.data?.url) {
-        return response.data.data.url;
+      if (category === 'info') {
+        const url = response.data.data?.[0]?.url;
+        if (url) {
+          return url;
+        }
       }
       // For dropdown category, return the full data object
       if (category === 'dropdown') {

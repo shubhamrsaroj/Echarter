@@ -8,7 +8,7 @@ import ReviewDecline from "../Review/ReviewDecline";
 import ReviewDelete from "../Review/ReviewDelete";
 import { toast } from "react-toastify";
 import RibbonIcon from "../../../assets/icons.png"; 
-import ChatUI from "../../../components/chat/ChatUI"; 
+import CommonChat from "../../../components/common/CommonChat";
 import { AcsService } from "../../../api/Acs/AcsService"; 
 import InfoModal from "../../../components/common/InfoModal";
 import { getInfoContent } from "../../../api/infoService";
@@ -164,14 +164,49 @@ const DealCard = () => {
 
     try {
       setIsConnecting(true);
-      const chatData = {
-        threadId: deal.threadId,
-        acsUserId: deal.acsUserId,
-        token: deal.accessToken, 
-        // displayName: deal.buyerName 
-      };
-      // Navigate to chat page with chatData
-      navigate('/chat', { state: { chatData } });
+      
+      // First validate and potentially refresh the token, passing the deal's creation date
+      const tokenValidation = await AcsService.validateAndRefreshToken(deal.accessToken, deal.createdDate);
+      
+      if (!tokenValidation.isValid) {
+        // If token is invalid or expired, try to get a new chat thread
+        const newChatData = await AcsService.getChatThread({
+          itineraryId: deal.itineraryId,
+          companyId: currentUser?.comId,
+          needs: false,
+          isBuyer: false,
+          source: 'easycharter',
+          conversationId: deal.conversationId || '',
+        });
+        
+        if (!newChatData.threadId) {
+          throw new Error('No threadId returned from chat service');
+        }
+        
+        // Set chat data with new token and user ID
+        const chatData = {
+          threadId: newChatData.threadId,
+          acsUserId: newChatData.acsUserId,
+          token: newChatData.token,
+          message: deal.buyerName
+        };
+        setChatData(chatData);
+      } else {
+        // Token is still valid (less than 1 hour old)
+        const chatData = {
+          threadId: deal.threadId,
+          acsUserId: tokenValidation.acsUserId || deal.acsUserId,
+          token: tokenValidation.token || deal.accessToken,
+          message: deal.buyerName
+        };
+        setChatData(chatData);
+      }
+      
+      setIsChatOpen(true);
+      // Reset other panels
+      setVisibleItineraryId(null);
+      setDeclineDealId(null);
+      setDeleteDealId(null);
     } catch (error) {
       console.error('Error opening chat:', error);
       toast.error("Failed to open chat", {
@@ -183,7 +218,7 @@ const DealCard = () => {
     }
   };
 
-  // Original function for "Initiate" button (updated to navigate)
+  // Original function for "Initiate" button (updated to set state instead of navigate)
   const handleConnect = async (dealId) => {
     const deal = deals.find(
       (d) =>
@@ -205,8 +240,14 @@ const DealCard = () => {
       if (!data.threadId) {
         throw new Error('No threadId returned from chat service');
       }
-      // Navigate to chat page with chatData
-      navigate('/chat', { state: { chatData: data } });
+      // Set chat data and open chat instead of navigating
+      data.message = deal.buyerName; // Add buyer name as message
+      setChatData(data);
+      setIsChatOpen(true);
+      // Reset other panels
+      setVisibleItineraryId(null);
+      setDeclineDealId(null);
+      setDeleteDealId(null);
     } catch (error) {
       console.error('Error connecting to chat:', error);
       toast.error("Failed to initiate chat", {
@@ -302,126 +343,136 @@ const DealCard = () => {
           <span>Your Deals</span>
           <Info 
             size={25} 
-            className="text-black cursor-pointer ml-4 hover:text-gray-700" 
+            className="text-gray-500  cursor-pointer ml-4 hover:text-gray-700" 
             onClick={handleInfoClick}
           />
         </div>
         {deals.map((deal) => (
-          <div
-            key={deal.conversationId || deal.threadId || deal.itineraryId}
-            className="border border-black rounded-lg relative p-4 bg-white mb-4 overflow-hidden"
-          >
-            {/* Ribbon Icon */}
+          <>
+            {/* Ribbon Icon - Positioned outside and overlapping into card */}
             {deal.buyerTag && (
-              <div className="absolute -right-1 -top-10">
-                <img src={RibbonIcon} alt="Ribbon Icon" className="w-22 h-28" />
+              <div className="relative z-10 h-0">
+                <div className="absolute -right-1 -top-11">
+                  <img src={RibbonIcon} alt="Ribbon Icon" className="w-22 h-28" />
+                </div>
               </div>
             )}
-
-            <div className="pb-4 pr-24">
-              <div className="text-xl font-semibold text-black truncate">{deal.buyerName}</div>
-              <div className="text-black mt-2 break-words">{deal.itineraryFromTo}</div>
-              <div className="text-black break-words">{deal.message || "No additional details available."}</div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center relative">
-              <div className="flex space-x-3 mb-2 sm:mb-0">
-                {deal.allowDelete !== false && (
-                  <div className="p-2" onClick={() => handleDeleteClick(deal.conversationId || deal.threadId || deal.itineraryId)}>
-                    <Trash2 size={20} className="text-black cursor-pointer hover:text-gray-700" />
-                  </div>
-                )}
-                <div className="p-2">
-                  <ShieldQuestion size={20} className="text-black" />
-                </div>
-                <div className="p-2" onClick={() => handleCalendarClick(deal.itineraryId)}>
-                  <CalendarClock size={20} className="text-black cursor-pointer hover:text-gray-700" />
-                </div>
-                <div className="p-2" onClick={() => handleCopyClick(deal.itineraryText)}>
-                  <Copy size={20} className="text-black cursor-pointer hover:text-gray-700" />
-                </div>
+            <div
+              key={deal.conversationId || deal.threadId || deal.itineraryId}
+              className={`border border-black rounded-lg relative p-4 bg-white mb-4 overflow-hidden ${
+                (visibleItineraryId === deal.itineraryId || 
+                 declineDealId === (deal.conversationId || deal.threadId || deal.itineraryId) ||
+                 deleteDealId === (deal.conversationId || deal.threadId || deal.itineraryId) ||
+                 (isChatOpen && chatData?.threadId === deal.threadId)) 
+                ? 'ring-2 ring-blue-500 shadow-lg transform scale-[1.02] transition-all' 
+                : ''
+              }`}
+            >
+              <div className="pb-4 pr-24">
+                <div className="text-xl font-semibold text-black truncate">{deal.buyerName}</div>
+                <div className="text-black mt-2 break-words">{deal.itineraryFromTo}</div>
+                <div className="text-black break-words">{deal.message || "No additional details available."}</div>
               </div>
 
-              <div className="flex items-center space-x-4 sm:absolute sm:right-0 sm:top-[-5.5rem]">
-                {/* Container to ensure consistent alignment */}
-                <div className="flex items-center space-x-5">
-                  {/* For "Open" button */}
-                  {deal.threadId !== null && deal.sellerInitiation === false && (
-                    <div className="flex flex-col items-center">
-                      <div
-                        onClick={() => handleOpenConnect(deal.conversationId || deal.threadId || deal.itineraryId)}
-                        className="w-12 h-12 rounded-full flex items-center justify-center mb-1 cursor-pointer bg-[#c1ff72]"
-                      >
-                        <MessagesSquare size={22} className="text-black" />
-                      </div>
-                      <div className="text-xs font-medium text-black">Open</div>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center relative">
+                <div className="flex space-x-3 mb-2 sm:mb-0">
+                  {deal.allowDelete !== false && (
+                    <div className="p-2" onClick={() => handleDeleteClick(deal.conversationId || deal.threadId || deal.itineraryId)}>
+                      <Trash2 size={20} className="text-black cursor-pointer hover:text-gray-700" />
                     </div>
                   )}
+                  <div className="p-2">
+                    <ShieldQuestion size={20} className="text-black" />
+                  </div>
+                  <div className="p-2" onClick={() => handleCalendarClick(deal.itineraryId)}>
+                    <CalendarClock size={20} className="text-black cursor-pointer hover:text-gray-700" />
+                  </div>
+                  <div className="p-2" onClick={() => handleCopyClick(deal.itineraryText)}>
+                    <Copy size={20} className="text-black cursor-pointer hover:text-gray-700" />
+                  </div>
+                </div>
 
-                  {/* For "Initiate" button */}
-                  {deal.threadId === null && deal.sellerInitiation === true && (
-                    <div className="flex flex-col items-center">
-                      <div
-                        onClick={() => handleConnect(deal.conversationId || deal.threadId || deal.itineraryId)}
-                        className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 cursor-pointer transition-colors ${
-                          isConnecting ? 'bg-gray-400' : 'bg-yellow-400 hover:bg-yellow-500'
-                        }`}
-                      >
-                        {isConnecting ? (
-                          <svg
-                            className="animate-spin h-6 w-6 text-black"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                        ) : (
-                          <MessageSquareDot size={22} className="text-black" />
-                        )}
-                      </div>
-                      <div className="text-xs font-medium text-black">{isConnecting ? 'Connecting...' : 'Initiate'}</div>
-                    </div>
-                  )}
-
-                  {/* Decline button - Space is reserved even if not rendered */}
-                  <div className="flex flex-col items-center w-12 min-w-[48px]">
-                    {deal.allowDecline !== false ? (
-                      <>
+                <div className="flex items-center space-x-4 sm:absolute sm:right-0 sm:top-[-2rem]">
+                  {/* Container to ensure consistent alignment */}
+                  <div className="flex items-center space-x-5">
+                    {/* For "Open" button */}
+                    {deal.threadId !== null && deal.sellerInitiation === false && (
+                      <div className="flex flex-col items-center">
                         <div
-                          className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mb-1 cursor-pointer hover:bg-red-900"
-                          onClick={() => handleDeclineClick(deal.conversationId || deal.threadId || deal.itineraryId)}
+                          onClick={() => handleOpenConnect(deal.conversationId || deal.threadId || deal.itineraryId)}
+                          className="w-12 h-12 rounded-full flex items-center justify-center mb-1 cursor-pointer bg-[#c1ff72]"
                         >
-                          <ThumbsDown size={22} className="text-white" />
+                          <MessagesSquare size={22} className="text-black" />
                         </div>
-                        <div className="text-xs font-medium text-black">Decline</div>
-                      </>
-                    ) : (
-                      /* Empty div to maintain spacing */
-                      <div className="w-12 h-12"></div>
+                        <div className="text-xs font-medium text-black">Open</div>
+                      </div>
                     )}
+
+                    {/* For "Initiate" button */}
+                    {deal.threadId === null && deal.sellerInitiation === true && (
+                      <div className="flex flex-col items-center">
+                        <div
+                          onClick={() => handleConnect(deal.conversationId || deal.threadId || deal.itineraryId)}
+                          className={`w-12 h-12 rounded-full flex items-center justify-center mb-1 cursor-pointer transition-colors ${
+                            isConnecting ? 'bg-gray-400' : 'bg-yellow-400 hover:bg-yellow-500'
+                          }`}
+                        >
+                          {isConnecting ? (
+                            <svg
+                              className="animate-spin h-6 w-6 text-black"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                          ) : (
+                            <MessageSquareDot size={22} className="text-black" />
+                          )}
+                        </div>
+                        <div className="text-xs font-medium text-black">{isConnecting ? 'Connecting...' : 'Initiate'}</div>
+                      </div>
+                    )}
+
+                    {/* Decline button - Space is reserved even if not rendered */}
+                    <div className="flex flex-col items-center w-12 min-w-[48px]">
+                      {deal.allowDecline !== false ? (
+                        <>
+                          <div
+                            className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mb-1 cursor-pointer hover:bg-red-900"
+                            onClick={() => handleDeclineClick(deal.conversationId || deal.threadId || deal.itineraryId)}
+                          >
+                            <ThumbsDown size={22} className="text-white" />
+                          </div>
+                          <div className="text-xs font-medium text-black">Decline</div>
+                        </>
+                      ) : (
+                        /* Empty div to maintain spacing */
+                        <div className="w-12 h-12"></div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </>
         ))}
       </div>
 
       {/* Right Side: Itinerary, ReviewDecline, ReviewDelete, or Chat Display */}
-      <div className="w-full md:w-1/2 p-4 mt-4 md:mt-8">
+      <div className="w-full md:w-1/2 p-4 mt-4 md:mt-8 md:sticky md:top-0 md:h-screen md:overflow-auto">
         {visibleItineraryId && (
           <DealItinerary
             itinerary={itineraries[visibleItineraryId] || []}
@@ -450,7 +501,15 @@ const DealCard = () => {
         )}
 
         {isChatOpen && chatData && (
-          <ChatUI chatData={chatData} onClose={handleCloseChat} />
+          <div className="relative h-[calc(100vh-12rem)] rounded-lg overflow-hidden border border-gray-200">
+            <CommonChat
+              chatData={chatData} 
+              onClose={handleCloseChat}
+              onMinimizeChange={() => {
+                // Removed unused parameter
+              }}
+            />
+          </div>
         )}
       </div>
 

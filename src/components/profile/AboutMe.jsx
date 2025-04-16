@@ -18,15 +18,12 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Personal Edit Form Component
 const PersonalEditForm = ({ userDetails, editedCurrency, onCurrencyChange, onSave, onCancel }) => {
-  const [firstName, setFirstName] = useState(userDetails?.normalizedName?.split(" ")[0] || "");
-  const [lastName, setLastName] = useState(userDetails?.normalizedName?.split(" ")[1] || "");
-  const [isLoading, setIsLoading] = useState(false); // Added loading state
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSavePersonal = async () => {
     try {
       setIsLoading(true);
       const updatedData = {
-        name: `${firstName} ${lastName}`.trim(),
         currency: editedCurrency
       };
       await onSave("personal", updatedData);
@@ -43,23 +40,12 @@ const PersonalEditForm = ({ userDetails, editedCurrency, onCurrencyChange, onSav
       <div className="grid grid-cols-1 gap-4">
         <div className="flex items-center">
           <div className="flex-1">
-            <label className="text-sm text-gray-600">Legal First Name *</label>
+            <label className="text-sm text-gray-600">Name</label>
             <input
               type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        </div>
-        <div className="flex items-center">
-          <div className="flex-1">
-            <label className="text-sm text-gray-600">Legal Last Name *</label>
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={userDetails?.normalizedName || ""}
+              disabled
+              className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
             />
           </div>
         </div>
@@ -115,17 +101,15 @@ const AboutMe = () => {
 
   const [editSection, setEditSection] = useState(null);
   const [editedCurrency, setEditedCurrency] = useState(userDetails?.currency || "");
-  const [editedName, setEditedName] = useState(userDetails?.normalizedName || "");
 
   useEffect(() => {
     fetchUserDetails();
-    fetchCompanyDetails(); // Fetch company details when component mounts
+    fetchCompanyDetails();
   }, [fetchUserDetails, fetchCompanyDetails]);
 
   useEffect(() => {
     if (userDetails) {
       setEditedCurrency(userDetails.currency || "");
-      setEditedName(userDetails.normalizedName || "");
     }
   }, [userDetails]);
 
@@ -200,8 +184,8 @@ const AboutMe = () => {
                 onCancel={() => setEditSection(null)}
               />
             ) : (
-              <div className="flex p-5">
-                <div className="mr-6">
+              <div className="flex flex-col md:flex-row p-5">
+                <div className="mb-4 md:mb-0 md:mr-6">
                   {userDetails?.profileImage ? (
                     <img
                       src={userDetails.profileImage.split(",")[0]}
@@ -215,23 +199,23 @@ const AboutMe = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 flex-grow">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
                   <div className="flex items-start">
-                    <User className="mr-2 text-gray-500 w-5 h-5 mt-1" />
-                    <div>
+                    <User className="mr-2 text-gray-500 w-5 h-5 mt-1 flex-shrink-0" />
+                    <div className="min-w-0">
                       <div className="text-sm text-gray-600">Name</div>
-                      <div className="text-gray-800 font-medium">{userDetails?.normalizedName || "Not set"}</div>
+                      <div className="text-gray-800 font-medium truncate">{userDetails?.normalizedName || "Not set"}</div>
                     </div>
                   </div>
                   <div className="flex items-start">
-                    <Mail className="mr-2 text-gray-500 w-5 h-5 mt-1" />
-                    <div>
+                    <Mail className="mr-2 text-gray-500 w-5 h-5 mt-1 flex-shrink-0" />
+                    <div className="min-w-0">
                       <div className="text-sm text-gray-600">Email</div>
-                      <div className="text-gray-800">{userDetails?.email || "Not set"}</div>
+                      <div className="text-gray-800 truncate">{userDetails?.email || "Not set"}</div>
                     </div>
                   </div>
-                  <div className="flex items-start ml-6">
-                    <div>
+                  <div className="flex items-start">
+                    <div className="min-w-0">
                       <div className="text-sm text-gray-600">Currency</div>
                       <div className="text-gray-800">{userDetails?.currency || "Not set"}</div>
                     </div>

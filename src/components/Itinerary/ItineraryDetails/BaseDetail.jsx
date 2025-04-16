@@ -9,6 +9,7 @@ import { AcsService } from '../../../api/Acs/AcsService';
 import ChatUI from '../../../components/chat/ChatUI';
 import InfoModal from '../../common/InfoModal';
 import { tokenHandler } from '../../../utils/tokenHandler';
+import { toast } from 'react-toastify';
 
 const PageContainer = ({ children }) => {
   return (
@@ -171,6 +172,15 @@ const BaseDetail = () => {
   );
 
   const handleConnect = async (companyId) => {
+    // Check if chat is minimized and active
+    if (chatData && isChatMinimized) {
+      toast.warning("Please close the ongoing chat first", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
     if (isConnectingInProgress) {
       console.log('handleConnect already in progress, skipping...');
       return;
@@ -185,19 +195,9 @@ const BaseDetail = () => {
         return;
       }
 
-      // // Log all condition values for debugging
-      console.log('DEBUG CONDITIONS:', {
-        companyId: company.id,
-        companyName: company.name,
-        userCount: company.userCount,
-        isUserPremium: userIsPremium,
-        isCompanyRestricted: company.isRestricted
-      });
-
-      // Check conditions according to the business decision tree
-      // Condition 1: Check if the company only communicates through email (userCount = 0)
+      // First check userCount = 0
       if (company.userCount === 0) {
-        // Email only case - user will only be able to communicate via email
+        // Show email only card first
         const emailOnlyPrompt = selectedCompanyDetails.prompts?.find(p => p.EmailOnly);
         setRecommendationData({
           companyId,
@@ -210,59 +210,70 @@ const BaseDetail = () => {
         return;
       }
 
-      // Condition 2: Check if user has premium status
-      if (userIsPremium) {
-        // Premium user path - show "Keep Private" option
-        const premiumPrompt = selectedCompanyDetails.prompts?.find(p => p.IsPremium);
-        setRecommendationData({
-          companyId,
-          company,
-          message: premiumPrompt?.IsPremium || "Select Continue to allow other Sellers to message you.",
-          requiresAction: true,
-          type: "premium"
-        });
-        setShowRecommendation(true);
-        return;
-      }
-      
-      // Condition 3: Check if company has restrictions on who can connect
-      if (company.isRestricted) {
-        // Restricted company - only premium members can connect directly
-        const restrictedPrompt = selectedCompanyDetails.prompts?.find(p => p.IsRestricted);
-        setRecommendationData({
-          companyId,
-          company,
-          message: restrictedPrompt?.IsRestricted || "This seller accepts connections only from Gold members.",
-          requiresAction: true,
-          type: "restricted"
-        });
-        setShowRecommendation(true);
-        return;
-      } else {
-        console.log('DEBUG: Taking default non-premium, non-restricted path');
-        // Not restricted but not premium either
-        const notPremiumPrompt = selectedCompanyDetails.prompts?.find(p => p.IsNotPremium);
-        setRecommendationData({
-          companyId,
-          company,
-          message: notPremiumPrompt?.IsNotPremium || "Select Continue to allow other Sellers to message you.",
-          requiresAction: true,
-          type: "notPremium"
-        });
-        setShowRecommendation(true);
-        return;
-      }
+      // If userCount is not 0, directly check premium status
+      checkPremiumAndRestricted(company);
+
     } catch (error) {
       console.error('Error in handleConnect:', error);
       alert('Failed to process connection: ' + error.message);
     }
   };
 
+  const checkPremiumAndRestricted = (company) => {
+    // Check if user is premium
+    if (userIsPremium) {
+      // Premium user - show keep private option
+      const premiumPrompt = selectedCompanyDetails.prompts?.find(p => p.IsPremium);
+      setRecommendationData({
+        companyId: company.id,
+        company,
+        message: premiumPrompt?.IsPremium || "Select Continue to allow other Sellers to message you.",
+        requiresAction: true,
+        type: "premium"
+      });
+      setShowRecommendation(true);
+    } else {
+      // Not premium - check if restricted
+      if (company.isRestricted) {
+        // Show restricted message
+        const restrictedPrompt = selectedCompanyDetails.prompts?.find(p => p.IsRestricted);
+        setRecommendationData({
+          companyId: company.id,
+          company,
+          message: restrictedPrompt?.IsRestricted || "This seller accepts connections only from Gold members.",
+          requiresAction: true,
+          type: "restricted"
+        });
+        setShowRecommendation(true);
+      } else {
+        // Show standard non-premium message
+        const notPremiumPrompt = selectedCompanyDetails.prompts?.find(p => p.IsNotPremium);
+        setRecommendationData({
+          companyId: company.id,
+          company,
+          message: notPremiumPrompt?.IsNotPremium || "Select Continue to allow other Sellers to message you.",
+          requiresAction: true,
+          type: "notPremium"
+        });
+        setShowRecommendation(true);
+      }
+    }
+  };
+
   const handleContinue = () => {
     if (recommendationData && recommendationData.companyId) {
-      // Close the recommendation modal immediately
+      // Close current recommendation modal
       setShowRecommendation(false);
       
+      const company = selectedCompanyDetails.companyData.find(c => c.id === recommendationData.companyId);
+      
+      if (recommendationData.type === "emailOnly") {
+        // If continuing from email only card, check premium status
+        checkPremiumAndRestricted(company);
+        return;
+      }
+
+      // For all other cases, proceed with connection
       if (recommendationData.type === "premium") {
         // For premium users, Continue sets needs=true
         console.log('DEBUG: Premium user - setting needs=true for Continue');
@@ -308,7 +319,7 @@ const BaseDetail = () => {
                 alt={company.name}
                 className="w-30 h-30 object-center"
               />
-              <div className="absolute top-2 right-0 p-3 text-right rounded-lg mr-2">
+              <div className="absolute top-2 right-2 p-4 text-right bg-white/60 backdrop-blur-[2px] shadow-lg rounded-lg border border-white/20">
                 <h2 className="font-bold text-lg text-black mt-2">{company.name}</h2>
                 <p className="text-md text-black mt-2">{company.city}, {company.country}</p>
                 {company.rankOverall !== null && (
@@ -319,13 +330,13 @@ const BaseDetail = () => {
                         style={{ width: `${company.rankOverall || 0}%` }}
                       />
                     </div>
-                    <p className="text-md font-semibold text-gray-600 mt-2">{company.rankOverall}</p>
+                    <p className="text-md font-semibold text-black mt-2">{company.rankOverall}</p>
                   </div>
                 )}
                 <div className="flex items-center space-x-1 text-md text-black justify-end mt-2">
                   <p>Trust Score</p>
                   <Info 
-                    className="w-4 h-4 cursor-pointer" 
+                    className="w-6 h-6 cursor-pointer" 
                     onClick={() => {
                       const trustScoreUrl = selectedCompanyDetails?.prompts?.find(p => p.TrustScore)?.TrustScore;
                       if (trustScoreUrl) {
@@ -688,15 +699,39 @@ const BaseDetail = () => {
       });
       
       console.log('AcsService.getChatThread returned:', data);
-      if (!data.threadId) {
-        throw new Error('No threadId returned from chat service');
+      
+      // Show success message from API response
+      if (data.message) {
+        toast.success(data.message, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      }
+
+      // Only set chat data if we have a threadId (for chat channel)
+      if (data.threadId && data.channel !== 'Email') {
+        setChatData(data);
+      } else {
+        // For email channel, just close the active company
+        setActiveCompanyId(null);
       }
       
-      setChatData(data);
-      // Recommendation modal is already closed earlier for better user experience
     } catch (error) {
       console.error('Error connecting to chat:', error);
-      alert('Failed to start chat: ' + error.message);
+      // Show error message from API if available, otherwise show generic error
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to start chat';
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       setActiveCompanyId(null);
     } finally {
       setIsConnecting(false);
@@ -756,7 +791,7 @@ const BaseDetail = () => {
       <PageContainer>
         <div className="relative">
           {/* Main content (companies list) */}
-          <div className={`transition-all duration-300 ${!isChatMinimized ? 'blur-[2px]' : ''}`}>
+          <div className="transition-all duration-300 overflow-auto">
             <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
               <h1 className="font-bold text-2xl text-gray-800">
                 {selectedBaseOption?.category || "Available Options"}
@@ -773,17 +808,23 @@ const BaseDetail = () => {
             {totalPages > 1 && renderPaginationControls()}
           </div>
           
-          {/* Chat component - Always rendered when active */}
-          <div className={`fixed inset-0 z-50 pointer-events-none transition-all duration-300 ${!isChatMinimized ? 'bg-black/20' : ''}`}>
-            <div className="w-full h-full flex items-center justify-center p-4">
-              <div className="w-full max-w-3xl h-[80vh] relative">
-                <div className="h-full pointer-events-auto">
-                  <ChatUI 
-                    chatData={chatData} 
-                    onClose={handleCloseChat}
-                    onMinimizeChange={setIsChatMinimized}
-                  />
-                </div>
+          {/* Chat component with conditional rendering based on minimized state */}
+          <div 
+            className={`fixed ${isChatMinimized ? 'bottom-0 right-0 w-[400px] p-4' : 'inset-0 bg-black/20'} z-50 transition-all duration-300`}
+            style={{ pointerEvents: isChatMinimized ? 'none' : 'auto' }}
+          >
+            <div 
+              className={`${isChatMinimized ? '' : 'w-full h-full flex items-center justify-center p-4'}`}
+            >
+              <div 
+                className={`${isChatMinimized ? '' : 'w-full max-w-3xl h-[80vh]'} relative`}
+                style={{ pointerEvents: 'auto' }}
+              >
+                <ChatUI 
+                  chatData={chatData} 
+                  onClose={handleCloseChat}
+                  onMinimizeChange={setIsChatMinimized}
+                />
               </div>
             </div>
           </div>

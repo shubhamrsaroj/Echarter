@@ -5,21 +5,16 @@ import { AcsService } from "../../../api/Acs/AcsService";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-const NeedItinerary = ({ itinerary, loading, error, onClose }) => {
-  const { currentUser, itineraries } = useSellerContext();
+const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId }) => {
+  const { currentUser } = useSellerContext();
   const navigate = useNavigate();
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleConnect = async () => {
-    const companyKey = Object.keys(itineraries)[0]; // "company_1921"
-const companyArray = itineraries[companyKey]; // This is the array of itineraries
-
-const itineraryId = companyArray?.[0]?.itineraryID;
-
-    if (!currentUser?.comId || !itineraryId) {
+    if (!currentUser?.comId || !selectedItineraryId) {
       console.error('Missing required data:', { 
         comId: currentUser?.comId, 
-        itineraryId: itineraryId 
+        itineraryId: selectedItineraryId 
       });
       toast.error("Missing required data for chat initiation", {
         position: "top-right",
@@ -27,25 +22,22 @@ const itineraryId = companyArray?.[0]?.itineraryID;
       });
       return;
     }
-    
 
     try {
       setIsConnecting(true);
       console.log('Initiating chat with:', {
-        itineraryId: itineraryId,
+        itineraryId: selectedItineraryId,
         companyId: currentUser.comId
       });
       
       const data = await AcsService.getChatThread({
-        itineraryId: itineraryId,
+        itineraryId: selectedItineraryId,
         companyId: currentUser.comId,
         needs: null,
         isBuyer: false,
         source: 'easycharter',
         conversationId: null,
       });
-
-      console.log('Chat thread response:', data);
 
       if (!data.threadId) {
         throw new Error('No threadId returned from chat service');
@@ -54,7 +46,7 @@ const itineraryId = companyArray?.[0]?.itineraryID;
       navigate('/chat', { state: { chatData: data } });
     } catch (error) {
       console.error('Error connecting to chat:', error);
-      toast.error("Failed to initiate chat", {
+      toast.error(error.message || "Failed to initiate chat", {
         position: "top-right",
         autoClose: 3000,
       });

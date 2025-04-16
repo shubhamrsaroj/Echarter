@@ -86,7 +86,7 @@ const BuyerItinerary = ({ itinerary, loading, error, onClose, onUpdate }) => {
     );
   }
 
-  if (!itinerary || !itinerary.itinerary) {
+  if (!itinerary || !itinerary.itinerary || !Array.isArray(itinerary.itinerary) || itinerary.itinerary.length === 0) {
     return (
       <div className="bg-[#f6f6f6] rounded-xl border border-black p-6 relative">
         <button
@@ -109,11 +109,6 @@ const BuyerItinerary = ({ itinerary, loading, error, onClose, onUpdate }) => {
       day: "numeric",
     });
   };
-
-  // Get the first leg of the itinerary or use default values
-  const firstLeg = Array.isArray(itinerary.itinerary) && itinerary.itinerary.length > 0 
-    ? itinerary.itinerary[0] 
-    : { date: new Date(), departurePlace: "Teterboro", arrivalPlace: "Miami", flightCategory: "Domestic", pax: "4" };
 
   return (
     <div className="bg-[#f6f6f6] rounded-xl border border-black p-4 md:p-6 w-full sticky top-4">
@@ -174,37 +169,41 @@ const BuyerItinerary = ({ itinerary, loading, error, onClose, onUpdate }) => {
       </div>
       
       {!isEditing && (
-        <div className="p-4 bg-white border border-black rounded-lg shadow-sm">
-          <div className="text-center text-black font-medium mb-2 text-lg">
-            {firstLeg.date ? formatDate(firstLeg.date) : "March 21, 2025"}
-          </div>
-          
-          <div className="flex items-center justify-between w-full">
-            <div className="flex flex-col items-center w-1/4">
-              <PlaneTakeoff className="text-black w-6 h-6" />
-              <span className="font-bold text-black mt-1 text-base text-center">
-                {firstLeg.departurePlace || "Teterboro"}
-              </span>
-            </div>
-            
-            <div className="flex-1 flex flex-col items-center px-1 w-2/4">
-              <div className="flex items-center w-full justify-center">
-                <div className="border-t-2 border-black flex-1"></div>
-                <ArrowRight className="text-black w-6 h-6 mx-2 flex-shrink-0" />
-                <div className="border-t-2 border-black flex-1"></div>
+        <div className="space-y-4">
+          {itinerary.itinerary.map((leg, index) => (
+            <div key={index} className="p-4 bg-white border border-black rounded-lg shadow-sm">
+              <div className="text-center text-black font-medium mb-2 text-lg">
+                {leg.date ? formatDate(leg.date) : 'Date not specified'}
               </div>
-              <div className="text-sm text-black mt-1 text-center">
-                {`${firstLeg.flightCategory || "Domestic"} ${firstLeg.pax || "4"}`}
+              
+              <div className="flex items-center justify-between w-full">
+                <div className="flex flex-col items-center w-1/4">
+                  <PlaneTakeoff className="text-black w-6 h-6" />
+                  <span className="font-bold text-black mt-1 text-base text-center">
+                    {leg.departurePlace || 'N/A'}
+                  </span>
+                </div>
+                
+                <div className="flex-1 flex flex-col items-center px-1 w-2/4">
+                  <div className="flex items-center w-full justify-center">
+                    <div className="border-t-2 border-black flex-1"></div>
+                    <ArrowRight className="text-black w-6 h-6 mx-2 flex-shrink-0" />
+                    <div className="border-t-2 border-black flex-1"></div>
+                  </div>
+                  <div className="text-sm text-black mt-1 text-center">
+                    {`${leg.flightCategory || 'N/A'} ${leg.pax || 'N/A'}`}
+                  </div>
+                </div>
+                
+                <div className="flex flex-col items-center w-1/4">
+                  <PlaneLanding className="text-black w-6 h-6" />
+                  <span className="font-bold text-black mt-1 text-base text-center">
+                    {leg.arrivalPlace || 'N/A'}
+                  </span>
+                </div>
               </div>
             </div>
-            
-            <div className="flex flex-col items-center w-1/4">
-              <PlaneLanding className="text-black w-6 h-6" />
-              <span className="font-bold text-black mt-1 text-base text-center">
-                {firstLeg.arrivalPlace || "Miami"}
-              </span>
-            </div>
-          </div>
+          ))}
         </div>
       )}
     </div>

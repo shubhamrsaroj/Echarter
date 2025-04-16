@@ -70,6 +70,18 @@ const ChatUI = ({ chatData, onClose, onMinimizeChange }) => {
     if (onMinimizeChange) {
       onMinimizeChange(isMinimized);
     }
+
+    // Handle body scrolling
+    if (!isMinimized) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    // Cleanup
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [isMinimized, onMinimizeChange]);
 
   useEffect(() => {
@@ -245,51 +257,58 @@ const ChatUI = ({ chatData, onClose, onMinimizeChange }) => {
     cursor: isDragging ? 'grabbing' : 'grab',
     background: '#fff',
     borderRadius: '8px',
+    pointerEvents: 'auto',
+    overflow: 'hidden'
   } : {
-    position: 'absolute',
-    inset: 0,
-    background: 'transparent',
+    position: 'relative',
+    height: '100%',
+    background: '#fff',
     display: 'flex',
     flexDirection: 'column',
+    borderRadius: '8px',
+    overflow: 'hidden'
   };
 
   return (
-    <div 
-      className="absolute inset-0 bg-transparent"
-      style={{ pointerEvents: isMinimized ? 'none' : 'auto' }}
-    >
+    <div className="h-full">
       <div 
-        className={`${isMinimized ? '' : 'absolute inset-0 flex flex-col bg-transparent'}`}
+        className="h-full flex flex-col bg-white rounded-lg shadow-lg overflow-hidden border border-black"
         style={containerStyle}
       >
         {/* Header */}
         <div 
-          className={`bg-white border-b border-gray-200 ${isMinimized ? 'rounded-t-xl' : 'rounded-t-xl'}`}
-          onMouseDown={handleMouseDown}
+          className="flex flex-col bg-white border-b border-gray-200 relative"
           style={{ pointerEvents: 'auto' }}
         >
-          {/* Info */}
-          <div className="px-4 py-3 flex justify-between items-center">
-            <div className="flex items-center space-x-2">
+          {/* Title and Controls Bar */}
+          <div 
+            className="flex items-center justify-between px-4 py-3"
+            onMouseDown={handleMouseDown}
+          >
+            <div className="flex items-center space-x-2 flex-1 min-w-0">
               {isMinimized && isInCall && (
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></span>
               )}
-              <h2 className="text-lg font-semibold text-gray-800 truncate" style={{ maxWidth: isMinimized ? '180px' : 'none' }}>
-                {chatData.message}
+              <h2 className="text-lg font-semibold text-gray-800 truncate">
+                Chat
               </h2>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-1 flex-shrink-0 ml-2">
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
                 aria-label={isMinimized ? "Maximize chat" : "Minimize chat"}
               >
-                {isMinimized ? <Maximize2 className="w-5 h-5 text-gray-700" /> : <Minimize2 className="w-5 h-5 text-gray-700" />}
+                {isMinimized ? (
+                  <Maximize2 className="w-5 h-5 text-gray-700" />
+                ) : (
+                  <Minimize2 className="w-5 h-5 text-gray-700" />
+                )}
               </button>
               {!isMinimized && onClose && (
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-1.5 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center"
                   aria-label="Close chat"
                 >
                   <X className="w-5 h-5 text-gray-700" />
@@ -300,7 +319,7 @@ const ChatUI = ({ chatData, onClose, onMinimizeChange }) => {
 
           {/* Action Buttons */}
           {!isMinimized && (
-            <div className="px-4 py-2 flex justify-between items-center bg-white">
+            <div className="px-4 py-2 flex justify-between items-center bg-white border-t border-gray-100">
               <div className="flex space-x-6">
                 <button className="flex flex-col items-center text-gray-600">
                   <Calendar className="w-5 h-5" />
@@ -320,7 +339,7 @@ const ChatUI = ({ chatData, onClose, onMinimizeChange }) => {
                 </button>
               </div>
               
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center">
                 <button 
                   onClick={handleCallToggle}
                   disabled={isTransitioningCall}
@@ -336,10 +355,19 @@ const ChatUI = ({ chatData, onClose, onMinimizeChange }) => {
         
         {/* Chat Area */}
         {!isMinimized && (
-          <div className="flex-1 relative overflow-hidden bg-white rounded-b-xl pb-4" style={{ pointerEvents: 'auto' }}>
+          <div className="flex-1 overflow-hidden bg-white pb-4">
             <div className={`h-full ${isInCall ? 'hidden' : ''}`}>
               <ChatComposite
                 adapter={chatAdapter}
+                options={{
+                  styles: {
+                    sendBox: {
+                      root: {
+                        marginBottom: '16px'
+                      }
+                    }
+                  }
+                }}
               />
             </div>
             {isInCall && callAdapter && (

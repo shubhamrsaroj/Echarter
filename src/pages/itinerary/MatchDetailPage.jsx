@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -52,4 +51,5 @@ const MatchDetailPage = () => {
 };
 
 export default MatchDetailPage;
+
 

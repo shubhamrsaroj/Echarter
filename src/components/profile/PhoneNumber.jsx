@@ -88,7 +88,8 @@ const PhoneNumber = ({ userDetails, editSection, setEditSection, handleSave }) =
                 value={phoneNumber}
                 onChange={handlePhoneChange}
                 className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter phone number"
+                placeholder="Enter phone number with country code (e.g. +91XXXXXXXXXX)"
+
               />
             </div>
             {isVerifying && (
