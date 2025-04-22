@@ -1,6 +1,6 @@
 import api from '../axios.config';
 
-export const ItineraryService = {
+export const SearchService = {
   getItineraryByText: async (itineraryText) => {
     // eslint-disable-next-line no-useless-catch
     try {

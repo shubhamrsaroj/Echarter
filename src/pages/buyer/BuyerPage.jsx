@@ -11,14 +11,14 @@ const BuyerPage = () => {
   };
 
   return (
-    <div className="flex flex-col overflow-y-auto">
-      {/* Header - Fixed at the top */}
-      <div className="flex justify-between items-center p-4 -mt-5">
+    <div className="flex flex-col h-screen">
+      {/* Header */}
+      <div className="flex justify-between items-center p-4">
         <ArrowLeft className="w-6 h-6 cursor-pointer text-black" onClick={handleBackClick} />
       </div>
       
-      {/* Main Content - No overflow on the container itself */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Main Content */}
+      <div className="flex-1">
         <ActivityCard />
       </div>
     </div>

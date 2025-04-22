@@ -1,15 +1,15 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import BaseDetail from '../../components/Itinerary/ItineraryDetails/BaseDetail';
-import { useItinerary } from '../../context/itinerary/ItineraryContext';
-import RouteMap from '../../components/Itinerary/Itinerary/RouteMap';
-import ItineraryText from '../../components/Itinerary/Itinerary/ItineraryText';
+import BaseDetail from '../../components/CharterSearch/SearchDetails/BaseDetail';
+import { useSearch } from '../../context/CharterSearch/SearchContext';
+import RouteMap from '../../components/common/RouteMap';
+import ItinerarySearchCard from '../../components/CharterSearch/Search/ItinerarySearchCard';
 
 const BaseDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { itineraryData, loading, getItineraryByText, setLoading } = useItinerary();
+  const { itineraryData, loading, getItineraryByText, setLoading } = useSearch();
 
   // Check if we have an itineraryText or ID from navigation state to re-fetch if needed
   const itineraryTextFromState = location.state?.copiedText || localStorage.getItem('lastItineraryText');
@@ -25,7 +25,7 @@ const BaseDetailPage = () => {
   }, [itineraryData, itineraryTextFromState, getItineraryByText, setLoading, loading]);
 
   const handleBackClick = () => {
-    navigate('/itinerary-details');
+    navigate('/search-details');
   };
 
   return (
@@ -45,7 +45,7 @@ const BaseDetailPage = () => {
           {!loading && itineraryData && (
             <div className="lg:w-2/5 lg:sticky lg:top-6 space-y-6">
               {itineraryData.itineraryResponseNewdata && (
-                <ItineraryText itinerary={itineraryData.itineraryResponseNewdata.itinerary} />
+                <ItinerarySearchCard itinerary={itineraryData.itineraryResponseNewdata.itinerary} />
               )}
               <RouteMap itineraryData={itineraryData} />
             </div>

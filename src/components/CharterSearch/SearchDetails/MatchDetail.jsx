@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useItinerary } from '../../../context/itinerary/ItineraryContext';
+import { useSearch } from '../../../context/CharterSearch/SearchContext';
 import { Plane, PlaneTakeoff, PlaneLanding, CalendarClock, ArrowLeft, TicketsPlane, Info, ListCollapse, X } from 'lucide-react';
 import LoadingSpinner from '../common/LoadingSpinner';
 import ErrorDisplay from '../common/ErrorDisplay';
+import InfoModal from '../../common/InfoModal';
 import { AcsService } from '../../../api/Acs/AcsService';
 import ChatUI from '../../../components/chat/ChatUI';
-import InfoModal from '../../common/InfoModal';
 import { tokenHandler } from '../../../utils/tokenHandler';
 import { toast } from 'react-toastify';
 
@@ -19,14 +19,14 @@ const PageContainer = ({ children }) => {
   );
 };
 
-const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
-  const { selectedCompanyDetails, loading, error, itineraryData } = useItinerary();
-  const dateAdjustment = itineraryData?.dateAdjustment || {};
+const MatchDetail = ({ setHoveredFlightCoords }) => {
+  const { selectedCompanyDetails, loading, error, itineraryData } = useSearch();
+  const match = itineraryData?.match || {};
+  const [infoModalUrl, setInfoModalUrl] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnectingInProgress, setIsConnectingInProgress] = useState(false);
   const [chatData, setChatData] = useState(null);
   const [activeCompanyId, setActiveCompanyId] = useState(null);
-  const [infoModalUrl, setInfoModalUrl] = useState(null);
   const [showRecommendation, setShowRecommendation] = useState(false);
   const [recommendationData, setRecommendationData] = useState(null);
   const [userIsPremium, setUserIsPremium] = useState(false);
@@ -73,8 +73,8 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
         return;
       }
 
-      // First check userCount = 0
-      if (company.userCount === 0) {
+      // First check userInfoCount = 0
+      if (company.userInfoCount === 0) {
         // Show email only card first
         const emailOnlyPrompt = selectedCompanyDetails.prompts?.find(p => p.EmailOnly);
         setRecommendationData({
@@ -88,7 +88,7 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
         return;
       }
 
-      // If userCount is not 0, directly check premium status
+      // If userInfoCount is not 0, directly check premium status
       checkPremiumAndRestricted(company);
 
     } catch (error) {
@@ -240,11 +240,6 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
     }
   };
 
-  const handleCloseChat = () => {
-    setChatData(null);
-    setActiveCompanyId(null);
-  };
-
   const handleMouseEnter = (haves) => {
     const coords = {
       fromLat: haves.fromLat,
@@ -254,11 +249,17 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
       fromCity: haves.fromCity || 'Unknown Departure',
       toCity: haves.toCity || 'Unknown Destination',
     };
+   
     setHoveredFlightCoords(coords);
   };
 
   const handleMouseLeave = () => {
     setHoveredFlightCoords(null);
+  };
+
+  const handleCloseChat = () => {
+    setChatData(null);
+    setActiveCompanyId(null);
   };
 
   const renderCompanyCard = (company) => {
@@ -282,28 +283,28 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
                 <img
                   src={imageUrl}
                   alt={company.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-center"
                 />
                 
                 {/* Overlay for Company Info - Top right */}
-                <div className="absolute top-2 right-2 p-4 text-right bg-white/60 backdrop-blur-[2px] shadow-lg rounded-lg border border-white/20">
+                <div className="absolute top-2 right-2 p-3 text-right bg-white/70 backdrop-blur-[2px] shadow-lg rounded-lg border border-white/20">
                   <h2 className="font-bold text-base text-black">{company.name || 'NA'}</h2>
-                  <p className="text-sm text-black mt-1">{company.city || 'NA'}, {company.country || 'NA'}</p>
+                  <p className="text-sm text-black">{company.city || 'NA'}, {company.country || 'NA'}</p>
                   {company.rankOverall !== null && (
-                <div className="flex items-center mt-4 justify-start sm:justify-end">
-                  <div className="w-28 h-3 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="bg-yellow-500 h-full rounded-full"
-                      style={{ width: `${company.rankOverall || 0}%` }}
-                    />
-                  </div>
-                  <p className="text-md font-semibold text-gray-600 ml-4">{company.rankOverall}</p>
-                </div>
-              )}
-                  <div className="flex items-center space-x-1 text-md text-black justify-end mt-1">
+                    <div className="flex items-center justify-end mt-1">
+                      <div className="w-24 h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                        <div
+                          className="bg-yellow-500 h-full rounded-full"
+                          style={{ width: `${company.rankOverall || 0}%` }}
+                        />
+                      </div>
+                      <p className="text-sm font-semibold text-black ml-2">{company.rankOverall}</p>
+                    </div>
+                  )}
+                  <div className="flex items-center text-sm text-black justify-end mt-1">
                     <p>Trust Score</p>
                     <Info 
-                      className="w-6 h-6 cursor-pointer" 
+                      className="w-5 h-5 ml-1 cursor-pointer" 
                       onClick={() => {
                         const trustScoreUrl = selectedCompanyDetails?.prompts?.find(p => p.TrustScore)?.TrustScore;
                         if (trustScoreUrl) {
@@ -443,7 +444,7 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
                   <img
                     src={company.logo}
                     alt={company.name}
-                    className="max-w-full max-h-full object-contain"
+                    className="w-full h-full object-contain p-2"
                   />
                 </div>
               ) : (
@@ -454,22 +455,22 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
             {/* Company Info - Right Aligned - 40% width */}
             <div className="flex flex-col justify-start sm:ml-auto text-left sm:text-right w-full sm:w-[40%]">
               <h2 className="font-bold text-lg text-black">{company.name}</h2>
-              <p className="text-md text-gray-600 mt-2">
+              <p className="text-md text-gray-600">
                 {company.city}
                 {company.country ? `, ${company.country}` : ''}
               </p>
               {company.rankOverall !== null && (
-                <div className="flex items-center mt-4 justify-start sm:justify-end">
+                <div className="flex items-center mt-1 justify-start sm:justify-end">
                   <div className="w-28 h-3 bg-gray-200 rounded-full overflow-hidden">
                     <div
                       className="bg-yellow-500 h-full rounded-full"
                       style={{ width: `${company.rankOverall || 0}%` }}
                     />
                   </div>
-                  <p className="text-md font-semibold text-gray-600 ml-4">{company.rankOverall}</p>
+                  <p className="text-md font-semibold text-gray-600 ml-2">{company.rankOverall}</p>
                 </div>
               )}
-              <div className="flex items-center text-md text-gray-600 mt-2 justify-start sm:justify-end">
+              <div className="flex items-center text-md text-gray-600 mt-1 justify-start sm:justify-end">
                 <p>Trust Score</p>
                 <Info 
                   className="w-4 h-4 ml-1 cursor-pointer" 
@@ -706,8 +707,7 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
               <img 
                 src={recommendationData.company?.logo || "https://md.aviapages.com/media/2022/12/26/solairus-aviation.png"} 
                 alt={recommendationData.company?.name || "Charter World"}
-                className="w-full h-auto object-contain rounded"
-                style={{ maxHeight: '120px' }}
+                className="w-full h-auto max-h-[120px] object-contain mx-auto"
               />
             </div>
             
@@ -725,7 +725,7 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
     );
   };
 
-  if (loading || !selectedCompanyDetails?.companyData || selectedCompanyDetails.companyData.length === 0) {
+  if (loading) {
     return (
       <PageContainer>
         <LoadingSpinner />
@@ -741,6 +741,14 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
     );
   }
 
+  if (!selectedCompanyDetails.companyData || selectedCompanyDetails.companyData.length === 0) {
+    return (
+      <PageContainer>
+        <div className="text-center py-4 text-sm">No Empty Legs found</div>
+      </PageContainer>
+    );
+  }
+
   // If chat is active, render as an overlay on top of the companies view
   if (chatData && activeCompanyId) {
     return (
@@ -750,10 +758,10 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
           <div className="transition-all duration-300 overflow-auto">
             <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
               <h1 className="font-bold text-2xl text-gray-800">
-                {dateAdjustment.title}
+                {match.title}
               </h1>
               <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-md">
-                Showing {selectedCompanyDetails.companyData.length} {dateAdjustment.title}
+                Showing {selectedCompanyDetails.companyData.length} {match.title}
               </div>
             </div>
 
@@ -801,10 +809,10 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
           <div>
             <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
               <h1 className="font-bold text-2xl text-gray-800">
-                {dateAdjustment.title}
+                {match.title}
               </h1>
               <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-md">
-                Showing {selectedCompanyDetails.companyData.length} {dateAdjustment.title}
+                Showing {selectedCompanyDetails.companyData.length} {match.title}
               </div>
             </div>
 
@@ -824,9 +832,9 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
     <PageContainer>
       <div>
         <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
-          <h1 className="font-bold text-3xl text-black">{dateAdjustment.title}</h1>
+          <h1 className="font-bold text-3xl text-black">{match.title}</h1>
           <div className="text-sm text-gray-600 bg-gray-50 px-4 py-2 rounded-md">
-            Showing {selectedCompanyDetails.companyData.length} {dateAdjustment.title}
+            Showing {selectedCompanyDetails.companyData.length} {match.title}
           </div>
         </div>
         <div className="flex flex-col gap-3">
@@ -842,4 +850,4 @@ const DateAdjustmentDetail = ({ setHoveredFlightCoords }) => {
   );
 };
 
-export default DateAdjustmentDetail;
+export default MatchDetail;

@@ -3,18 +3,18 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import BrokerDetail from '../../components/Itinerary/ItineraryDetails/BrokerDetail';
-import { useItinerary } from '../../context/itinerary/ItineraryContext';
-import RouteMap from '../../components/Itinerary/Itinerary/RouteMap';
-import ItineraryText from '../../components/Itinerary/Itinerary/ItineraryText';
+import BrokerDetail from '../../components/CharterSearch/SearchDetails/BrokerDetail';
+import { useSearch } from '../../context/CharterSearch/SearchContext';
+import RouteMap from '../../components/common/RouteMap';
+import ItinerarySearchCard from '../../components/CharterSearch/Search/ItinerarySearchCard';
 
 const BrokerDetailPage = () => {
   const navigate = useNavigate();
-  const { itineraryData, loading, setLoading } = useItinerary();
+  const { itineraryData, loading, setLoading } = useSearch();
 
   const handleBackClick = () => {
     setLoading(false); // Reset loading before navigating back
-    navigate('/itinerary-details');
+    navigate('/search-details');
   };
 
   return (
@@ -35,7 +35,7 @@ const BrokerDetailPage = () => {
           {!loading && itineraryData && (
             <div className="w-full lg:w-2/5 space-y-6 lg:sticky lg:top-6">
               {itineraryData.itineraryResponseNewdata && (
-                <ItineraryText itinerary={itineraryData.itineraryResponseNewdata.itinerary} />
+                <ItinerarySearchCard itinerary={itineraryData.itineraryResponseNewdata.itinerary} />
               )}
               <RouteMap itineraryData={itineraryData} />
             </div>

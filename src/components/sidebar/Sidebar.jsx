@@ -26,7 +26,7 @@ const Sidebar = () => {
   // const canSeeSellers = userRoles.some(role => ['Broker', 'Operator','User'].includes(role));
 
   const baseNavLinks = [
-    { name: 'Search', path: '/itinerary', icon: <Search size={30} /> },
+    { name: 'Search', path: '/search', icon: <Search size={30} /> },
     { name: 'Activity', path: '/conversation', icon: <MessagesSquare size={30} /> },
   ];
 

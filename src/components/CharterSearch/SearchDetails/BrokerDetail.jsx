@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useItinerary } from '../../../context/itinerary/ItineraryContext';
+import { useSearch } from '../../../context/CharterSearch/SearchContext';
 import { useNavigate } from 'react-router-dom';
 import { Plane, ArrowLeft, Info, ListCollapse, X } from 'lucide-react';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -21,7 +21,7 @@ const PageContainer = ({ children }) => {
 };
 
 const BrokerDetail = () => {
-  const { selectedCompanyDetails, loading, error, itineraryData } = useItinerary();
+  const { selectedCompanyDetails, loading, error, itineraryData } = useSearch();
   const navigate = useNavigate();
   const broker = itineraryData?.broker || {};
   const [isConnecting, setIsConnecting] = useState(false);
@@ -75,8 +75,8 @@ const BrokerDetail = () => {
         return;
       }
 
-      // First check userCount = 0
-      if (company.userCount === 0) {
+      // First check userInfoCount = 0
+      if (company.userInfoCount === 0) {
         // Show email only card first
         const emailOnlyPrompt = selectedCompanyDetails.prompts?.find(p => p.EmailOnly);
         setRecommendationData({
@@ -90,7 +90,7 @@ const BrokerDetail = () => {
         return;
       }
 
-      // If userCount is not 0, directly check premium status
+      // If userInfoCount is not 0, directly check premium status
       checkPremiumAndRestricted(company);
 
     } catch (error) {

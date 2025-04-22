@@ -51,4 +51,21 @@ export const BuyerService = {
     }
   },
 
+
+  // Update Itinerary needs endpoint
+  updateItineraryNeeds: async (itineraryId, needsStatus, text) => {
+    // eslint-disable-next-line no-useless-catch
+    try {
+      const requestBody = {
+        id: itineraryId,
+        needs: needsStatus,
+        text: text
+      };
+      const response = await api.post('/api/SinglePoint/UpdateItinerary', requestBody);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
 }

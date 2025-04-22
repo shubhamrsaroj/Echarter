@@ -1,16 +1,16 @@
 import React from 'react';
-import { useItinerary } from '../../context/itinerary/ItineraryContext';
+import { useSearch } from '../../context/CharterSearch/SearchContext';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import RouteMap from '../../components/Itinerary/Itinerary/RouteMap';
-import BaseCard from '../../components/Itinerary/Itinerary/BaseCard';
-import BrokerCard from '../../components/Itinerary/Itinerary/BrokerCard';
-import MatchCard from '../../components/Itinerary/Itinerary/MatchCard';
-import DateAdjustment from '../../components/Itinerary/Itinerary/DateAdjustment';
-import ItineraryText from '../../components/Itinerary/Itinerary/ItineraryText';
+import RouteMap from '../../components/common/RouteMap';
+import BaseCard from '../../components/CharterSearch/Search/BaseCard';
+import BrokerCard from '../../components/CharterSearch/Search/BrokerCard';
+import MatchCard from '../../components/CharterSearch/Search/MatchCard';
+import DateAdjustment from '../../components/CharterSearch/Search/DateAdjustment';
+import ItinerarySearchCard from '../../components/CharterSearch/Search/ItinerarySearchCard';
 
 const ItineraryDetailsPage = () => {
-  const { itineraryData, loading } = useItinerary();
+  const { itineraryData, loading } = useSearch();
   const navigate = useNavigate();
 
   return (
@@ -18,7 +18,7 @@ const ItineraryDetailsPage = () => {
       <div className="container mx-auto p-6 relative">
         {/* Back Button & Heading - Arrow Above the Heading */}
         <div className="flex flex-col items-start space-y-1 mb-6">
-          <button onClick={() => navigate('/itinerary')} className="p-1">
+          <button onClick={() => navigate('/search')} className="p-1">
             <ArrowLeft className="w-6 h-6" />
           </button>
           <h1 className="text-2xl font-bold">Option for You</h1>
@@ -38,7 +38,7 @@ const ItineraryDetailsPage = () => {
             {/* Right Column: Map and Itinerary Text - Sticky without scrolling */}
             <div className="lg:w-2/5 lg:sticky lg:top-6 lg:self-start space-y-6">
               {itineraryData.itineraryResponseNewdata && (
-                <ItineraryText itinerary={itineraryData.itineraryResponseNewdata.itinerary} />
+                <ItinerarySearchCard itinerary={itineraryData.itineraryResponseNewdata.itinerary} />
               )}
               <RouteMap itineraryData={itineraryData} />
             </div>

@@ -2,14 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import DateAdjustmentDetail from '../../components/Itinerary/ItineraryDetails/DateAdjustmentDetail';
-import { useItinerary } from '../../context/itinerary/ItineraryContext';
-import RouteMap from '../../components/Itinerary/Itinerary/RouteMap';
-import ItineraryText from '../../components/Itinerary/Itinerary/ItineraryText';
+import MatchDetail from '../../components/CharterSearch/SearchDetails/MatchDetail';
+import { useSearch } from '../../context/CharterSearch/SearchContext';
+import RouteMap from '../../components/common/RouteMap'
+import ItinerarySearchCard from '../../components/CharterSearch/Search/ItinerarySearchCard';
 
-const DateAdjustmentDetailPage = () => {
+const MatchDetailPage = () => {
   const navigate = useNavigate();
-  const { itineraryData, loading, setLoading } = useItinerary();
+  const { itineraryData, loading, setLoading } = useSearch();
   const [hoveredFlightCoords, setHoveredFlightCoords] = useState(null);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ const DateAdjustmentDetailPage = () => {
 
   const handleBackClick = () => {
     setLoading(false); // Reset loading before navigating back
-    navigate('/itinerary-details');
+    navigate('/search-details');
   };
 
   return (
@@ -31,15 +31,15 @@ const DateAdjustmentDetailPage = () => {
         {/* Added padding to avoid overlap */}
         {/* Main Content Area */}
         <div className="flex flex-col gap-6 items-start lg:flex-row">
-          {/* Left Column: DateAdjustmentDetail */}
+          {/* Left Column: MatchDetail */}
           <div className="w-full lg:w-3/5">
-            <DateAdjustmentDetail setHoveredFlightCoords={setHoveredFlightCoords} />
+            <MatchDetail setHoveredFlightCoords={setHoveredFlightCoords} />
           </div>
           {/* Right Column: Map and Itinerary Text - Responsive Layout */}
           {!loading && itineraryData && (
             <div className="w-full lg:w-2/5 space-y-6 lg:sticky lg:top-6">
               {itineraryData.itineraryResponseNewdata && (
-                <ItineraryText itinerary={itineraryData.itineraryResponseNewdata.itinerary} />
+                <ItinerarySearchCard itinerary={itineraryData.itineraryResponseNewdata.itinerary} />
               )}
               <RouteMap itineraryData={itineraryData} hoveredFlightCoords={hoveredFlightCoords} />
             </div>
@@ -50,4 +50,6 @@ const DateAdjustmentDetailPage = () => {
   );
 };
 
-export default DateAdjustmentDetailPage;
+export default MatchDetailPage;
+
+

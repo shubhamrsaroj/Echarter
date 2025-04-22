@@ -1,12 +1,12 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { ItineraryService } from '../../api/itinerary/ItineraryService';
+import { SearchService } from '../../api/CharterSearch/SearchService';
 import { useNavigate } from 'react-router-dom';
 
 const ItineraryContext = createContext();
 
-export const useItinerary = () => useContext(ItineraryContext);
+export const useSearch = () => useContext(ItineraryContext);
 
-export const ItineraryProvider = ({ children }) => {
+export const SearchProvider = ({ children }) => {
   const [itineraryData, setItineraryData] = useState(() => {
     const saved = localStorage.getItem('itineraryData');
     return saved ? JSON.parse(saved) : null;
@@ -18,7 +18,7 @@ export const ItineraryProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(5);
   const [currentCategory, setCurrentCategory] = useState('');
   const [currentFlight, setCurrentFlight] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
@@ -46,7 +46,7 @@ export const ItineraryProvider = ({ children }) => {
       setError(null);
       setItineraryData(null);
 
-      const response = await ItineraryService.getItineraryByText(itineraryText);
+      const response = await SearchService.getItineraryByText(itineraryText);
 
       if (response.success) {
         const flights = response.data.itineraryResponseNewdata.itinerary.map((leg) => ({
@@ -75,8 +75,8 @@ export const ItineraryProvider = ({ children }) => {
     }
   };
 
-  const getCompaniesByCategory = async (baseOption, flight, page = 1, size = 20) => {
-    navigate('/itinerary/base-details');
+  const getCompaniesByCategory = async (baseOption, flight, page = 1, size = 5) => {
+    navigate('/search/base-details');
     try {
       setLoading(true);
       setError(null);
@@ -100,7 +100,7 @@ export const ItineraryProvider = ({ children }) => {
         seenCurrency: baseOption.currency,
       };
 
-      const response = await ItineraryService.getCompaniesByCategory(payload);
+      const response = await SearchService.getCompaniesByCategory(payload);
 
       if (response.success) {
         const companies = response.data.companies || response.data;
@@ -110,7 +110,10 @@ export const ItineraryProvider = ({ children }) => {
 
         const totalCompanies = response.data.totalCompanies || (companies.length < size ? companies.length : size * page + 1);
         setTotalCount(totalCompanies);
-        setTotalPages(Math.ceil(totalCompanies / size));
+        
+        // Limit to a maximum of 6 pages
+        const calculatedPages = Math.ceil(totalCompanies / size);
+        setTotalPages(Math.min(calculatedPages, 6));
       } else {
         setError(response.message || 'Failed to get company details');
       }
@@ -124,7 +127,7 @@ export const ItineraryProvider = ({ children }) => {
   };
 
   const getCompaniesByMatch = async (itineraryData) => {
-    navigate('/itinerary/match-details');
+    navigate('/search/match-details');
     try {
       setLoading(true);
       setError(null);
@@ -136,7 +139,7 @@ export const ItineraryProvider = ({ children }) => {
         ids: ids
       };
 
-      const response = await ItineraryService.getCompaniesByCategory(payload);
+      const response = await SearchService.getCompaniesByCategory(payload);
 
       if (response.success) {
         const companies = response.data || [];
@@ -155,7 +158,7 @@ export const ItineraryProvider = ({ children }) => {
   };
 
   const getCompaniesByDateAdjustment = async (itineraryData) => {
-    navigate('/itinerary/date-adjustment-details');
+    navigate('/search/date-adjustment-details');
     try {
       setLoading(true);
       setError(null);
@@ -167,7 +170,7 @@ export const ItineraryProvider = ({ children }) => {
         ids: ids
       };
 
-      const response = await ItineraryService.getCompaniesByCategory(payload);
+      const response = await SearchService.getCompaniesByCategory(payload);
 
       if (response.success) {
         const companies = response.data || [];
@@ -186,7 +189,7 @@ export const ItineraryProvider = ({ children }) => {
   };
 
   const getCompaniesByBroker = async (itineraryData) => {
-    navigate('/itinerary/broker-details');
+    navigate('/search/broker-details');
     try {
       setLoading(true);
       setError(null);
@@ -198,7 +201,7 @@ export const ItineraryProvider = ({ children }) => {
         ids: ids
       };
 
-      const response = await ItineraryService.getCompaniesByCategory(payload);
+      const response = await SearchService.getCompaniesByCategory(payload);
 
       if (response.success) {
         const companies = response.data || [];
@@ -233,7 +236,7 @@ export const ItineraryProvider = ({ children }) => {
     setItineraryData(null);
     setSelectedCompanyDetails(null);
     setCurrentPage(1);
-    setPageSize(20);
+    setPageSize(5);
     setCurrentCategory('');
     setCurrentFlight(null);
     setTotalCount(0);

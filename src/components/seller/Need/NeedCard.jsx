@@ -7,6 +7,7 @@ import NeedItinerary from "./NeedItinerary";
 import InfoModal from "../../common/InfoModal";
 import { getInfoContent } from "../../../api/infoService";
 import { toast } from "react-toastify";
+import RouteMap from "../../common/RouteMap";
 
 const NeedCard = () => {
   const { 
@@ -83,6 +84,30 @@ const NeedCard = () => {
     return <SkeletonNeedCard />;
   }
 
+  // Create route map data from itinerary
+  const getRouteMapData = () => {
+    if (!selectedItineraryId || !itineraries[selectedItineraryId] || !itineraries[selectedItineraryId].itinerary) {
+      return null;
+    }
+
+    return {
+      flights: itineraries[selectedItineraryId].itinerary.map(leg => ({
+        from: leg.departurePlace,
+        to: leg.arrivalPlace,
+        fromCoordinates: {
+          lat: parseFloat(leg.departureLatitude),
+          long: parseFloat(leg.departureLongitude)
+        },
+        toCoordinates: {
+          lat: parseFloat(leg.arrivalLatitude),
+          long: parseFloat(leg.arrivalLongitude)
+        },
+        fromCity: leg.departurePlace,
+        toCity: leg.arrivalPlace
+      }))
+    };
+  };
+
   return (
     <div className="flex flex-col md:flex-row w-full -mt-4">
       {/* Left Side: Need List */}
@@ -115,10 +140,10 @@ const NeedCard = () => {
                 </div>
               )}
               <div
-                className={`border border-black rounded-lg relative p-4 bg-white mb-4 overflow-hidden ${
+                className={`border border-black rounded-lg relative p-4 mb-4 overflow-hidden ${
                   selectedItineraryId === need.id
-                  ? 'ring-2 ring-blue-500 shadow-lg transform scale-[1.02] transition-all'
-                  : ''
+                   ? 'ring-2 ring-black bg-blue-50 shadow-lg transform scale-[1.02] transition-all'
+                : 'bg-white'
                 }`}
               >
                 <div className="flex justify-between items-start">
@@ -153,19 +178,31 @@ const NeedCard = () => {
         )}
       </div>
 
-      {/* Right Side: Itinerary Display */}
-      <div className="w-full md:w-1/2 p-4 mt-2 md:mt-8 relative">
-        <div className="sticky top-4">
-          {selectedItineraryId && (
-            <NeedItinerary
-              itinerary={itineraries[selectedItineraryId] || []}
-              loading={loadingItinerary}
-              error={itineraryError}
-              onClose={handleCloseItinerary}
-              selectedItineraryId={selectedItineraryId}
-            />
-          )}
-        </div>
+      {/* Right Side: Itinerary and Route Map Display - Updated with sticky positioning */}
+      <div className="w-full md:w-1/2 p-4 mt-2 md:mt-8">
+        {selectedItineraryId && (
+          <div className="lg:sticky lg:top-6 space-y-4">
+            {/* NeedItinerary Component */}
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <NeedItinerary
+                itinerary={itineraries[selectedItineraryId] || []}
+                loading={loadingItinerary}
+                error={itineraryError}
+                onClose={handleCloseItinerary}
+                selectedItineraryId={selectedItineraryId}
+              />
+            </div>
+
+            {/* RouteMap Component */}
+            {itineraries[selectedItineraryId] && itineraries[selectedItineraryId].itinerary && (
+             
+                <RouteMap
+                  itineraryData={getRouteMapData()}
+                />
+  
+            )}
+          </div>
+        )}
       </div>
 
       {/* Info Modal */}

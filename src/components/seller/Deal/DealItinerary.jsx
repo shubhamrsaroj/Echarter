@@ -58,7 +58,7 @@ const DealItinerary = ({ itinerary, loading, error, onClose }) => {
 
   if (!itinerary || !itinerary.itinerary) {
     return (
-      <div className="bg-white rounded-xl border border-black p-6 relative">
+      <div className="bg-white rounded-xl border-2 border-black p-6 relative">
         <button
           className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-gray-200 rounded-full hover:bg-gray-300 border border-black"
           onClick={onClose}
@@ -81,7 +81,7 @@ const DealItinerary = ({ itinerary, loading, error, onClose }) => {
   };
 
   return (
-    <div className="bg-[#f6f6f6] rounded-xl border border-black p-4 md:p-6 w-full sticky top-4">
+    <div className="bg-[#f6f6f6] rounded-xl  border border-black p-4 md:p-6 w-full">
       <div className="relative">
         <button
           className="absolute top-0 right-0 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-[#f6f6f6] rounded-full hover:bg-gray-300 border border-black"
@@ -138,4 +138,5 @@ const DealItinerary = ({ itinerary, loading, error, onClose }) => {
     </div>
   );
 };
+
 export default DealItinerary;

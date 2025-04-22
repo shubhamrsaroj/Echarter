@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Info } from 'lucide-react';
-import { useItinerary } from '../../../context/itinerary/ItineraryContext';
+import { useSearch } from '../../../context/CharterSearch/SearchContext';
 import InfoModal from '../../common/InfoModal';
 import { toast } from 'react-toastify';
 
 const BrokerCard = ({ broker = {} }) => {
-  const { getCompaniesByBroker, itineraryData } = useItinerary();
+  const { getCompaniesByBroker, itineraryData } = useSearch();
   const [infoUrl, setInfoUrl] = useState('');
   
   // If ids array is empty, don't render the component
@@ -34,13 +34,19 @@ const BrokerCard = ({ broker = {} }) => {
     setInfoUrl(broker.infoUrl);
   };
   
+  // Check if recommendation should be shown
+  const showRecommendation = itineraryData?.itineraryResponseNewdata?.trip_category === 'passenger' || 
+                            broker.title === 'Verified Brokers';
+  
   return (
     <>
       <div className="bg-white rounded-xl border border-b-3 p-6 relative">
         <div className="absolute top-4 right-4 text-right">
-          <h3 className="font-semibold text-lg text-black">{broker.title}</h3>
+          <h3 className="font-semibold text-xl text-black">{broker.title}</h3>
           <p className="text-sm text-black mb-1">{broker.message}</p>
-          <p className="text-sm text-gray-700 mb-1 ml-[120px]">{itineraryData.itineraryResponseNewdata.brokers_recommendation}</p>
+          {showRecommendation && (
+            <p className="text-sm text-gray-700 mb-1 ml-[120px]">{itineraryData.itineraryResponseNewdata.brokers_recommendation}</p>
+          )}
           <div className="flex justify-end">
             <button
               onClick={handleInfoClick}

@@ -1,9 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PlaneTakeoff, PlaneLanding, ArrowRight, X, Pencil, Mic } from "lucide-react";
+import { useBuyerContext } from "../../../context/buyer/BuyerContext";
 
-const BuyerItinerary = ({ itinerary, loading, error, onClose, onUpdate }) => {
+const BuyerItinerary = ({ itinerary, loading, error, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [itineraryText, setItineraryText] = useState("");
+  const [needsStatus, setNeedsStatus] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { updateItineraryNeeds, fetchItinerary } = useBuyerContext();
+  
+  useEffect(() => {
+    if (itinerary) {
+      setNeedsStatus(itinerary.needs );
+      setItineraryText(itinerary.itineraryText || "");
+    }
+  }, [itinerary]);
+
+
+
+  console.log("itinerary data:", itinerary);
   
   // Handle edit mode toggle
   const handleEditClick = () => {
@@ -13,17 +28,36 @@ const BuyerItinerary = ({ itinerary, loading, error, onClose, onUpdate }) => {
     setIsEditing(true);
   };
   
-  // Handle update submission
-  const handleUpdate = () => {
-    if (onUpdate && itineraryText.trim()) {
-      onUpdate(itineraryText);
+  // Handle needs toggle
+  const handleNeedsToggle = async () => {
+    if (!itinerary?.itineraryId) return;
+    
+    const newNeedsStatus = !needsStatus;
+    setNeedsStatus(newNeedsStatus);
+    
+    // Only make API call if not in edit mode
+    if (!isEditing) {
+      // When not in edit mode, only send needs status without text
+      await updateItineraryNeeds(itinerary.itineraryId, newNeedsStatus);
     }
-    setIsEditing(false);
+  };
+  
+  // Handle update submission
+  const handleUpdate = async () => {
+    if (!itinerary?.itineraryId || !itineraryText.trim()) return;
+    
+    setIsUpdating(true);
+    const success = await updateItineraryNeeds(itinerary.itineraryId, needsStatus, itineraryText.trim());
+    if (success) {
+      await fetchItinerary(itinerary.itineraryId);
+      setIsEditing(false);
+    }
+    setIsUpdating(false);
   };
   
   if (loading) {
     return (
-      <div className="bg-[#f6f6f6] rounded-xl border border-black p-6 relative animate-pulse">
+      <div className="bg-white rounded-xl border border-black p-6 relative">
         <div className="relative mb-8 pt-4">
           <div className="absolute top-4 right-3 w-10 h-10 flex items-center justify-center bg-transparent rounded-full border border-gray-300">
             <div className="w-6 h-6 bg-gray-300 rounded-full"></div>
@@ -111,10 +145,10 @@ const BuyerItinerary = ({ itinerary, loading, error, onClose, onUpdate }) => {
   };
 
   return (
-    <div className="bg-[#f6f6f6] rounded-xl border border-black p-4 md:p-6 w-full sticky top-4">
-      <div className="relative mb-8 pt-4">
+    <div className="bg-[#f6f6f6] h-full">
+      <div className="relative mb-6">
         <button
-          className="absolute top-4 right-3 w-10 h-10 flex items-center justify-center bg-transparent rounded-full hover:bg-gray-200 border border-black"
+          className="absolute top-0 right-0 w-10 h-10 flex items-center justify-center bg-transparent rounded-full hover:bg-gray-200 border border-black"
           onClick={onClose}
         >
           <X className="w-6 h-6 cursor-pointer text-black" />
@@ -124,17 +158,23 @@ const BuyerItinerary = ({ itinerary, loading, error, onClose, onUpdate }) => {
 
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
-          <span className="text-base font-bold text-black">Passenger</span>
+          <span className="text-base font-bold text-black">{itinerary.tripCategory}</span>
           <div className="flex items-center">
             <span className="text-sm mr-4">Needs</span>
-            <div className="w-12 h-6 bg-green-500 rounded-full relative flex items-center">
-              <div className="absolute right-1 w-5 h-5 bg-white rounded-full"></div>
-            </div>
+            <button 
+              onClick={handleNeedsToggle}
+              className={`w-12 h-6 rounded-full relative flex items-center transition-colors duration-200 ${
+                needsStatus ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+            >
+              <div className={`absolute w-5 h-5 bg-white rounded-full transition-transform duration-200 ${
+                needsStatus ? 'right-1' : 'left-1'
+              }`}></div>
+            </button>
           </div>
         </div>
 
         {isEditing ? (
-          // Edit mode UI
           <div>
             <div className="relative mb-4">
               <textarea
@@ -147,16 +187,16 @@ const BuyerItinerary = ({ itinerary, loading, error, onClose, onUpdate }) => {
             </div>
             <button
               onClick={handleUpdate}
+              disabled={isUpdating}
               className="w-full bg-black text-white py-3 rounded-lg font-medium mb-3"
             >
-              Update
+              {isUpdating ? "Updating..." : "Update"}
             </button>
           </div>
         ) : (
-          // View mode UI - Position pencil icon directly adjacent to the text
           <div className="flex items-center">
             <p className="text-base text-black">
-              {itinerary.itineraryText || "No itinerary text"}
+              {itineraryText || "No itinerary text"}
             </p>
             <button 
               onClick={handleEditClick}
@@ -169,9 +209,9 @@ const BuyerItinerary = ({ itinerary, loading, error, onClose, onUpdate }) => {
       </div>
       
       {!isEditing && (
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto">
           {itinerary.itinerary.map((leg, index) => (
-            <div key={index} className="p-4 bg-white border border-black rounded-lg shadow-sm">
+            <div key={index} className="p-4 bg-white border-2 border-black rounded-lg shadow-sm">
               <div className="text-center text-black font-medium mb-2 text-lg">
                 {leg.date ? formatDate(leg.date) : 'Date not specified'}
               </div>
@@ -209,4 +249,5 @@ const BuyerItinerary = ({ itinerary, loading, error, onClose, onUpdate }) => {
     </div>
   );
 };
+
 export default BuyerItinerary;

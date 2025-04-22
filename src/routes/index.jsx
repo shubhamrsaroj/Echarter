@@ -7,12 +7,12 @@ import LoginPage from '../pages/auth/LoginPage';
 import SignupPage from '../pages/auth/SignupPage';
 import VerifyOtpPage from '../pages/auth/VerifyOtpPage';
 
-import ItineraryInputPage from '../pages/itinerary/ItineraryInputPage';
-import ItineraryDetailPage from '../pages/itinerary/ItineraryDetailPage';
-import BaseDetailPage from '../pages/itinerary/BaseDetailPage';
-import MatchDetailPage from '../pages/itinerary/MatchDetailPage';
-import DateAdjustmentDetailPage from '../pages/itinerary/DateAdjustmentDetailPage';
-import BrokerDetailPage from '../pages/itinerary/BrokerDetailPage';
+import SearchInputPage from '../pages/CharterSearch/SearchInputPage';
+import SearchDetailPage from '../pages/CharterSearch/SearchDetailPage';
+import BaseDetailPage from '../pages/CharterSearch/BaseDetailPage';
+import MatchDetailPage from '../pages/CharterSearch/MatchDetailPage';
+import DateAdjustmentDetailPage from '../pages/CharterSearch/DateAdjustmentDetailPage';
+import BrokerDetailPage from '../pages/CharterSearch/BrokerDetailPage';
 
 import SellerPage from '../pages/seller/SellerPage';
 import BuyerPage from '../pages/buyer/BuyerPage';
@@ -28,7 +28,7 @@ import CommonLayout from '../layouts/CommonLayout';
 import { SellerProvider } from '../context/seller/SellerContext';
 import { BuyerProvider } from '../context/buyer/BuyerContext';
 
-import { ItineraryProvider } from '../context/itinerary/ItineraryContext';
+import { SearchProvider } from '../context/CharterSearch/SearchContext';
 import { UserDetailsProvider } from '../context/profile/UserDetailsContext';
 
 // Helper function to wrap routes with common layout and appropriate provider
@@ -40,34 +40,44 @@ const wrapWithProvider = (Provider, Component) => (
   </ProtectedRoute>
 );
 
+// Helper function to wrap routes with multiple providers
+const wrapWithMultipleProviders = (Providers, Component) => (
+  <ProtectedRoute>
+    <CommonLayout>
+      {Providers.reduce((acc, Provider) => (
+        <Provider>{acc}</Provider>
+      ), Component)}
+    </CommonLayout>
+  </ProtectedRoute>
+);
+
 export const routes = [
   // Public Routes
   { path: "/signup", element: <SignupPage /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/verify-otp", element: <VerifyOtpPage /> },
 
-  // Protected Routes with Itinerary Provider
-  { path: "/itinerary", element: wrapWithProvider(ItineraryProvider, <ItineraryInputPage />) },
-  { path: "/itinerary-details", element: wrapWithProvider(ItineraryProvider, <ItineraryDetailPage />) },
-  { path: "/itinerary/broker-details", element: wrapWithProvider(ItineraryProvider, <BrokerDetailPage />) },
-  { path: "/itinerary/base-details", element: wrapWithProvider(ItineraryProvider, <BaseDetailPage />) },
-  { path: "/itinerary/match-details", element: wrapWithProvider(ItineraryProvider, <MatchDetailPage />) },
-  { path: "/itinerary/date-adjustment-details", element: wrapWithProvider(ItineraryProvider, <DateAdjustmentDetailPage />) },
+  // Protected Routes with search Provider
+  { path: "/search", element: wrapWithProvider(SearchProvider, <SearchInputPage />) },
+  { path: "/search-details", element: wrapWithProvider(SearchProvider, <SearchDetailPage />) },
+  { path: "/search/broker-details", element: wrapWithProvider(SearchProvider, <BrokerDetailPage />) },
+  { path: "/search/base-details", element: wrapWithProvider(SearchProvider, <BaseDetailPage />) },
+  { path: "/search/match-details", element: wrapWithProvider(SearchProvider, <MatchDetailPage />) },
+  { path: "/search/date-adjustment-details", element: wrapWithProvider(SearchProvider, <DateAdjustmentDetailPage />) },
 
   // Protected Routes with Seller Provider
   { path: "/seller", element: wrapWithProvider(SellerProvider, <SellerPage />) },
-  
 
-  // Protected Routes with buyer Provider
-  { path: "/conversation", element: wrapWithProvider(BuyerProvider, <BuyerPage  />) },
+  // Protected Routes with both Buyer and Search Provider
+  { path: "/conversation", element: wrapWithMultipleProviders([BuyerProvider, SearchProvider], <BuyerPage />) },
 
-   { path: "/chat", element: wrapWithProvider(React.Fragment, <ChatPage  />) },
+  { path: "/chat", element: wrapWithProvider(React.Fragment, <ChatPage />) },
 
   // Protected Routes with User Details Provider
   { path: "/profile", element: wrapWithProvider(UserDetailsProvider, <UserProfilePage />) },
 
-  // Redirect root to itinerary
-  { path: "/", element: <ProtectedRoute><Navigate to="/itinerary" replace /></ProtectedRoute> },
+  // Redirect root to search
+  { path: "/", element: <ProtectedRoute><Navigate to="/search" replace /></ProtectedRoute> },
 
   // Catch all route
   { path: "*", element: <Navigate to="/" replace /> },

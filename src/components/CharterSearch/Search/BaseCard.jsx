@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Plane, Info } from 'lucide-react';
-import { useItinerary } from '../../../context/itinerary/ItineraryContext';
+import { useSearch } from '../../../context/CharterSearch/SearchContext';
 import InfoModal from '../../common/InfoModal';
 import { toast } from 'react-toastify';
 
 const BaseCard = ({ itineraryData = {} }) => {
-  const { getCompaniesByCategory, setSelectedBaseOption } = useItinerary();
+  const { getCompaniesByCategory, setSelectedBaseOption } = useSearch();
   const [infoUrl, setInfoUrl] = useState('');
   
   const formatPrice = (price) => {
@@ -47,7 +47,7 @@ const BaseCard = ({ itineraryData = {} }) => {
               className="bg-white rounded-xl border border-b-3 p-6 relative"
             >
               <div className="absolute top-4 right-4 text-right">
-                <h3 className="font-semibold text-lg text-black">{option.category}</h3>
+                <h3 className="font-semibold text-xl text-black">{option.category}</h3>
                 <p className="text-sm text-black">{option.message}</p>
                 <div className="flex items-center justify-end mt-2">
                   <button 

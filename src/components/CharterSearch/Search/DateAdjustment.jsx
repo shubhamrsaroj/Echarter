@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
 import { Info } from 'lucide-react';
-import { useItinerary } from '../../../context/itinerary/ItineraryContext';
+import { useSearch } from '../../../context/CharterSearch/SearchContext';
 import InfoModal from '../../common/InfoModal';
 import { toast } from 'react-toastify';
 
-const MatchCard = ({ match = {} }) => {
-  const { getCompaniesByMatch, itineraryData } = useItinerary();
+const DateAdjustment = ({ adjustment = {} }) => {
+  const { getCompaniesByDateAdjustment, itineraryData } = useSearch();
   const [infoUrl, setInfoUrl] = useState('');
   
   // If ids array is empty, don't render the component
-  if (!match.ids || match.ids.length === 0) {
+  if (!adjustment.ids || adjustment.ids.length === 0) {
     return null;
   }
   
-  const handleMatchClick = async () => {
+  const handleDateAdjustmentClick = async () => {
     if (itineraryData) {
-      await getCompaniesByMatch(itineraryData);
+      await getCompaniesByDateAdjustment(itineraryData);
     }
   };
 
   const handleInfoClick = () => {
-    if (!match.infoUrl) {
+    if (!adjustment.infoUrl) {
       toast.info('No information available at the moment.', {
         position: 'top-right',
         autoClose: 3000,
@@ -31,15 +31,15 @@ const MatchCard = ({ match = {} }) => {
       });
       return;
     }
-    setInfoUrl(match.infoUrl);
+    setInfoUrl(adjustment.infoUrl);
   };
   
   return (
     <>
       <div className="bg-white rounded-xl border border-b-3 p-6 relative">
         <div className="absolute top-4 right-4 text-right">
-          <h3 className="font-semibold text-lg text-black">{match.title}</h3>
-          <p className="text-sm text-black">{match.message}</p>
+          <h3 className="font-semibold text-xl text-black">{adjustment.title}</h3>
+          <p className="text-sm text-black">{adjustment.message}</p>
           <div className="flex items-center justify-end mt-2">
             <button 
               onClick={handleInfoClick}
@@ -52,8 +52,8 @@ const MatchCard = ({ match = {} }) => {
         
         <div className="flex items-center mb-2">
           <img
-            src={match.image}
-            alt="Match"
+            src={adjustment.image}
+            alt="Adjustment"
             className="w-24 h-24 rounded-full border border-gray-200 object-cover"
           />
         </div>
@@ -61,14 +61,14 @@ const MatchCard = ({ match = {} }) => {
         <div className="flex items-center justify-between mt-4">
           <div className="bg-[#c1ff72] py-1 px-3 rounded-lg inline-block">
             <span className="font-medium text-black text-sm">
-              {match.count} Nearby
+              {adjustment.count} Nearby
             </span>
           </div>
           <button 
-            onClick={handleMatchClick}
+            onClick={handleDateAdjustmentClick}
             className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition-all"
           >
-            {match.button}
+            {adjustment.button}
           </button>
         </div>
       </div>
@@ -77,4 +77,4 @@ const MatchCard = ({ match = {} }) => {
   );
 };
 
-export default MatchCard;
+export default DateAdjustment;

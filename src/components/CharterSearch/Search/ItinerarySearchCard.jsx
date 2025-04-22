@@ -1,7 +1,7 @@
 import React from "react";
 import { PlaneTakeoff, PlaneLanding, ArrowRight } from "lucide-react";
 
-const ItineraryText = ({ itinerary }) => {
+const ItinerarySearchCard = ({ itinerary }) => {
   if (!itinerary || itinerary.length === 0) {
     return null;
   }
@@ -17,7 +17,7 @@ const ItineraryText = ({ itinerary }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-black p-3 sm:p-4 md:p-6 w-full max-w-full overflow-hidden">
+    <div className="bg-white rounded-xl border-2 border-black p-3 sm:p-4 md:p-6 w-full max-w-full overflow-hidden">
       <h2 className="text-xl md:text-2xl font-bold mb-2 md:mb-4 text-black text-center">
         Itinerary
       </h2>
@@ -73,4 +73,4 @@ const ItineraryText = ({ itinerary }) => {
   );
 };
 
-export default ItineraryText;
+export default ItinerarySearchCard;

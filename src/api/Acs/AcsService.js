@@ -1,6 +1,41 @@
 import api from '../axios.config';
 
 export const AcsService = {
+  isTokenValid: (token) => {
+    if (!token) return false;
+    
+    try {
+      // Extract the payload from JWT token (format: header.payload.signature)
+      const base64Url = token.split('.')[1];
+      if (!base64Url) return false;
+      
+      // Convert base64url to base64
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      
+      // Decode the payload
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      
+      const payload = JSON.parse(jsonPayload);
+      
+      // Check if token is expired
+      // exp is in seconds, Date.now() is in milliseconds
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        console.log('ACS token expired');
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error checking token validity:', error);
+      return false;
+    }
+  },
+
   getChatThread: async ({ itineraryId, companyId, needs, isBuyer, source, conversationId }) => {
     const payload = {
       itineraryId,
@@ -44,39 +79,27 @@ export const AcsService = {
     }
   },
 
-  validateAndRefreshToken: async (token, createdDate) => {
+  getRefreshedAcsToken: async () => {
     try {
-      // Check if more than 1 hour has passed since creation
-      const creationTime = new Date(createdDate).getTime();
-      const currentTime = new Date().getTime();
-      const oneHourInMs = 60 * 60 * 1000;
-      const isExpired = (currentTime - creationTime) > oneHourInMs;
-
-      // If less than an hour has passed, token is still valid
-      if (!isExpired) {
-        return {
-          isValid: true,
-          token: token
-        };
-      }
-
-      // If more than an hour, refresh the token
-      const response = await api.get('/api/SinglePoint/GetRefreshedAcsToken', {
-        params: { token }
-      });
-
+      console.log('AcsService.getRefreshedAcsToken - getting fresh token');
+      const response = await api.get(`/api/SinglePoint/GetRefreshedAcsToken`);
+      
       if (response.status === 200 && response.data.success) {
-        const { accessToken, acsUserId } = response.data.data;
-        return {
-          isValid: true,
+        const { userId, acsUserId, accessToken } = response.data.data;
+        
+        return { 
+          userId, 
+          acsUserId, 
           token: accessToken,
-          acsUserId
         };
       }
-      return { isValid: false };
+      throw new Error(response.data.message || 'Failed to refresh ACS token');
     } catch (error) {
-      console.error('Error in AcsService.validateAndRefreshToken:', error);
-      return { isValid: false, error: error.message };
+      console.error('Error in AcsService.getRefreshedAcsToken:', error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
     }
   },
 };

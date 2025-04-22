@@ -1,6 +1,6 @@
 // src/components/BaseDetail.js
 import React, { useState, useEffect } from 'react';
-import { useItinerary } from '../../../context/itinerary/ItineraryContext';
+import { useSearch } from '../../../context/CharterSearch/SearchContext';
 import { useNavigate } from 'react-router-dom';
 import { Plane, ArrowLeft, ListCollapse, Info, X } from 'lucide-react';
 import LoadingSpinner from '../common/LoadingSpinner';
@@ -33,7 +33,7 @@ const BaseDetail = () => {
     setPageSize,
     selectedBaseOption,
     itineraryData
-  } = useItinerary();
+  } = useSearch();
   const navigate = useNavigate();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnectingInProgress, setIsConnectingInProgress] = useState(false);
@@ -76,7 +76,7 @@ const BaseDetail = () => {
 
   const getPageNumbers = () => {
     const pages = [];
-    const maxVisiblePages = 5;
+    const maxVisiblePages = 6;
 
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
@@ -121,8 +121,10 @@ const BaseDetail = () => {
         >
           <option value="5">5</option>
           <option value="10">10</option>
-          <option value="20">20</option>
-          <option value="50">50</option>
+          <option value="20">15</option>
+          <option value="50">20</option>
+          <option value="50">25</option>
+          <option value="50">30</option>
         </select>
         <span className="text-sm text-gray-600">per page</span>
       </div>
@@ -195,8 +197,8 @@ const BaseDetail = () => {
         return;
       }
 
-      // First check userCount = 0
-      if (company.userCount === 0) {
+      // First check userInfoCount = 0
+      if (company.userInfoCount === 0) {
         // Show email only card first
         const emailOnlyPrompt = selectedCompanyDetails.prompts?.find(p => p.EmailOnly);
         setRecommendationData({
@@ -210,7 +212,7 @@ const BaseDetail = () => {
         return;
       }
 
-      // If userCount is not 0, directly check premium status
+      // If userInfoCount is not 0, directly check premium status
       checkPremiumAndRestricted(company);
 
     } catch (error) {
@@ -317,26 +319,26 @@ const BaseDetail = () => {
               <img
                 src={company.images[0]}
                 alt={company.name}
-                className="w-30 h-30 object-center"
+                className="w-full h-full object-cover object-center"
               />
-              <div className="absolute top-2 right-2 p-4 text-right bg-white/60 backdrop-blur-[2px] shadow-lg rounded-lg border border-white/20">
-                <h2 className="font-bold text-lg text-black mt-2">{company.name}</h2>
-                <p className="text-md text-black mt-2">{company.city}, {company.country}</p>
+              <div className="absolute top-2 right-2 p-3 text-right bg-white/70 backdrop-blur-[2px] shadow-lg rounded-lg border border-white/20">
+                <h2 className="font-bold text-lg text-black">{company.name}</h2>
+                <p className="text-md text-black">{company.city}, {company.country}</p>
                 {company.rankOverall !== null && (
-                  <div className="flex items-center space-x-2 mt-2 justify-end">
+                  <div className="flex items-center justify-end mt-1">
                     <div className="w-24 h-3 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="bg-yellow-500 h-full rounded-full"
                         style={{ width: `${company.rankOverall || 0}%` }}
                       />
                     </div>
-                    <p className="text-md font-semibold text-black mt-2">{company.rankOverall}</p>
+                    <p className="text-md font-semibold text-black ml-2">{company.rankOverall}</p>
                   </div>
                 )}
-                <div className="flex items-center space-x-1 text-md text-black justify-end mt-2">
+                <div className="flex items-center text-md text-black justify-end mt-1">
                   <p>Trust Score</p>
                   <Info 
-                    className="w-6 h-6 cursor-pointer" 
+                    className="w-5 h-5 ml-1 cursor-pointer" 
                     onClick={() => {
                       const trustScoreUrl = selectedCompanyDetails?.prompts?.find(p => p.TrustScore)?.TrustScore;
                       if (trustScoreUrl) {
@@ -437,7 +439,7 @@ const BaseDetail = () => {
                   <img
                     src={company.logo}
                     alt={company.name}
-                    className="max-w-full max-h-full object-contain"
+                    className="w-full h-full object-contain p-2"
                   />
                 </div>
               ) : (
@@ -448,25 +450,25 @@ const BaseDetail = () => {
             {/* Company Info - Right Aligned - 40% width */}
             <div className="flex flex-col justify-start sm:ml-auto text-left sm:text-right w-full sm:w-[40%]">
               <h2 className="font-bold text-lg text-black">{company.name}</h2>
-              <p className="text-md text-gray-600 mt-2">
+              <p className="text-md text-gray-600">
                 {company.city}
                 {company.country ? `, ${company.country}` : ''}
               </p>
               {company.rankOverall !== null && (
-                <div className="flex items-center mt-4 justify-start sm:justify-end">
+                <div className="flex items-center mt-1 justify-start sm:justify-end">
                   <div className="w-28 h-3 bg-gray-200 rounded-full overflow-hidden">
                     <div
                       className="bg-yellow-500 h-full rounded-full"
                       style={{ width: `${company.rankOverall || 0}%` }}
                     />
                   </div>
-                  <p className="text-md font-semibold text-gray-600 ml-4">{company.rankOverall}</p>
+                  <p className="text-md font-semibold text-gray-600 ml-2">{company.rankOverall}</p>
                 </div>
               )}
-              <div className="flex items-center text-md text-gray-600 mt-2 justify-start sm:justify-end">
+              <div className="flex items-center text-md text-gray-600 mt-1 justify-start sm:justify-end">
                 <p>Trust Score</p>
                 <Info 
-                  className="w-4 h-4 ml-1 cursor-pointer" 
+                  className="w-5 h-5 ml-1 cursor-pointer" 
                   onClick={() => {
                     const trustScoreUrl = selectedCompanyDetails?.prompts?.find(p => p.TrustScore)?.TrustScore;
                     if (trustScoreUrl) {
@@ -663,8 +665,7 @@ const BaseDetail = () => {
               <img 
                 src={recommendationData.company?.logo || "https://md.aviapages.com/media/2022/12/26/solairus-aviation.png"} 
                 alt={recommendationData.company?.name || "Charter World"}
-                className="w-full h-auto object-contain rounded"
-                style={{ maxHeight: '120px' }}
+                className="w-full h-auto max-h-[120px] object-contain mx-auto"
               />
             </div>
             

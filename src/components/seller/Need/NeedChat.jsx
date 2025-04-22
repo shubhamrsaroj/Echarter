@@ -8,6 +8,8 @@ import {
 import { AzureCommunicationTokenCredential } from '@azure/communication-common';
 import { Calendar, FileText, Paperclip, UserRoundPlus, Phone } from 'lucide-react';
 
+// Import logo for notification icon
+import logoIcon from '../../../assets/logo.png';
 
 // Add the utility functions for creating call adapter locators
 const validateUUID = (id) => {
@@ -84,6 +86,26 @@ const NeedChat = ({ chatData }) => {
         });
         
         setChatAdapter(chatAdapterInstance);
+
+        // Listen for new messages
+        chatAdapterInstance.on('messageReceived', (event) => {
+          // Extract the actual message object from the event
+          const message = event.message || {};
+          
+          // Remove any whitespace and ensure clean comparison
+          const cleanCurrentUserId = chatData.acsUserId?.trim();
+          const cleanSenderId = message.sender?.communicationUserId?.trim();
+          
+          // Check if we have valid IDs and the message is not from the current user
+          if (cleanSenderId && cleanCurrentUserId && cleanSenderId !== cleanCurrentUserId) {
+            handleNotification({
+              sender: message.sender,
+              senderDisplayName: message.senderDisplayName,
+              content: message.content,
+              type: message.type
+            });
+          }
+        });
       } catch (err) {
         console.error('Error creating chat adapter:', err);
         setError('Failed to initialize chat: ' + err.message);
@@ -94,6 +116,7 @@ const NeedChat = ({ chatData }) => {
 
     return () => {
       if (chatAdapter) {
+        chatAdapter.off('messageReceived'); // Clean up event listener
         chatAdapter.dispose();
       }
       if (callAdapter) {
@@ -101,7 +124,64 @@ const NeedChat = ({ chatData }) => {
         callSessionRegistry.unregisterUser(chatData.acsUserId);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatData]);
+
+  // Handle notification function for new messages
+  const handleNotification = async (message) => {
+    try {
+      // Only show notification if the window is not focused
+      if (!document.hasFocus()) {
+        // Show notification if permission granted
+        if (Notification.permission === 'granted') {
+          // Extract message text safely
+          const messageText = typeof message.content?.message === 'string' 
+            ? message.content.message 
+            : 'New message received';
+            
+          const senderName = message.senderDisplayName || 'User';
+          
+          // Create a notification with better formatting
+          const notification = new Notification(`New Message from ${senderName}`, {
+            body: messageText,
+            icon: logoIcon,
+            badge: logoIcon,
+            tag: 'chat-message',
+            requireInteraction: true,
+            vibrate: [200, 100, 200],
+            renotify: true,
+            sound: true // Use system sound
+          });
+
+          notification.onclick = () => {
+            window.focus();
+            notification.close();
+          };
+        } else if (Notification.permission === 'default') {
+          try {
+            const permission = await Notification.requestPermission();
+            
+            // If permission granted after request, show notification
+            if (permission === 'granted') {
+              // Recursive call to show notification now that we have permission
+              handleNotification(message);
+            }
+          } catch {
+            // Silent error - don't log in production
+          }
+        }
+      }
+    } catch {
+      // Silent error - don't log in production
+    }
+  };
+
+  // Request notification permission on component mount
+  useEffect(() => {
+    if (Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   const handleCallToggle = async () => {
     if (isTransitioningCall) return;
