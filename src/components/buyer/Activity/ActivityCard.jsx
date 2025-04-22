@@ -22,7 +22,7 @@ const ActivityCard = () => {
   const [infoUrl, setInfoUrl] = useState('');
   const [chatData, setChatData] = useState(null);
   const [activeCardId, setActiveCardId] = useState(null);
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchingActivities, setSearchingActivities] = useState({});
   const { 
     loading, 
     deleteConversationWithReview, 
@@ -216,7 +216,7 @@ const ActivityCard = () => {
     if (!activity?.itineraryFromTo) return;
     
     try {
-      setIsSearching(true);
+      setSearchingActivities(prev => ({ ...prev, [activity.conversationId]: true }));
       const response = await getItineraryByText(activity.itineraryFromTo);
       if (response?.itineraryResponseNewdata?.itinerary) {
         navigate('/search-details');
@@ -227,7 +227,7 @@ const ActivityCard = () => {
       console.error('Failed to fetch itinerary:', err);
       toast.error("Failed to search itinerary");
     } finally {
-      setIsSearching(false);
+      setSearchingActivities(prev => ({ ...prev, [activity.conversationId]: false }));
     }
   };
 
@@ -238,7 +238,7 @@ const ActivityCard = () => {
   return (
     <div className={`flex flex-col lg:flex-row h-full`}>
       {/* Left half of the page */}
-      <div className={`w-full lg:w-1/2 overflow-y-auto ${hasRightContent ? "h-[calc(100vh-4rem)]" : "min-h-full"}`}>
+      <div className={`w-full lg:w-1/2 overflow-y-auto ${(hasRightContent || Object.values(searchingActivities).some(Boolean)) ? "h-[calc(100vh-4rem)]" : "min-h-full"}`}>
         {/* Activity Cards Container - Including header in scroll */}
         <div className="px-4 lg:px-6">
           {/* Header */}
@@ -282,12 +282,12 @@ const ActivityCard = () => {
                     
                     <div className="flex flex-col items-center">
                       <div 
-                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white border border-gray-300 cursor-pointer hover:bg-gray-100 ${isSearching ? 'opacity-50' : ''}`}
-                        onClick={() => !isSearching && handleSearchOption(activity)}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center bg-white border border-gray-300 cursor-pointer hover:bg-gray-100 ${searchingActivities[activity.conversationId] ? 'opacity-50' : ''}`}
+                        onClick={() => !searchingActivities[activity.conversationId] && handleSearchOption(activity)}
                       >
                         <Search size={20} className="text-black" />
                       </div>
-                      <span className="text-xs mt-1 text-black text-center">{isSearching ? 'Searching...' : 'More Option'}</span>
+                      <span className="text-xs mt-1 text-black text-center">{searchingActivities[activity.conversationId] ? 'Searching...' : 'More Option'}</span>
                     </div>
                   </div>
                 </div>
@@ -318,9 +318,15 @@ const ActivityCard = () => {
       </div>
 
       {/* Right half of the page */}
-      {hasRightContent && (
+      {(hasRightContent || Object.values(searchingActivities).some(Boolean)) && (
         <div className="w-full lg:w-1/2 h-[calc(100vh-4rem)]">
-          <div className="h-full px-4 lg:px-6 py-4">
+          <div className="h-full px-4 lg:px-6 py-4 relative">
+            {Object.values(searchingActivities).some(Boolean) && (
+              <div className="absolute inset-0 z-10">
+                <LoadingOverlay />
+              </div>
+            )}
+            
             {showDeleteModal && (
               <div className="bg-white rounded-lg w-full h-full overflow-y-auto">
                 <ReviewDelete
@@ -394,9 +400,6 @@ const ActivityCard = () => {
           onClose={() => setShowInfoModal(false)}
         />
       )}
-
-      {/* Loading Overlay */}
-      {isSearching && <LoadingOverlay />}
     </div>
   );
 };
