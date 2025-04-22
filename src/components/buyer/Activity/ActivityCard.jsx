@@ -11,7 +11,6 @@ import SkeletonActivityCard from "./SkeletonActivityCard";
 import { AcsService } from "../../../api/Acs/AcsService";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "../../../context/CharterSearch/SearchContext";
-import LoadingOverlay from "../../../components/common/LoadingOverlay";
 import RouteMap from "../../common/RouteMap";
 
 const ActivityCard = () => {
@@ -318,81 +317,91 @@ const ActivityCard = () => {
       </div>
 
       {/* Right half of the page */}
-      {(hasRightContent || Object.values(searchingActivities).some(Boolean)) && (
-        <div className="w-full lg:w-1/2 h-[calc(100vh-4rem)]">
-          <div className="h-full px-4 lg:px-6 py-4 relative">
-            {Object.values(searchingActivities).some(Boolean) && (
-              <div className="absolute inset-0 z-10">
-                <LoadingOverlay />
-              </div>
-            )}
-            
-            {showDeleteModal && (
-              <div className="bg-white rounded-lg w-full h-full overflow-y-auto">
-                <ReviewDelete
-                  dealSellerName={selectedDeal?.sellerName}
-                  conversationId={selectedDeal?.conversationId}
-                  onClose={handleCloseDelete}
-                  onSubmit={handleSubmitDelete}
-                  isSubmitting={loading}
-                />
-              </div>
-            )}
-
-            {showItinerary && (
-              <div className="bg-white w-full h-full">
-                <div className="flex flex-col h-full">
-                  {/* Itinerary Section - Fixed height */}
-                  <div className="bg-[#f6f6f6] rounded-xl border border-black p-4 md:p-6 w-full mb-4">
-                    <BuyerItinerary
-                      itinerary={itineraries[showItinerary] || []}
-                      loading={loadingItinerary}
-                      error={itineraryError}
-                      onClose={handleCloseItinerary}
-                    />
-                  </div>
-
-                  {/* Route Map Section - Takes remaining height */}
-                  <div className="h-[50%] min-h-[300px] mb-8">
-                    {itineraries[showItinerary] && itineraries[showItinerary].itinerary && (
-                      <RouteMap
-                        itineraryData={{
-                          flights: itineraries[showItinerary].itinerary.map(leg => ({
-                            from: leg.departurePlace,
-                            to: leg.arrivalPlace,
-                            fromCoordinates: {
-                              lat: parseFloat(leg.departureLatitude),
-                              long: parseFloat(leg.departureLongitude)
-                            },
-                            toCoordinates: {
-                              lat: parseFloat(leg.arrivalLatitude),
-                              long: parseFloat(leg.arrivalLongitude)
-                            },
-                            fromCity: leg.departurePlace,
-                            toCity: leg.arrivalPlace
-                          }))
-                        }}
-                      />
-                    )}
-                  </div>
+      <div className={`w-full lg:w-1/2 ${(hasRightContent || Object.values(searchingActivities).some(Boolean)) ? "h-[calc(100vh-4rem)]" : "hidden lg:block"}`}>
+        <div className="h-full px-4 lg:px-6 py-4 relative">
+          {/* Loading overlay only when searching */}
+          {Object.values(searchingActivities).some(Boolean) && (
+            <div className="absolute inset-0 z-50 bg-white bg-opacity-80 rounded-lg">
+              <div className="h-full flex items-center justify-center">
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 border-4 border-gray-100 border-t-black rounded-full animate-spin"></div>
+                  <p className="mt-4 text-lg font-medium text-gray-800">
+                    Please wait
+                  </p>
                 </div>
               </div>
-            )}
-
-            {chatData && (
-              <div className="bg-white rounded-lg border border-gray-200 w-full h-full overflow-hidden relative">
-                <div className="absolute inset-0">
-                  <CommonChat 
-                    chatData={chatData}
-                    onClose={handleCloseChat}
-                   
+            </div>
+          )}
+          
+          {/* Only show content if there's something to show */}
+          {hasRightContent && (
+            <>
+              {showDeleteModal && (
+                <div className="bg-white rounded-lg w-full h-full overflow-y-auto">
+                  <ReviewDelete
+                    dealSellerName={selectedDeal?.sellerName}
+                    conversationId={selectedDeal?.conversationId}
+                    onClose={handleCloseDelete}
+                    onSubmit={handleSubmitDelete}
+                    isSubmitting={loading}
                   />
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+              
+              {showItinerary && (
+                <div className="bg-white w-full h-full">
+                  <div className="flex flex-col h-full">
+                    {/* Itinerary Section - Fixed height */}
+                    <div className="bg-[#f6f6f6] rounded-xl border border-black p-4 md:p-6 w-full mb-4">
+                      <BuyerItinerary
+                        itinerary={itineraries[showItinerary] || []}
+                        loading={loadingItinerary}
+                        error={itineraryError}
+                        onClose={handleCloseItinerary}
+                      />
+                    </div>
+
+                    {/* Route Map Section - Takes remaining height */}
+                    <div className="h-[50%] min-h-[300px] mb-8">
+                      {itineraries[showItinerary] && itineraries[showItinerary].itinerary && (
+                        <RouteMap
+                          itineraryData={{
+                            flights: itineraries[showItinerary].itinerary.map(leg => ({
+                              from: leg.departurePlace,
+                              to: leg.arrivalPlace,
+                              fromCoordinates: {
+                                lat: parseFloat(leg.departureLatitude),
+                                long: parseFloat(leg.departureLongitude)
+                              },
+                              toCoordinates: {
+                                lat: parseFloat(leg.arrivalLatitude),
+                                long: parseFloat(leg.arrivalLongitude)
+                              },
+                              fromCity: leg.departurePlace,
+                              toCity: leg.arrivalPlace
+                            }))
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {chatData && (
+                <div className="bg-white rounded-lg border border-gray-200 w-full h-full overflow-hidden relative">
+                  <div className="absolute inset-0">
+                    <CommonChat 
+                      chatData={chatData}
+                      onClose={handleCloseChat}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       {showInfoModal && (
         <InfoModal
