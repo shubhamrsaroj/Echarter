@@ -347,11 +347,11 @@ const BrokerDetail = () => {
           
           {/* Content */}
           <div className="p-5">
-            {/* Charter World Banner */}
+            {/* logo Banner */}
             <div className="mb-4 relative">
               <img 
-                src={recommendationData.company?.logo || "https://md.aviapages.com/media/2022/12/26/solairus-aviation.png"} 
-                alt={recommendationData.company?.name || "Charter World"}
+                src={recommendationData.company?.logo} 
+        
                 className="w-full h-auto object-contain rounded"
                 style={{ maxHeight: '120px' }}
               />

@@ -41,23 +41,23 @@ const BrokerCard = ({ broker = {} }) => {
   return (
     <>
       <div className="bg-white rounded-xl border border-b-3 p-6 relative">
-        <div className="absolute top-4 right-4 text-right">
+        <div className="absolute top-4 right-4 text-right mb-10">
           <h3 className="font-semibold text-xl text-black">{broker.title}</h3>
-          <p className="text-sm text-black mb-1">{broker.message}</p>
+          <p className="text-sm text-black">{broker.message}</p>
           {showRecommendation && (
-            <p className="text-sm text-gray-700 mb-1 ml-[120px]">{itineraryData.itineraryResponseNewdata.brokers_recommendation}</p>
+            <p className="text-sm text-gray-700 ml-[120px]">{itineraryData.itineraryResponseNewdata.brokers_recommendation}</p>
           )}
-          <div className="flex justify-end">
-            <button
+          <div className="flex items-center justify-end mt-2">
+            <button 
               onClick={handleInfoClick}
-              className="hover:bg-gray-100 p-1 sm:p-2 rounded-full transition-colors"
+              className="hover:bg-gray-100 p-1 rounded-full transition-colors"
             >
-              <Info className="text-gray-700 w-4 h-4 sm:w-5 sm:h-5" />
+              <Info className="text-gray-700 ml-1" size={20} />
             </button>
           </div>
         </div>
         
-        <div className="flex items-center mb-2">
+        <div className="flex items-center mb-8">
           <img
             src={broker.image}
             alt="Broker"
@@ -65,20 +65,18 @@ const BrokerCard = ({ broker = {} }) => {
           />
         </div>
         
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-12">
           <div className="bg-[#c1ff72] py-1 px-3 rounded-lg inline-block">
             <span className="font-medium text-black text-sm">
               {broker.count} Nearby
             </span>
           </div>
-          <div className="flex items-end">
-            <button
-              onClick={handleBrokerClick}
-              className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition-all mt-12"
-            >
-              {broker.button}
-            </button>
-          </div>
+          <button
+            onClick={handleBrokerClick}
+            className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition-all"
+          >
+            {broker.button}
+          </button>
         </div>
       </div>
       {infoUrl && <InfoModal url={infoUrl} onClose={() => setInfoUrl('')} />}

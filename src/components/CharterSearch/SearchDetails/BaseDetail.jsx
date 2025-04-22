@@ -660,11 +660,10 @@ const BaseDetail = () => {
           
           {/* Content */}
           <div className="p-5">
-            {/* Charter World Banner */}
+            {/* logo baner */}
             <div className="mb-4 relative">
               <img 
-                src={recommendationData.company?.logo || "https://md.aviapages.com/media/2022/12/26/solairus-aviation.png"} 
-                alt={recommendationData.company?.name || "Charter World"}
+                src={recommendationData.company?.logo} 
                 className="w-full h-auto max-h-[120px] object-contain mx-auto"
               />
             </div>
