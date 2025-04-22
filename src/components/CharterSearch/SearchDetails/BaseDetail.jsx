@@ -197,8 +197,8 @@ const BaseDetail = () => {
         return;
       }
 
-      // First check userInfoCount = 0
-      if (company.userInfoCount === 0) {
+      // First check userCount = 0
+      if (company.userCount === 0) {
         // Show email only card first
         const emailOnlyPrompt = selectedCompanyDetails.prompts?.find(p => p.EmailOnly);
         setRecommendationData({
@@ -212,7 +212,7 @@ const BaseDetail = () => {
         return;
       }
 
-      // If userInfoCount is not 0, directly check premium status
+      // If userCount is not 0, directly check premium status
       checkPremiumAndRestricted(company);
 
     } catch (error) {
