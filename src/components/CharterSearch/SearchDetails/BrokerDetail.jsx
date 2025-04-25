@@ -263,7 +263,7 @@ const BrokerDetail = () => {
       switch (type) {
         case "restricted":
         case "notPremium":
-          // For both restricted and non-premium cases, show Gold and Continue buttons
+          // For both restricted and non-premium cases,z show Gold and Continue buttons
           return (
             <div className="flex justify-between p-4 border-t border-gray-100">
               <button

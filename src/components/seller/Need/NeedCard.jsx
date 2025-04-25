@@ -4,6 +4,7 @@ import RibbonIcon from "../../../assets/icons.png";
 import { useSellerContext } from "../../../context/seller/SellerContext"; 
 import SkeletonNeedCard from "./SkeletonNeedCard";
 import NeedItinerary from "./NeedItinerary"; 
+import NeedChat from "./NeedChat";
 import InfoModal from "../../common/InfoModal";
 import { getInfoContent } from "../../../api/infoService";
 import { toast } from "react-toastify";
@@ -23,6 +24,7 @@ const NeedCard = () => {
   const [loadingInfo, setLoadingInfo] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const [chatData, setChatData] = useState(null);
 
   // Fetch itineraries for company when component mounts or currentUser changes
   useEffect(() => {
@@ -77,6 +79,14 @@ const NeedCard = () => {
   // Close itinerary handler
   const handleCloseItinerary = () => {
     setSelectedItineraryId(null);
+  };
+
+  const handleConnect = (data) => {
+    setChatData(data);
+  };
+
+  const handleCloseChat = () => {
+    setChatData(null);
   };
 
   // Show skeleton during initial load
@@ -182,24 +192,33 @@ const NeedCard = () => {
       <div className="w-full md:w-1/2 p-4 mt-2 md:mt-8">
         {selectedItineraryId && (
           <div className="lg:sticky lg:top-6 space-y-4">
-            {/* NeedItinerary Component */}
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <NeedItinerary
-                itinerary={itineraries[selectedItineraryId] || []}
-                loading={loadingItinerary}
-                error={itineraryError}
-                onClose={handleCloseItinerary}
-                selectedItineraryId={selectedItineraryId}
+            {chatData ? (
+              <NeedChat 
+                chatData={chatData} 
+                onClose={handleCloseChat}
               />
-            </div>
+            ) : (
+              <>
+                {/* NeedItinerary Component */}
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <NeedItinerary
+                    itinerary={itineraries[selectedItineraryId] || []}
+                    loading={loadingItinerary}
+                    error={itineraryError}
+                    onClose={handleCloseItinerary}
+                    selectedItineraryId={selectedItineraryId}
+                    onConnect={handleConnect}
+                    buyerName={displayNeeds.find(need => need.id === selectedItineraryId)?.buyerName}
+                  />
+                </div>
 
-            {/* RouteMap Component */}
-            {itineraries[selectedItineraryId] && itineraries[selectedItineraryId].itinerary && (
-             
-                <RouteMap
-                  itineraryData={getRouteMapData()}
-                />
-  
+                {/* RouteMap Component */}
+                {itineraries[selectedItineraryId] && itineraries[selectedItineraryId].itinerary && (
+                  <RouteMap
+                    itineraryData={getRouteMapData()}
+                  />
+                )}
+              </>
             )}
           </div>
         )}

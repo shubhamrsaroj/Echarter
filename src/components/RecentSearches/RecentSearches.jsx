@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useRecentItinerary } from '../../context/RecentItineraryContext/RecentItineraryContext';
+import { useSearch } from '../../context/CharterSearch/SearchContext';
 import { Search, X } from 'lucide-react';
 
 const RecentSearches = ({ onSelectItinerary }) => {
   const { recentItineraries, loading } = useRecentItinerary();
+  const { setSelectedBaseOption } = useSearch();
   const [isOpen, setIsOpen] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
 
@@ -14,8 +16,10 @@ const RecentSearches = ({ onSelectItinerary }) => {
     }
     
     setSelectedId(itinerary.itineraryID);
+    // Reset selectedBaseOption to ensure BaseCard is interactive
+    setSelectedBaseOption(null);
     if (onSelectItinerary) {
-      onSelectItinerary(itinerary.itineraryText);
+      onSelectItinerary(itinerary.itineraryID);
     }
   };
 

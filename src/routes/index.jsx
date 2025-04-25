@@ -17,7 +17,7 @@ import BrokerDetailPage from '../pages/CharterSearch/BrokerDetailPage';
 import SellerPage from '../pages/seller/SellerPage';
 import BuyerPage from '../pages/buyer/BuyerPage';
 
-import ChatPage from '../pages/Chat/ChatPage';
+
 
 import UserProfilePage from '../pages/profile/UserProfilePage';
 
@@ -71,7 +71,7 @@ export const routes = [
   // Protected Routes with both Buyer and Search Provider
   { path: "/conversation", element: wrapWithMultipleProviders([BuyerProvider, SearchProvider], <BuyerPage />) },
 
-  { path: "/chat", element: wrapWithProvider(React.Fragment, <ChatPage />) },
+
 
   // Protected Routes with User Details Provider
   { path: "/profile", element: wrapWithProvider(UserDetailsProvider, <UserProfilePage />) },

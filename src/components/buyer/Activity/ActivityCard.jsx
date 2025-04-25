@@ -35,7 +35,7 @@ const ActivityCard = () => {
     fetchDeals: fetchActivities
   } = useBuyerContext();
   const navigate = useNavigate();
-  const { getItineraryByText } = useSearch();
+  const { getOptionsByItineraryId } = useSearch();
 
   // Check if right panel has content
   const hasRightContent = showDeleteModal || showItinerary || chatData;
@@ -212,19 +212,19 @@ const ActivityCard = () => {
   };
 
   const handleSearchOption = async (activity) => {
-    if (!activity?.itineraryFromTo) return;
+    if (!activity?.itineraryId) return;
     
     try {
       setSearchingActivities(prev => ({ ...prev, [activity.conversationId]: true }));
-      const response = await getItineraryByText(activity.itineraryFromTo);
+      const response = await getOptionsByItineraryId(activity.itineraryId);
       if (response?.itineraryResponseNewdata?.itinerary) {
         navigate('/search-details');
       } else {
         toast.error("No results found for this itinerary");
       }
     } catch (err) {
-      console.error('Failed to fetch itinerary:', err);
-      toast.error("Failed to search itinerary");
+      console.error('Failed to fetch itinerary options:', err);
+      toast.error("Failed to search itinerary options");
     } finally {
       setSearchingActivities(prev => ({ ...prev, [activity.conversationId]: false }));
     }

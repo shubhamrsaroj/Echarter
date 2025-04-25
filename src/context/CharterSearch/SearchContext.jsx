@@ -249,6 +249,41 @@ export const SearchProvider = ({ children }) => {
     localStorage.removeItem('SelectedBaseOption');
   };
 
+  const getOptionsByItineraryId = async (itineraryId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await SearchService.getOptionsByItineraryId(itineraryId);
+      
+      if (response.success) {
+        // Process flights data for the map
+        const flights = response.data.itineraryResponseNewdata.itinerary.map((leg) => ({
+          from: leg.dep_place,
+          to: leg.arrv_place,
+          fromCoordinates: { lat: leg.dep_lat, long: leg.dep_long },
+          toCoordinates: { lat: leg.arrv_lat, long: leg.arrv_long },
+        }));
+
+        const newItineraryData = { ...response.data, flights };
+        setItineraryData(newItineraryData);
+        return newItineraryData;
+      } else {
+        setError(
+          response.data && typeof response.data === 'object'
+            ? response.data
+            : { message: response.message || 'No options found for this itinerary', statusCode: response.statusCode }
+        );
+        return response.data;
+      }
+    } catch (error) {
+      setError({ message: error.message || 'An error occurred while fetching options' });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     itineraryData,
     setItineraryData, 
@@ -271,6 +306,7 @@ export const SearchProvider = ({ children }) => {
     setPageSize,
     setLoading,
     resetItineraryState,
+    getOptionsByItineraryId,
   };
 
   return <ItineraryContext.Provider value={value}>{children}</ItineraryContext.Provider>;

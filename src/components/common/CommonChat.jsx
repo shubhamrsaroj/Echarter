@@ -8,9 +8,6 @@ import {
 import { AzureCommunicationTokenCredential } from '@azure/communication-common';
 import { Calendar, FileText, Paperclip, UserRoundPlus, Phone, X } from 'lucide-react';
 
-// Import logo for notification icon
-import logoIcon from '../../assets/logo.png';
-
 // Utility functions for call adapter locators (unchanged)
 const validateUUID = (id) => {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -87,26 +84,6 @@ const CommonChat = ({ chatData, onClose }) => {
         
         setChatAdapter(chatAdapterInstance);
 
-        // Listen for new messages
-        chatAdapterInstance.on('messageReceived', (event) => {
-          // Extract the actual message object from the event
-          const message = event.message || {};
-          
-          // Remove any whitespace and ensure clean comparison
-          const cleanCurrentUserId = chatData.acsUserId?.trim();
-          const cleanSenderId = message.sender?.communicationUserId?.trim();
-          
-          // Check if we have valid IDs and the message is not from the current user
-          if (cleanSenderId && cleanCurrentUserId && cleanSenderId !== cleanCurrentUserId) {
-            handleNotification({
-              sender: message.sender,
-              senderDisplayName: message.senderDisplayName,
-              content: message.content,
-              type: message.type
-            });
-          }
-        });
-
       } catch (err) {
         console.error('Error creating chat adapter:', err);
         setError('Failed to initialize chat: ' + err.message);
@@ -117,7 +94,6 @@ const CommonChat = ({ chatData, onClose }) => {
 
     return () => {
       if (chatAdapter) {
-        chatAdapter.off('messageReceived'); // Clean up event listener
         chatAdapter.dispose();
       }
       if (callAdapter) {
@@ -184,64 +160,6 @@ const CommonChat = ({ chatData, onClose }) => {
 
     setIsTransitioningCall(false);
   };
-
-  // Update handleNotification function to handle the correct message structure
-  const handleNotification = async (message) => {
-    try {
-      // Only show notification if the window is not focused
-      if (!document.hasFocus()) {
-        // Show notification if permission granted
-        if (Notification.permission === 'granted') {
-          // Extract message text safely
-          const messageText = typeof message.content?.message === 'string' 
-            ? message.content.message 
-            : 'New message received';
-            
-          const senderName = message.senderDisplayName || 'User';
-          
-          // Create a notification with better formatting
-          const notification = new Notification(`New Message from ${senderName}`, {
-            body: messageText,
-            icon: logoIcon,
-            badge: logoIcon,
-            tag: 'chat-message',
-            requireInteraction: true,
-            vibrate: [200, 100, 200],
-            renotify: true,
-            sound: true // Use system sound
-          });
-
-          notification.onclick = () => {
-            window.focus();
-            notification.close();
-          };
-        } else if (Notification.permission === 'default') {
-          try {
-            const permission = await Notification.requestPermission();
-            
-            // If permission granted after request, show notification
-            if (permission === 'granted') {
-              // Recursive call to show notification now that we have permission
-              handleNotification(message);
-            }
-          } catch (error) {
-            // Silent error - notifications are non-critical, don't impact core functionality
-            console.debug('Permission request failed:', error);
-          }
-        }
-      }
-    } catch (error) {
-      // Silent error - notifications are non-critical, don't impact core functionality
-      console.debug('Notification display failed:', error);
-    }
-  };
-
-  // Request notification permission on component mount
-  useEffect(() => {
-    if (Notification.permission !== 'granted') {
-      Notification.requestPermission();
-    }
-  }, []);
 
   if (error) {
     return (

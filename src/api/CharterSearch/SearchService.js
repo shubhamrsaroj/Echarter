@@ -11,6 +11,16 @@ export const SearchService = {
     }
   },
   
+  getOptionsByItineraryId: async (itineraryId) => {
+    // eslint-disable-next-line no-useless-catch
+    try {
+      const response = await api.get(`/api/SinglePoint/GetOptionsbyItineraryId?itineraryId=${encodeURIComponent(itineraryId)}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  
   getCompaniesByCategory: async (payload) => {
     // eslint-disable-next-line no-useless-catch
     try {

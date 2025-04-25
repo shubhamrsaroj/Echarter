@@ -8,7 +8,7 @@ import ErrorPrompt from '../../components/CharterSearch/SearchDetails/ErrorPromp
 import LoadingOverlay from '../../components/common/LoadingOverlay';
 
 const SearchInputPage = () => {
-  const { loading, error, getItineraryByText } = useSearch();
+  const { loading, error, getItineraryByText, getOptionsByItineraryId } = useSearch();
   const [showError, setShowError] = useState(false);
   const navigate = useNavigate();
   
@@ -23,6 +23,21 @@ const SearchInputPage = () => {
       }
     } catch (err) {
       console.error('Failed to fetch itinerary:', err);
+      setShowError(true);
+    }
+  };
+
+  const handleRecentItinerarySelect = async (itineraryId) => {
+    setShowError(false);
+    try {
+      const response = await getOptionsByItineraryId(itineraryId);
+      if (response?.itineraryResponseNewdata?.itinerary) {
+        navigate('/search-details');
+      } else {
+        setShowError(true);
+      }
+    } catch (err) {
+      console.error('Failed to fetch itinerary options:', err);
       setShowError(true);
     }
   };
@@ -52,7 +67,7 @@ const SearchInputPage = () => {
           
           {/* Recent Searches Component */}
           <div className="md:w-[450px]">
-            <RecentSearches onSelectItinerary={handleItinerarySearch} />
+            <RecentSearches onSelectItinerary={handleRecentItinerarySelect} />
           </div>
         </div>
      

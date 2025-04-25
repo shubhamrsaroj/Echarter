@@ -2,12 +2,10 @@ import React, { useState } from "react";
 import { PlaneTakeoff, PlaneLanding, ArrowRight, X } from "lucide-react";
 import { useSellerContext } from "../../../context/seller/SellerContext";
 import { AcsService } from "../../../api/Acs/AcsService";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId }) => {
+const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId, onConnect, buyerName }) => {
   const { currentUser } = useSellerContext();
-  const navigate = useNavigate();
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleConnect = async () => {
@@ -43,7 +41,12 @@ const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId
         throw new Error('No threadId returned from chat service');
       }
 
-      navigate('/chat', { state: { chatData: data } });
+      const modifiedData = {
+        ...data,
+        message: buyerName || "New Chat"
+      };
+
+      onConnect(modifiedData);
     } catch (error) {
       console.error('Error connecting to chat:', error);
       toast.error(error.message || "Failed to initiate chat", {

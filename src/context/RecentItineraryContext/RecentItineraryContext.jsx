@@ -12,7 +12,7 @@ export const RecentItineraryProvider = ({ children }) => {
 
   const hasFetched = useRef(false); // 🔒 Prevent double API calls
 
-  const fetchRecentItineraries = async (days = 10) => {
+  const fetchRecentItineraries = async (days = 4) => {
     setLoading(true);
     setError(null);
     try {
