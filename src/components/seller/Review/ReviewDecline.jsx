@@ -1,5 +1,5 @@
 // ReviewDecline.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Star, CircleHelp, ChevronDown, X } from "lucide-react";
 import SpeechInput from "./SpeechInput"; // Import the reusable component
 import { getInfoContent } from "../../../api/infoService";
@@ -11,23 +11,53 @@ const ReviewDecline = ({ dealBuyerName, onClose, onSubmit, isSubmitting = false 
   const [showCloseButton, setShowCloseButton] = useState(false);
   const [error, setError] = useState(null);
   const [reasonOptions, setReasonOptions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const isMounted = useRef(true);
+  const hasInitializedRef = useRef(false);
 
   const rating = selectedStars.filter(Boolean).length;
 
   useEffect(() => {
-    const fetchReasons = async () => {
-      try {
-        const data = await getInfoContent('decline', 'dropdown');
-        if (data && data.text) {
-          setReasonOptions([{ value: 'decline', text: data.text }]);
+    isMounted.current = true;
+    
+    // Only run this effect once (on mount)
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      
+      const fetchReasons = async () => {
+        if (!isMounted.current) return;
+        
+        try {
+          setIsLoading(true);
+          const data = await getInfoContent('decline', 'dropdown');
+          
+          if (!isMounted.current) return;
+          
+          if (data && Array.isArray(data)) {
+            const options = data.map(item => ({
+              value: item.text,
+              text: item.text
+            }));
+            setReasonOptions(options);
+          }
+          setError(null);
+        } catch (err) {
+          if (isMounted.current) {
+            setError(err.message);
+          }
+        } finally {
+          if (isMounted.current) {
+            setIsLoading(false);
+          }
         }
-        setError(null);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
+      };
 
-    fetchReasons();
+      fetchReasons();
+    }
+    
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   const handleStarClick = (index) => {
@@ -79,7 +109,7 @@ const ReviewDecline = ({ dealBuyerName, onClose, onSubmit, isSubmitting = false 
             onChange={(e) => setReason(e.target.value)}
             className="w-full p-3 border border-black rounded-lg pr-10 appearance-none"
             required
-            disabled={isSubmitting}
+            disabled={isSubmitting || isLoading}
           >
             <option value="">Select a reason</option>
             {reasonOptions.map((option) => (

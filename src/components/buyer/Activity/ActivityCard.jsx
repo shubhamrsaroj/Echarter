@@ -133,6 +133,31 @@ const ActivityCard = () => {
     }
   };
 
+  // Handle itinerary click from chat
+  const handleItineraryClickFromChat = (itineraryId, isInternalHandling = false) => {
+    if (itineraryId) {
+      // If handling internally within the chat, just fetch the data but don't show the panel
+      if (isInternalHandling) {
+        if (!itineraries[itineraryId]) {
+          // Only fetch data, don't show the side panel
+          fetchItinerary(itineraryId, false); // Added parameter to indicate don't show UI
+        }
+        return;
+      }
+      
+      // Normal external handling - show the itinerary panel
+      if (showDeleteModal) {
+        setShowDeleteModal(false);
+        setSelectedDeal(null);
+      }
+      setChatData(null);
+      
+      fetchItinerary(itineraryId);
+      setActiveCardId(null);
+    }
+  };
+
+  // When opening chat, include itineraryId
   const handleOpenConnect = async (activityId) => {
     const activity = activities.find(
       (activity) =>
@@ -156,7 +181,10 @@ const ActivityCard = () => {
           threadId: activity.threadId,
           acsUserId: activity.acsUserId,
           token: activity.accessToken,
-          message: activity.sellerName
+          message: activity.sellerName,
+          itineraryId: activity.itineraryId, // Add itineraryId
+          conversationId: activity.conversationId, // Add conversationId
+          sellerCompanyId: activity.sellerCompanyId // Add sellerCompanyId
         };
       } else {
         // Invalid token path - Call API to refresh ACS token
@@ -171,7 +199,10 @@ const ActivityCard = () => {
           threadId: activity.threadId, // Use existing threadId from the activity
           acsUserId: refreshedData.acsUserId,
           token: refreshedData.token,
-          message: activity.sellerName
+          message: activity.sellerName,
+          itineraryId: activity.itineraryId, // Add itineraryId
+          conversationId: activity.conversationId, // Add conversationId
+          sellerCompanyId: activity.sellerCompanyId // Add sellerCompanyId
         };
       }
 
@@ -394,6 +425,10 @@ const ActivityCard = () => {
                     <CommonChat 
                       chatData={chatData}
                       onClose={handleCloseChat}
+                      onItineraryClick={handleItineraryClickFromChat}
+                      itineraryData={chatData?.itineraryId ? itineraries[chatData.itineraryId] : null}
+                      itineraryType="buyer"
+                      disableDefaultItinerary={false}
                     />
                   </div>
                 </div>

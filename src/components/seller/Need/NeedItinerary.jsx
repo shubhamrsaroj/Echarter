@@ -43,7 +43,8 @@ const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId
 
       const modifiedData = {
         ...data,
-        message: buyerName || "New Chat"
+        message: buyerName || "New Chat",
+        itineraryId: selectedItineraryId
       };
 
       onConnect(modifiedData);
@@ -208,13 +209,15 @@ const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId
       </div>
 
       <div className="mt-4 flex justify-center">
-        <button
-          onClick={handleConnect}
-          disabled={isConnecting}
-          className="bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors duration-200 border border-black disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {isConnecting ? 'Connecting...' : 'Connect'}
-        </button>
+        {onConnect && (
+          <button
+            onClick={handleConnect}
+            disabled={isConnecting}
+            className="bg-black text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors duration-200 border border-black disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            {isConnecting ? 'Connecting...' : 'Connect'}
+          </button>
+        )}
       </div>
     </div>
   );

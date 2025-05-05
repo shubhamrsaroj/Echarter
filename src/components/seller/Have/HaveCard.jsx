@@ -35,8 +35,15 @@ const HaveCard = () => {
     resetSuccessMessages 
   } = useSellerContext();
 
+  // Use a ref to track component mounted state to prevent duplicate fetches
+  const hasInitialFetchedRef = React.useRef(false);
+
   useEffect(() => {
-    fetchHaves();
+    // Only fetch once when the component mounts
+    if (!hasInitialFetchedRef.current) {
+      fetchHaves();
+      hasInitialFetchedRef.current = true;
+    }
   }, [fetchHaves]);
 
   const handleInfoClick = async () => {

@@ -1,8 +1,16 @@
-import React, { createContext, useState, useContext, useCallback, useEffect } from "react";
+import React, { createContext, useState, useContext, useCallback, useEffect, useRef } from "react";
 import { SellerService } from "../../api/seller/SellerService";
 import { tokenHandler } from "../../utils/tokenHandler";
 
 const SellerContext = createContext();
+
+// Keep itinerary requests outside of the component to prevent re-renders
+const pendingRequests = {};
+const lastFetchTimestamps = {};
+const CACHE_DURATION = 10000; // 10 seconds
+
+// Create a request cache outside the component to prevent re-renders
+const requestCache = {};
 
 export const SellerProvider = ({ children }) => {
   const [haves, setHaves] = useState([]);
@@ -19,6 +27,11 @@ export const SellerProvider = ({ children }) => {
   const [loadingItinerary, setLoadingItinerary] = useState(false);
   const [itineraryError, setItineraryError] = useState(null);
   const [showItinerary, setShowItinerary] = useState(null);
+  
+  // Add a ref to keep track of ongoing fetch requests
+  const abortControllerRef = useRef(null);
+  const pendingFetchHavesRef = useRef(false);
+  const lastFetchHavesTimestamp = useRef(0);
 
   useEffect(() => {
     const token = tokenHandler.getToken();
@@ -47,7 +60,15 @@ export const SellerProvider = ({ children }) => {
   const fetchHaves = useCallback(async () => {
     if (!currentUser?.comId) return;
 
+    // Check if we're already fetching or if we've fetched recently (within last 2 seconds)
+    const now = Date.now();
+    if (pendingFetchHavesRef.current || (now - lastFetchHavesTimestamp.current < 2000)) {
+      return;
+    }
+
+    pendingFetchHavesRef.current = true;
     setLoading(true);
+    
     try {
       const data = await SellerService.getCompanyHaves(currentUser.comId);
       if (!data || !data.data) {
@@ -61,15 +82,28 @@ export const SellerProvider = ({ children }) => {
       setHaves([]);
     } finally {
       setLoading(false);
+      pendingFetchHavesRef.current = false;
+      lastFetchHavesTimestamp.current = Date.now();
     }
   }, [currentUser]);
 
   const fetchDeals = useCallback(async () => {
     if (!currentUser?.comId) return;
-
+    
+    // Set loading state first, before any other operations
     setLoading(true);
+    
+    // Cancel previous request if it exists
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new AbortController
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+    
     try {
-      const data = await SellerService.getCompanyDeals();
+      const data = await SellerService.getCompanyDeals(signal);
       const dealsArray = Array.isArray(data?.data?.newResponse) ? data.data.newResponse : [];
       const enrichedDeals = dealsArray.map(deal => ({
         ...deal,
@@ -79,37 +113,63 @@ export const SellerProvider = ({ children }) => {
       setDeals(enrichedDeals);
       setError(null);
     } catch (err) {
-      setError(err.message);
-      setDeals([]);
+      if (err.name !== 'AbortError') {
+        setError(err.message);
+        setDeals([]);
+      } else {
+        // Don't clear loading state for aborted requests as
+        // a new request will be made immediately
+        return;
+      }
     } finally {
-      setLoading(false);
+      // Only set loading to false if the request wasn't aborted
+      if (!signal.aborted) {
+        setLoading(false);
+      }
     }
   }, [currentUser]);
 
   const fetchItinerary = useCallback(async (idOrCompanyId, days) => {
-    if (!idOrCompanyId) return;
+   
+    if (!idOrCompanyId) {
+      return;
+    }
 
     const isCompanyFetch = typeof days === 'number';
     const key = isCompanyFetch ? `company_${idOrCompanyId}` : idOrCompanyId;
-
+    
+    // Check if we have a pending request for this key
+    if (requestCache[key]) {
+      return;
+    }
+    
+    // Mark this request as pending
+    requestCache[key] = true;
+    
     setShowItinerary(isCompanyFetch ? null : idOrCompanyId);
     setLoadingItinerary(true);
     setItineraryError(null);
 
     try {
+      
       const data = await SellerService.getItinerary(idOrCompanyId, days);
+      
+      
       if (data?.success && data?.statusCode === 200) {
-        let itineraryData;
         if (isCompanyFetch) {
           // New response structure for companyId and days
-          itineraryData = data.data.itineraries || [];
+          const itineraryData = data.data.itineraries || [];
+         
+          setItineraries(prev => ({
+            ...prev,
+            [key]: itineraryData,
+          }));
         } else {
           // Original response structure for itineraryId
           const itineraryList = data?.data?.itineraries || [];
           const firstItinerary = itineraryList[0]?.itineraryResponseNewdata || {};
-          itineraryData = firstItinerary.itinerary || [];
+          const itineraryData = firstItinerary.itinerary || [];
           
-          // Add tripCategory and itineraryText to the context
           setItineraries(prev => ({
             ...prev,
             [key]: {
@@ -118,13 +178,7 @@ export const SellerProvider = ({ children }) => {
               itineraryText: firstItinerary.itineraryText
             }
           }));
-          setItineraryError(null);
-          return;
         }
-        setItineraries(prev => ({
-          ...prev,
-          [key]: itineraryData,
-        }));
         setItineraryError(null);
       } else {
         setItineraries(prev => ({
@@ -134,12 +188,18 @@ export const SellerProvider = ({ children }) => {
         setItineraryError("Failed to fetch itinerary");
       }
     } catch (err) {
+      console.error(`Error fetching itinerary for ${key}:`, err);
       setItineraryError(err.message || "Failed to fetch itinerary");
       setItineraries(prev => ({
         ...prev,
         [key]: null,
       }));
     } finally {
+      // Clear the request cache after a short delay to prevent immediately sequential duplicates
+      setTimeout(() => {
+        delete requestCache[key];
+      }, 2000); // 2 second delay
+      
       setLoadingItinerary(false);
     }
   }, []);
@@ -259,6 +319,16 @@ export const SellerProvider = ({ children }) => {
     setShowItinerary(null);
   }, []);
 
+  // Make sure to add resetItineraryCache function to clear cache when needed
+  const resetItineraryCache = useCallback(() => {
+    Object.keys(pendingRequests).forEach(key => {
+      delete pendingRequests[key];
+    });
+    Object.keys(lastFetchTimestamps).forEach(key => {
+      delete lastFetchTimestamps[key];
+    });
+  }, []);
+
   return (
     <SellerContext.Provider
       value={{
@@ -288,6 +358,7 @@ export const SellerProvider = ({ children }) => {
         resetSuccessMessages,
         resetItineraryState,
         resetAllState,
+        resetItineraryCache,
       }}
     >
       {children}

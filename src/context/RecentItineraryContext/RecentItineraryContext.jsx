@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { getItinerary } from '../../api/getItinerary/GetItinerary';
+import { getItinerary, updateItinerary } from '../../api/getItinerary/GetItinerary';
+import { toast } from 'react-toastify';
 
 const RecentItineraryContext = createContext();
 
@@ -8,6 +9,7 @@ export const useRecentItinerary = () => useContext(RecentItineraryContext);
 export const RecentItineraryProvider = ({ children }) => {
   const [recentItineraries, setRecentItineraries] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
 
   const hasFetched = useRef(false); // 🔒 Prevent double API calls
@@ -29,6 +31,52 @@ export const RecentItineraryProvider = ({ children }) => {
     }
   };
 
+  const updateItineraryText = async (itineraryId, text) => {
+    setUpdating(true);
+    try {
+      const response = await updateItinerary(itineraryId, text);
+      
+      if (response?.success) {
+        // Update the local state to reflect the change
+        setRecentItineraries(prev => 
+          prev.map(itinerary => 
+            itinerary.itineraryID === itineraryId 
+              ? { ...itinerary, itineraryText: text }
+              : itinerary
+          )
+        );
+        
+        // Show success toast
+        toast.success(response.message || "Update successful", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        return true;
+      } else {
+        throw new Error(response?.message || "Failed to update itinerary");
+      }
+    } catch (err) {
+      const errorMessage = err.message || "Failed to update itinerary";
+      setError(errorMessage);
+      // Show error toast
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+      return false;
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   useEffect(() => {
     if (!hasFetched.current) {
       fetchRecentItineraries();
@@ -41,8 +89,10 @@ export const RecentItineraryProvider = ({ children }) => {
       value={{
         recentItineraries,
         loading,
+        updating,
         error,
         fetchRecentItineraries,
+        updateItineraryText,
       }}
     >
       {children}

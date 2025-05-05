@@ -13,7 +13,7 @@ const DealItinerary = ({ itinerary, loading, error, onClose }) => {
         </button>
         <h2 className="text-2xl font-bold mb-4 text-black text-center">Itinerary</h2>
         <div className="space-y-4">
-          {[...Array(3)].map((_, index) => (
+          {[...Array(1)].map((_, index) => (
             <div key={index} className="mb-4 p-4 border border-black rounded-lg shadow-sm flex flex-col items-center">
               <div className="h-4 w-32 bg-black rounded mb-2"></div>
               <div className="flex items-center justify-between w-full">

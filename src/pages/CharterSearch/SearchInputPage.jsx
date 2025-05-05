@@ -6,12 +6,70 @@ import SearchInput from '../../components/CharterSearch/Search/SearchInput';
 import RecentSearches from '../../components/RecentSearches/RecentSearches';
 import ErrorPrompt from '../../components/CharterSearch/SearchDetails/ErrorPrompt';
 import LoadingOverlay from '../../components/common/LoadingOverlay';
+import { pushNotificationService } from '../../api/Acs/pushNotificationService';
+import { tokenHandler } from '../../utils/tokenHandler';
+import { toast } from 'react-toastify';
 
 const SearchInputPage = () => {
   const { loading, error, getItineraryByText, getOptionsByItineraryId } = useSearch();
   const [showError, setShowError] = useState(false);
+  const [showRecentSearches, setShowRecentSearches] = useState(true);
   const navigate = useNavigate();
   
+
+
+  useEffect(() => {
+    const registerForPushNotifications = async () => {
+      // Check if user is authenticated
+      const token = tokenHandler.getToken();
+      if (!token) {
+        console.log('User not authenticated, skipping push registration');
+        return;
+      }
+
+      try {
+        // Register service worker
+        const swRegistration = await pushNotificationService.registerServiceWorker();
+        // console.log('Service worker registered successfully');
+        
+        // Get push subscription
+        const subscription = await pushNotificationService.getSubscription(swRegistration);
+  
+        // Register device with backend
+        const result = await pushNotificationService.registerDevice(subscription);
+        // console.log('Device registration result:', result);
+        
+        if (result.status === 'skipped' || result.status === 'cached') {
+          // console.log('Device registration handled:', result.message);
+        } else {
+          console.log('Device registered successfully');
+          toast.success('Push notifications enabled', {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        }
+      } catch (error) {
+        console.error('Push notification registration failed:', error);
+        toast.error('Failed to setup push notifications: ' + (error.message || 'Unknown error'), {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+      }
+    };
+
+    registerForPushNotifications();
+  }, []);
+
+
+
   const handleItinerarySearch = async (itineraryText) => {
     setShowError(false); // Reset error state on new search
     try {
@@ -58,16 +116,26 @@ const SearchInputPage = () => {
             <ErrorPrompt error={error} onClose={() => setShowError(false)} />
           </div>
         )}
-        
+
         <div className="flex flex-col md:flex-row">
           {/* Itinerary Input Component */}
           <div className="flex-1 mb-6 md:mb-0 md:mr-6">
-            <SearchInput onSearch={handleItinerarySearch} disabled={loading} />
+            <SearchInput 
+              onSearch={handleItinerarySearch} 
+              disabled={loading}
+              showRecentSearches={showRecentSearches}
+              onToggleRecentSearches={() => setShowRecentSearches(!showRecentSearches)}
+            />
           </div>
           
           {/* Recent Searches Component */}
           <div className="md:w-[450px]">
-            <RecentSearches onSelectItinerary={handleRecentItinerarySelect} />
+            {showRecentSearches && (
+              <RecentSearches 
+                onSelectItinerary={handleRecentItinerarySelect}
+                onClose={() => setShowRecentSearches(false)}
+              />
+            )}
           </div>
         </div>
      

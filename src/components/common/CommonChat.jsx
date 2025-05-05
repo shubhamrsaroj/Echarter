@@ -6,7 +6,7 @@ import {
   createAzureCommunicationCallAdapter
 } from '@azure/communication-react';
 import { AzureCommunicationTokenCredential } from '@azure/communication-common';
-import { Calendar, FileText, Paperclip, UserRoundPlus, Phone, X } from 'lucide-react';
+import ChatHeader from './ChatHeader';
 
 // Utility functions for call adapter locators (unchanged)
 const validateUUID = (id) => {
@@ -53,12 +53,21 @@ const callSessionRegistry = {
   }
 };
 
-const CommonChat = ({ chatData, onClose }) => {
+const CommonChat = ({ 
+  chatData, 
+  onClose, 
+  onItineraryClick, 
+  itineraryData, 
+  disableDefaultItinerary = false, 
+  itineraryType = 'deal' // New prop: 'deal', 'buyer', or 'need'
+}) => {
   const [chatAdapter, setChatAdapter] = useState(null);
   const [callAdapter, setCallAdapter] = useState(null);
   const [error, setError] = useState(null);
   const [isInCall, setIsInCall] = useState(false);
   const [isTransitioningCall, setIsTransitioningCall] = useState(false);
+  const [showItinerary, setShowItinerary] = useState(false);
+  const [loadingItinerary, setLoadingItinerary] = useState(false);
 
   useEffect(() => {
     if (!chatData?.threadId || !chatData?.token || !chatData?.acsUserId) {
@@ -103,6 +112,10 @@ const CommonChat = ({ chatData, onClose }) => {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatData]);
+
+  // Keep one logging statement for debugging
+  useEffect(() => {
+  }, [chatData, itineraryType]);
 
   const handleCallToggle = async () => {
     if (isTransitioningCall) return;
@@ -161,6 +174,38 @@ const CommonChat = ({ chatData, onClose }) => {
     setIsTransitioningCall(false);
   };
 
+  const handleItineraryClick = () => {
+    // If itineraryId is missing, show warning and return
+    if (!chatData?.itineraryId) {
+      console.warn('CommonChat - No itineraryId found in chatData. Calendar icon should be disabled.');
+      return;
+    }
+    
+    // Modified behavior: If disableDefaultItinerary is true, use external handling ONLY
+    if (disableDefaultItinerary && onItineraryClick && chatData?.itineraryId) {
+      // Just trigger the callback without changing internal state
+      onItineraryClick(chatData.itineraryId);
+      return;
+    }
+
+    // Normal behavior: Toggle internal itinerary overlay
+    setShowItinerary(!showItinerary);
+    
+    // If we have an itinerary callback and we're showing the itinerary (not closing it)
+    // and we're NOT using disableDefaultItinerary
+    if (onItineraryClick && chatData?.itineraryId && !showItinerary && !disableDefaultItinerary) {
+      // Indicate loading state
+      setLoadingItinerary(true);
+      // Call parent handler to fetch itinerary data if needed
+      // but DON'T show the full map view because we're handling it internally
+      onItineraryClick(chatData.itineraryId, true); // Added second parameter to indicate internal handling
+    }
+  };
+
+  const handleFilesClick = () => {
+    // Now handled in ChatHeader
+  };
+
   if (error) {
     return (
       <div className="p-4">
@@ -184,64 +229,23 @@ const CommonChat = ({ chatData, onClose }) => {
   }
 
   return (
-    <div className="h-full">
+    <div className="h-full relative">
       <div className="h-full flex flex-col bg-white rounded-xl overflow-hidden border border-black">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 rounded-t-xl">
-          {/* Info */}
-          <div className="px-4 py-3 flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              {isInCall && (
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-              )}
-              <h2 className="text-lg font-semibold text-gray-800">
-                {chatData.message}
-              </h2>
-            </div>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                aria-label="Close chat"
-              >
-                <X className="w-5 h-5 text-gray-700" />
-              </button>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="px-4 py-2 flex justify-between items-center bg-white">
-            <div className="flex space-x-6">
-              <button className="flex flex-col items-center text-gray-600">
-                <Calendar className="w-5 h-5" />
-                <span className="text-xs mt-1">Itinerary</span>
-              </button>
-              <button className="flex flex-col items-center text-gray-600">
-                <FileText className="w-5 h-5" />
-                <span className="text-xs mt-1">Files</span>
-              </button>
-              <button className="flex flex-col items-center text-gray-600">
-                <Paperclip className="w-5 h-5" />
-                <span className="text-xs mt-1">Attach</span>
-              </button>
-              <button className="flex flex-col items-center text-gray-600">
-                <UserRoundPlus className="w-5 h-5" />
-                <span className="text-xs mt-1">People</span>
-              </button>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <button 
-                onClick={handleCallToggle}
-                disabled={isTransitioningCall}
-                className={`p-2 rounded-full flex items-center ${isInCall ? 'bg-green-100 text-green-600' : 'text-gray-600 hover:bg-gray-100'}`}
-              >
-                <Phone className="w-6 h-6" />
-                {isInCall && <span className="ml-1 text-xs font-medium">Switch to Chat</span>}
-              </button>
-            </div>
-          </div>
-        </div>
+        {/* Using the ChatHeader component with overlay props */}
+        <ChatHeader 
+          chatData={chatData}
+          onClose={onClose}
+          showItinerary={showItinerary}
+          isInCall={isInCall}
+          isTransitioningCall={isTransitioningCall}
+          handleCallToggle={handleCallToggle}
+          handleItineraryClick={handleItineraryClick}
+          handleFilesClick={handleFilesClick}
+          itineraryType={itineraryType}
+          itineraryData={itineraryData}
+          loadingItinerary={loadingItinerary}
+          disableDefaultItinerary={disableDefaultItinerary}
+        />
         
         {/* Chat Area */}
         <div className="flex-1 relative overflow-hidden bg-white rounded-b-xl pb-4">

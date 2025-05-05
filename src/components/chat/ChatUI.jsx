@@ -6,7 +6,10 @@ import {
   createAzureCommunicationCallAdapter
 } from '@azure/communication-react';
 import { AzureCommunicationTokenCredential } from '@azure/communication-common';
-import { Calendar, FileText, Paperclip, UserRoundPlus, Phone, X, Minimize2, Maximize2 } from 'lucide-react';
+import { CalendarClock, FileText, ScrollText, UserRoundPlus, Phone, X, Minimize2, Maximize2 } from 'lucide-react';
+import ItinerarySearchCard from '../CharterSearch/Search/ItinerarySearchCard';
+import { useSearch } from '../../context/CharterSearch/SearchContext';
+import { toast } from 'react-toastify';
 
 // Add the utility functions for creating call adapter locators
 const validateUUID = (id) => {
@@ -63,6 +66,10 @@ const ChatUI = ({ chatData, onClose, onMinimizeChange }) => {
   const [position, setPosition] = useState({ x: window.innerWidth - 380, y: window.innerHeight - 100 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [showItineraryOverlay, setShowItineraryOverlay] = useState(false);
+  const [showFilesBrowser, setShowFilesBrowser] = useState(false);
+  const [showAircraftDetails, setShowAircraftDetails] = useState(false);
+  const { itineraryData } = useSearch();
 
   // Add effect to notify parent of minimize state changes
   useEffect(() => {
@@ -224,6 +231,29 @@ const ChatUI = ({ chatData, onClose, onMinimizeChange }) => {
     };
   }, [isDragging, dragStart, handleMouseMove, handleMouseUp]);
 
+  const handleFilesClick = () => {
+    // Check if we have a conversation ID before showing files browser
+    if (!chatData?.conversationId) {
+      console.warn('No conversation ID available for files');
+      // Show toast message
+      toast.info('Please send a message first before accessing files');
+      // Don't open the files browser if there's no conversationId
+      return;
+    }
+    
+    // Toggle files browser
+    setShowFilesBrowser(!showFilesBrowser);
+  };
+
+  const handleAircraftClick = () => {
+    if (!chatData?.conversationId || !chatData?.sellerCompanyId) {
+      toast.info('Please send a message first before accessing equipment details');
+      return;
+    }
+
+    setShowAircraftDetails(!showAircraftDetails);
+  };
+
   if (error) {
     return (
       <div className="p-4">
@@ -322,19 +352,28 @@ const ChatUI = ({ chatData, onClose, onMinimizeChange }) => {
           {!isMinimized && (
             <div className="px-4 py-2 flex justify-between items-center bg-white border-t border-gray-100">
               <div className="flex space-x-6">
-                <button className="flex flex-col items-center text-gray-600">
-                  <Calendar className="w-5 h-5" />
+                <button 
+                  className="flex flex-col items-center text-black"
+                  onClick={() => setShowItineraryOverlay(!showItineraryOverlay)}
+                >
+                  <CalendarClock className="w-5 h-5" />
                   <span className="text-xs mt-1">Itinerary</span>
                 </button>
-                <button className="flex flex-col items-center text-gray-600">
+                <button 
+                  className="flex flex-col items-center text-black"
+                  onClick={handleFilesClick}
+                >
                   <FileText className="w-5 h-5" />
                   <span className="text-xs mt-1">Files</span>
                 </button>
-                <button className="flex flex-col items-center text-gray-600">
-                  <Paperclip className="w-5 h-5" />
-                  <span className="text-xs mt-1">Attach</span>
+                <button 
+                  className="flex flex-col items-center text-black"
+                  onClick={handleAircraftClick}
+                >
+                <ScrollText className="w-5 h-5" />
+                  <span className="text-xs mt-1">Eqpt</span>
                 </button>
-                <button className="flex flex-col items-center text-gray-600">
+                <button className="flex flex-col items-center text-black">
                   <UserRoundPlus className="w-5 h-5" />
                   <span className="text-xs mt-1">People</span>
                 </button>
@@ -344,7 +383,7 @@ const ChatUI = ({ chatData, onClose, onMinimizeChange }) => {
                 <button 
                   onClick={handleCallToggle}
                   disabled={isTransitioningCall}
-                  className={`p-2 rounded-full flex items-center ${isInCall ? 'bg-green-100 text-green-600' : 'text-gray-600 hover:bg-gray-100'}`}
+                  className={`p-2 rounded-full flex items-center ${isInCall ? 'bg-green-100 text-green-600' : 'text-black hover:bg-gray-100'}`}
                 >
                   <Phone className="w-6 h-6" />
                   {isInCall && <span className="ml-1 text-xs font-medium">Switch to Chat</span>}
@@ -390,6 +429,23 @@ const ChatUI = ({ chatData, onClose, onMinimizeChange }) => {
                 />
               </div>
             )}
+          </div>
+        )}
+
+        {/* Itinerary Overlay */}
+        {showItineraryOverlay && itineraryData && !isMinimized && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 p-6">
+            <div className="max-w-lg w-full">
+              <div className="flex justify-end mb-2">
+                <button
+                  onClick={() => setShowItineraryOverlay(false)}
+                  className="p-1 bg-white rounded-full shadow-md"
+                >
+                  <X className="w-5 h-5 text-black" />
+                </button>
+              </div>
+              <ItinerarySearchCard itinerary={itineraryData.itineraryResponseNewdata.itinerary} />
+            </div>
           </div>
         )}
       </div>

@@ -64,13 +64,17 @@ export const BuyerProvider = ({ children }) => {
     }
   }, [loading]);
 
-  const fetchItinerary = useCallback(async (itineraryId) => {
+  const fetchItinerary = useCallback(async (itineraryId, showPanel = true) => {
     if (!itineraryId) {
       setShowItinerary(null);
       return;
     }
     
-    setShowItinerary(itineraryId);
+    // Only update showItinerary if showPanel is true
+    if (showPanel) {
+      setShowItinerary(itineraryId);
+    }
+    
     setLoadingItinerary(true);
     setItineraryError(null);
     

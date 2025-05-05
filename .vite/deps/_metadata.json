@@ -1,0 +1,115 @@
+{
+  "hash": "afb221c3",
+  "configHash": "346b5e3d",
+  "lockfileHash": "d22f5a02",
+  "browserHash": "daad9248",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "47b9bd5f",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "6ef86863",
+      "needsInterop": true
+    },
+    "react-toastify": {
+      "src": "../../node_modules/react-toastify/dist/index.mjs",
+      "file": "react-toastify.js",
+      "fileHash": "f5128984",
+      "needsInterop": false
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.js",
+      "file": "react-router-dom.js",
+      "fileHash": "5e765a68",
+      "needsInterop": false
+    },
+    "jwt-decode": {
+      "src": "../../node_modules/jwt-decode/build/esm/index.js",
+      "file": "jwt-decode.js",
+      "fileHash": "6b589076",
+      "needsInterop": false
+    },
+    "js-cookie": {
+      "src": "../../node_modules/js-cookie/dist/js.cookie.mjs",
+      "file": "js-cookie.js",
+      "fileHash": "73dea467",
+      "needsInterop": false
+    },
+    "axios": {
+      "src": "../../node_modules/axios/index.js",
+      "file": "axios.js",
+      "fileHash": "090aa433",
+      "needsInterop": false
+    },
+    "lucide-react": {
+      "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "bb375faf",
+      "needsInterop": false
+    },
+    "framer-motion": {
+      "src": "../../node_modules/framer-motion/dist/es/index.mjs",
+      "file": "framer-motion.js",
+      "fileHash": "a64fb8c4",
+      "needsInterop": false
+    },
+    "microsoft-cognitiveservices-speech-sdk": {
+      "src": "../../node_modules/microsoft-cognitiveservices-speech-sdk/distrib/lib/microsoft.cognitiveservices.speech.sdk.js",
+      "file": "microsoft-cognitiveservices-speech-sdk.js",
+      "fileHash": "9c1f0d10",
+      "needsInterop": true
+    },
+    "@react-google-maps/api": {
+      "src": "../../node_modules/@react-google-maps/api/dist/esm.js",
+      "file": "@react-google-maps_api.js",
+      "fileHash": "d4817e4c",
+      "needsInterop": false
+    },
+    "@azure/communication-react": {
+      "src": "../../node_modules/@azure/communication-react/dist/dist-esm/communication-react/src/index.js",
+      "file": "@azure_communication-react.js",
+      "fileHash": "b243b8fb",
+      "needsInterop": false
+    },
+    "@azure/communication-common": {
+      "src": "../../node_modules/@azure/communication-common/dist-esm/src/index.js",
+      "file": "@azure_communication-common.js",
+      "fileHash": "837729eb",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-MIKOOR6L": {
+      "file": "chunk-MIKOOR6L.js"
+    },
+    "dist-esm-MSD4KCOE": {
+      "file": "dist-esm-MSD4KCOE.js"
+    },
+    "chunk-QXZ2W3TT": {
+      "file": "chunk-QXZ2W3TT.js"
+    },
+    "chunk-SPLQORUU": {
+      "file": "chunk-SPLQORUU.js"
+    },
+    "chunk-FAHVASUX": {
+      "file": "chunk-FAHVASUX.js"
+    },
+    "chunk-E5ODL3YF": {
+      "file": "chunk-E5ODL3YF.js"
+    },
+    "chunk-32NEGIXE": {
+      "file": "chunk-32NEGIXE.js"
+    },
+    "chunk-65KY755N": {
+      "file": "chunk-65KY755N.js"
+    },
+    "chunk-V4OQ3NZ2": {
+      "file": "chunk-V4OQ3NZ2.js"
+    }
+  }
+}

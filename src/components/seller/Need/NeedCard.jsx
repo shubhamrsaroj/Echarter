@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { MessageSquareDot, Info } from "lucide-react";
 import RibbonIcon from "../../../assets/icons.png";
 import { useSellerContext } from "../../../context/seller/SellerContext"; 
@@ -17,6 +17,8 @@ const NeedCard = () => {
     itineraries, 
     loadingItinerary, 
     itineraryError,
+    resetItineraryCache,
+    loading: globalLoading,
   } = useSellerContext();
 
   const [selectedItineraryId, setSelectedItineraryId] = useState(null);
@@ -25,18 +27,57 @@ const NeedCard = () => {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [chatData, setChatData] = useState(null);
+  const [isInitiating, setIsInitiating] = useState(false);
+  const [localLoading, setLocalLoading] = useState(true);
+  const clickTimeoutRef = useRef(null);
+  
+  // Previous itineraries ref to compare
+  const prevItinerariesRef = useRef({});
+
+  // Clean up on component unmount
+  useEffect(() => {
+    return () => {
+      // Clean up any ongoing requests when component unmounts
+      resetItineraryCache();
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    };
+  }, [resetItineraryCache]);
 
   // Fetch itineraries for company when component mounts or currentUser changes
   useEffect(() => {
     if (currentUser?.comId) {
+      // Always show loading on first mount or user change
       setIsFirstLoad(true);
-      fetchItinerary(currentUser.comId, 30).finally(() => {
-        setIsFirstLoad(false);
-        setInitialLoadComplete(true);
-      });
+      setLocalLoading(true);
+      
+      if (!initialLoadComplete) {
+        fetchItinerary(currentUser.comId, 30)
+          .finally(() => {
+            // Keep loading true until data is detected in the next useEffect
+            setIsFirstLoad(false);
+            setInitialLoadComplete(true);
+          });
+      }
     }
-  }, [currentUser, fetchItinerary]);
+  }, [currentUser?.comId, fetchItinerary, initialLoadComplete]);
 
+  // Monitor for data changes and update loading state
+  useEffect(() => {
+    const companyKey = currentUser?.comId ? `company_${currentUser.comId}` : null;
+    
+    // If we have the itineraries data and it's an array (actual data not just an empty object)
+    if (companyKey && itineraries[companyKey] && Array.isArray(itineraries[companyKey])) {
+      // Data has arrived, turn off loading
+      setLocalLoading(false);
+      
+      // Update the reference for future comparisons
+      prevItinerariesRef.current[companyKey] = itineraries[companyKey];
+    }
+  }, [itineraries, currentUser?.comId]);
+
+  // Handle info click
   const handleInfoClick = async () => {
     try {
       setLoadingInfo(true);
@@ -55,7 +96,13 @@ const NeedCard = () => {
 
   // Use itineraries from company fetch
   const companyKey = currentUser?.comId ? `company_${currentUser.comId}` : null;
-  const apiNeeds = companyKey && itineraries[companyKey] ? itineraries[companyKey] : [];
+  
+  // Check if itineraries data is loaded
+  const isDataLoaded = companyKey && 
+                       itineraries[companyKey] && 
+                       Array.isArray(itineraries[companyKey]);
+  
+  const apiNeeds = isDataLoaded ? itineraries[companyKey] : [];
   
   // Map API response to match expected fields
   const displayNeeds = apiNeeds.map(need => ({
@@ -70,10 +117,46 @@ const NeedCard = () => {
     allowDecline: true,
   }));
 
-  // Handle Initiate button click
+  // Show loading state in these conditions:
+  // 1. First load is in progress
+  // 2. Local loading state is true
+  // 3. Global loading is true and we haven't completed initial load
+  // 4. We have a company ID but data isn't loaded yet
+  const isLoading = 
+    isFirstLoad || 
+    localLoading || 
+    (globalLoading && !initialLoadComplete) ||
+    (currentUser?.comId && !isDataLoaded);
+
+  if (isLoading) {
+    return <SkeletonNeedCard />;
+  }
+
+  // Handle Initiate button click with debounce
   const handleInitiateClick = (itineraryId) => {
+    // Prevent rapid double-clicks
+    if (isInitiating) {
+      return;
+    }
+    
+    // Check if it's the same itinerary we already have selected
+    if (itineraryId === selectedItineraryId) {
+      return;
+    }
+    
+    setIsInitiating(true);
     setSelectedItineraryId(itineraryId);
     fetchItinerary(itineraryId);
+    
+    // Clear any existing timeout before setting a new one
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+    
+    // Set a timeout to allow the next click
+    clickTimeoutRef.current = setTimeout(() => {
+      setIsInitiating(false);
+    }, 1000); // 1 second debounce
   };
 
   // Close itinerary handler
@@ -82,17 +165,13 @@ const NeedCard = () => {
   };
 
   const handleConnect = (data) => {
+    console.log('NeedCard - connecting with data:', data);
     setChatData(data);
   };
 
   const handleCloseChat = () => {
     setChatData(null);
   };
-
-  // Show skeleton during initial load
-  if (isFirstLoad || (loadingItinerary && !initialLoadComplete)) {
-    return <SkeletonNeedCard />;
-  }
 
   // Create route map data from itinerary
   const getRouteMapData = () => {
@@ -134,7 +213,7 @@ const NeedCard = () => {
           <div className="text-red-500 p-4 rounded-lg bg-red-50 border border-red-200">
             {itineraryError}
           </div>
-        ) : displayNeeds.length === 0 && initialLoadComplete ? (
+        ) : displayNeeds.length === 0 ? (
           <div className="text-gray-500 p-4 rounded-lg bg-gray-50 border border-gray-200">
             No needs are currently available for your company.
           </div>
@@ -171,15 +250,21 @@ const NeedCard = () => {
 
                   </div>
                   
-                  {/* Initiate Button - moved to the right side but with margin to avoid overlap */}
+                  {/* Initiate Button with disabled state */}
                   <div className="flex flex-col items-center mr-12 mt-2 relative z-20">
                     <div 
-                      className="w-12 h-12 rounded-full flex items-center justify-center bg-yellow-400 hover:bg-yellow-500 cursor-pointer"
-                      onClick={() => handleInitiateClick(need.id)}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                        isInitiating
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-yellow-400 hover:bg-yellow-500 cursor-pointer"
+                      }`}
+                      onClick={() => !isInitiating && handleInitiateClick(need.id)}
                     >
                       <MessageSquareDot size={24} className="text-black" />
                     </div>
-                    <span className="text-xs text-black mt-1">Initiate</span>
+                    <span className="text-xs text-black mt-1">
+                      {isInitiating && selectedItineraryId === need.id ? "Loading..." : "Initiate"}
+                    </span>
                   </div>
                 </div>
               </div>

@@ -34,3 +34,17 @@ export const getItinerary = async ({ days }) => {
     throw error;
   }
 };
+
+export const updateItinerary = async (itineraryId, text) => {
+  // eslint-disable-next-line no-useless-catch
+  try {
+    const requestBody = {
+      id: itineraryId,
+      text: text
+    };
+    const response = await api.post('/api/SinglePoint/UpdateItinerary', requestBody);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

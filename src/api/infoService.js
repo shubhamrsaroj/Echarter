@@ -1,8 +1,19 @@
 import api from './axios.config';
 
+// Store URLs in a cache to prevent duplicate requests
+const infoCache = {};
+
 export const getInfoContent = async (topic, category = 'info') => {
+  // Create a cache key
+  const cacheKey = `${topic}-${category}`;
+  
+  // Return cached value if available
+  if (infoCache[cacheKey]) {
+    return infoCache[cacheKey];
+  }
+  
   try {
-    const response = await api.get('/api/SinglePoint//GetInfo', {
+    const response = await api.get('/api/SinglePoint/GetInfo', {
       params: {
         topic,
         category
@@ -10,20 +21,28 @@ export const getInfoContent = async (topic, category = 'info') => {
     });
 
     if (response.data.success) {
+      let result;
+      
       // For info category, return url as before
       if (category === 'info') {
         const url = response.data.data?.[0]?.url;
         if (url) {
-          return url;
+          result = url;
         }
       }
-      // For dropdown category, return the full data object
-      if (category === 'dropdown') {
-        return response.data.data;
+      // For dropdown category, return the full data array
+      else if (category === 'dropdown') {
+        result = response.data.data;
       }
       // For reviewdecline category, return text
-      if (category === 'reviewdecline' && response.data.data?.text) {
-        return response.data.data.text;
+      else if (category === 'reviewdecline' && response.data.data?.text) {
+        result = response.data.data.text;
+      }
+      
+      if (result) {
+        // Cache the result
+        infoCache[cacheKey] = result;
+        return result;
       }
     }
     throw new Error(response.data.message || 'No information available');

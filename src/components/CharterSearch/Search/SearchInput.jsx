@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { SendHorizontal, Mic, MicOff, Info } from "lucide-react";
+import { SendHorizontal, Mic, MicOff, Info, History } from "lucide-react";
 import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 import { useLocation } from "react-router-dom";
 import InfoModal from "../../common/InfoModal";
@@ -26,7 +26,7 @@ const isItineraryPath = (path) => {
   return itineraryPaths.some(itineraryPath => path.startsWith(itineraryPath));
 };
 
-export default function SearchInput({ onSearch }) {
+export default function SearchInput({ onSearch, showRecentSearches, onToggleRecentSearches }) {
   const [text, setText] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -327,6 +327,13 @@ export default function SearchInput({ onSearch }) {
           disabled={isSending}
         >
           {isListening ? <Mic size={35} className="text-black" /> : <MicOff size={35} className="text-black" />}
+        </button>
+
+        <button
+          className={`p-2 rounded-full hover:bg-gray-100 transition-all duration-200 ${!showRecentSearches ? 'animate-pulse' : ''}`}
+          onClick={onToggleRecentSearches}
+        >
+          <History size={35} className="text-black" />
         </button>
   
         <button 

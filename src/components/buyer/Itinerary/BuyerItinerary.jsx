@@ -145,7 +145,7 @@ const BuyerItinerary = ({ itinerary, loading, error, onClose }) => {
   };
 
   return (
-    <div className="bg-[#f6f6f6] h-full">
+    <div className="bg-[#f6f6f6] h-full p-4">
       <div className="relative mb-6">
         <button
           className="absolute top-0 right-0 w-10 h-10 flex items-center justify-center bg-transparent rounded-full hover:bg-gray-200 border border-black"

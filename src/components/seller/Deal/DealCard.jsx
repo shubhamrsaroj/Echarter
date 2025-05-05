@@ -18,7 +18,7 @@ const DealCard = () => {
   const {
     deals,
     fetchDeals,
-    loading,
+    loading: contextLoading,
     currentUser,
     fetchItinerary,
     itineraries,
@@ -27,6 +27,12 @@ const DealCard = () => {
     resetItineraryState,
     deleteConversationWithReview,
   } = useSellerContext();
+
+  // Add a local loading state to ensure proper visual feedback
+  const [localLoading, setLocalLoading] = useState(true);
+  
+  // Combine context loading with local loading
+  const loading = contextLoading || localLoading;
 
   const navigate = useNavigate();
 
@@ -40,17 +46,45 @@ const DealCard = () => {
   const [isChatOpen, setIsChatOpen] = useState(false); // Added for chat
   const [isConnecting, setIsConnecting] = useState(false); // Added for button feedback
   const [infoUrl, setInfoUrl] = useState(null);
+  const [hasLoadedDeals, setHasLoadedDeals] = useState(false);
+  const [isLoadingInfoUrl, setIsLoadingInfoUrl] = useState(false);
 
   useEffect(() => {
-    if (currentUser?.comId) {
+    if (currentUser?.comId && !hasLoadedDeals) {
+      // Set local loading to true immediately
+      setLocalLoading(true);
+      // Set flag to prevent duplicate calls
+      setHasLoadedDeals(true);
+      
+      // Fetch data
       fetchDeals();
     }
-  }, [currentUser, fetchDeals]);
+  }, [currentUser, fetchDeals, hasLoadedDeals]);
+
+  // Add effect to turn off local loading when deals are loaded
+  useEffect(() => {
+    if (deals && deals.length > 0 && localLoading) {
+      setLocalLoading(false);
+    }
+    
+    // Also turn off local loading after a delay if no deals found
+    if (!contextLoading && localLoading) {
+      const timer = setTimeout(() => {
+        setLocalLoading(false);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [deals, contextLoading, localLoading]);
 
   const handleCalendarClick = (itineraryId) => {
     if (itineraryId) {
       setDeclineDealId(null);
       setDeleteDealId(null);
+      // Close chat if it's open
+      setIsChatOpen(false);
+      setChatData(null);
+      
       if (visibleItineraryId === itineraryId) {
         setVisibleItineraryId(null);
       } else {
@@ -177,7 +211,10 @@ const DealCard = () => {
           threadId: deal.threadId,
           acsUserId: deal.acsUserId,
           token: deal.accessToken,
-          message: deal.buyerName 
+          message: deal.buyerName,
+          itineraryId: deal.itineraryId, // Add itineraryId to chatData
+          conversationId: deal.conversationId, // Add conversationId to chatData
+          sellerCompanyId: deal.sellerCompanyId // Add sellerCompanyId to chatData
         };
       } else {
         // Invalid token path - Call API to refresh ACS token
@@ -192,7 +229,9 @@ const DealCard = () => {
           threadId: deal.threadId, // Use existing threadId from the deal
           acsUserId: refreshedData.acsUserId,
           token: refreshedData.token,
-          message: deal.buyerName
+          message: deal.buyerName,
+          itineraryId: deal.itineraryId, // Add itineraryId to chatData
+          conversationId: deal.conversationId // Add conversationId to chatData
         };
       }
       
@@ -239,6 +278,8 @@ const DealCard = () => {
       }
       // Set chat data and open chat instead of navigating
       data.message = deal.buyerName; // Add buyer name as message
+      data.itineraryId = deal.itineraryId; // Add itineraryId to data
+      data.conversationId = deal.conversationId; // Add conversationId to data
       setChatData(data);
       setIsChatOpen(true);
       // Reset other panels
@@ -256,13 +297,32 @@ const DealCard = () => {
     }
   };
 
+  // Handle itinerary click from chat component
+  const handleItineraryClickFromChat = (itineraryId) => {
+    // Only fetch the itinerary data but don't show the side panel
+    if (itineraryId && !itineraries[itineraryId]) {
+      fetchItinerary(itineraryId);
+    }
+    // We don't call handleCalendarClick here anymore since
+    // the itinerary will be displayed as overlay in the chat component
+  };
+
   const handleCloseChat = () => {
     setIsChatOpen(false);
     setChatData(null);
   };
 
   const handleInfoClick = async () => {
+    // If we already have the URL or are currently loading it, don't make another request
+    if (infoUrl || isLoadingInfoUrl) {
+      if (infoUrl) {
+        setInfoUrl(infoUrl); // Just make the modal appear
+      }
+      return;
+    }
+    
     try {
+      setIsLoadingInfoUrl(true);
       const url = await getInfoContent('deals', 'info');
       setInfoUrl(url);
     } catch (error) {
@@ -271,6 +331,8 @@ const DealCard = () => {
         position: "top-right",
         autoClose: 3000,
       });
+    } finally {
+      setIsLoadingInfoUrl(false);
     }
   };
 
@@ -303,13 +365,18 @@ const DealCard = () => {
       setApiResponse(null);
       setIsChatOpen(false); // Cleanup chat state
       setChatData(null);
+      // Reset flags for next mount
+      setHasLoadedDeals(false);
+      setLocalLoading(true);
     };
   }, [resetItineraryState]);
 
+  // Always render the skeleton when loading, regardless of deals state
   if (loading) {
     return <SkeletonDealCard />;
   }
 
+  // Only check for empty deals after confirming we're not loading
   if (!deals || deals.length === 0) {
     return <div>No deals available</div>;
   }
@@ -535,9 +602,9 @@ const DealCard = () => {
             <CommonChat
               chatData={chatData} 
               onClose={handleCloseChat}
-              onMinimizeChange={() => {
-                // Removed unused parameter
-              }}
+              onItineraryClick={handleItineraryClickFromChat}
+              itineraryData={chatData?.itineraryId ? itineraries[chatData.itineraryId] : null}
+              itineraryType="deal"
             />
           </div>
         )}
