@@ -84,7 +84,7 @@ export const SellerService = {
     }
   },
 
-  getItinerary: async (param1, param2, signal) => {
+  getItinerary: async (param1, param2) => {
     // eslint-disable-next-line no-useless-catch
     try {
       let params = {};
@@ -98,10 +98,7 @@ export const SellerService = {
         throw new Error("Invalid parameters for getItinerary");
       }
 
-      const response = await api.get(`/api/SinglePoint/GetItinerary`, { 
-        params,
-        signal
-      });
+      const response = await api.get(`/api/SinglePoint/GetItinerary`, { params });
       return response.data;
     } catch (error) {
       throw error;

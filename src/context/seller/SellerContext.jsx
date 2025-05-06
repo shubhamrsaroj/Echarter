@@ -62,6 +62,7 @@ export const SellerProvider = ({ children }) => {
 
     // Only block concurrent fetches but allow immediate refetching when needed
     if (pendingFetchHavesRef.current) {
+      console.log('fetchHaves: Already fetching, wait for completion');
       return;
     }
 
@@ -69,6 +70,7 @@ export const SellerProvider = ({ children }) => {
     setLoading(true);
     
     try {
+      console.log('fetchHaves: Fetching haves for company', currentUser.comId);
       const data = await SellerService.getCompanyHaves(currentUser.comId);
       if (!data || !data.data) {
         setHaves([]);
@@ -77,6 +79,7 @@ export const SellerProvider = ({ children }) => {
       }
       setError(null);
     } catch (err) {
+      console.error('fetchHaves error:', err);
       setError(err.message);
       setHaves([]);
     } finally {
@@ -130,43 +133,29 @@ export const SellerProvider = ({ children }) => {
   }, [currentUser]);
 
   const fetchItinerary = useCallback(async (idOrCompanyId, days) => {
-    if (!idOrCompanyId) {
-      return;
-    }
+    if (!idOrCompanyId) return;
 
     const isCompanyFetch = typeof days === 'number';
     const key = isCompanyFetch ? `company_${idOrCompanyId}` : idOrCompanyId;
-    
-    // Check if we have a pending request for this key
-    if (requestCache[key]) {
-      return;
-    }
-    
-    // Mark this request as pending
-    requestCache[key] = true;
-    
+
     setShowItinerary(isCompanyFetch ? null : idOrCompanyId);
     setLoadingItinerary(true);
     setItineraryError(null);
 
     try {
       const data = await SellerService.getItinerary(idOrCompanyId, days);
-      
       if (data?.success && data?.statusCode === 200) {
+        let itineraryData;
         if (isCompanyFetch) {
           // New response structure for companyId and days
-          const itineraryData = data.data.itineraries || [];
-         
-          setItineraries(prev => ({
-            ...prev,
-            [key]: itineraryData,
-          }));
+          itineraryData = data.data.itineraries || [];
         } else {
           // Original response structure for itineraryId
           const itineraryList = data?.data?.itineraries || [];
           const firstItinerary = itineraryList[0]?.itineraryResponseNewdata || {};
-          const itineraryData = firstItinerary.itinerary || [];
+          itineraryData = firstItinerary.itinerary || [];
           
+          // Add tripCategory and itineraryText to the context
           setItineraries(prev => ({
             ...prev,
             [key]: {
@@ -175,7 +164,13 @@ export const SellerProvider = ({ children }) => {
               itineraryText: firstItinerary.itineraryText
             }
           }));
+          setItineraryError(null);
+          return;
         }
+        setItineraries(prev => ({
+          ...prev,
+          [key]: itineraryData,
+        }));
         setItineraryError(null);
       } else {
         setItineraries(prev => ({
@@ -185,18 +180,13 @@ export const SellerProvider = ({ children }) => {
         setItineraryError("Failed to fetch itinerary");
       }
     } catch (err) {
-      console.error(`Error fetching itinerary for ${key}:`, err);
       setItineraryError(err.message || "Failed to fetch itinerary");
       setItineraries(prev => ({
         ...prev,
         [key]: null,
       }));
     } finally {
-      // Always update loading state and clear cache
       setLoadingItinerary(false);
-      
-      // Clear the request cache immediately
-      delete requestCache[key];
     }
   }, []);
 
@@ -255,12 +245,14 @@ export const SellerProvider = ({ children }) => {
     setDeleteSuccess(false);
     
     try {
+      console.log('Context sending reviewData:', reviewData);
       const response = await SellerService.deleteConversation(
         conversationId,
         currentUser.id,
         currentUser.comId,
         reviewData
       );
+      console.log('Context received response:', response);
 
       // Update the deals list to remove the deleted conversation
       if (response?.success) {
@@ -275,8 +267,10 @@ export const SellerProvider = ({ children }) => {
         setError(null);
       }
 
+      // Return the response without any transformation
       return response;
     } catch (err) {
+      console.error('Context Error:', err);
       setDeleteError(err.message || "Failed to handle conversation");
       setError(err.message);
       setDeleteSuccess(false);
