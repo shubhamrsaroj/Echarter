@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: read # This is required for actions/checkout
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: Checkout repository
@@ -32,10 +32,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install --include=dev
-
-      - name: Inject VITE_BASE_URL from secret into .env
-        run: |
-          echo VITE_BASE_URL=${{ secrets.VITE_BASE_URL }} >> .env
 
       - name: Verify Vite installation
         run: npx vite --version
@@ -63,7 +59,7 @@ jobs:
         with:
           name: node-app
           path: .
-
+      
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3

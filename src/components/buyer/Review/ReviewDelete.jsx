@@ -11,8 +11,13 @@ const ReviewDelete = ({ dealSellerName, conversationId, onClose, onSubmit, isSub
 
   const handleStarClick = (index) => {
     if (isSubmitting) return;
-    const newSelectedStars = selectedStars.map((_, i) => i <= index);
-    setSelectedStars(newSelectedStars);
+    // If clicking first star and it's already selected, clear all stars
+    if (index === 0 && selectedStars[0]) {
+      setSelectedStars([false, false, false, false, false]);
+    } else {
+      const newSelectedStars = selectedStars.map((_, i) => i <= index);
+      setSelectedStars(newSelectedStars);
+    }
   };
 
   const handleSubmit = () => {

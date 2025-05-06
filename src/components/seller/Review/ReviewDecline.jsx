@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Star, CircleHelp, ChevronDown, X } from "lucide-react";
 import SpeechInput from "./SpeechInput"; // Import the reusable component
 import { getInfoContent } from "../../../api/infoService";
+import { toast } from "react-toastify"; // Using react-toastify for notifications
 
 const ReviewDecline = ({ dealBuyerName, onClose, onSubmit, isSubmitting = false }) => {
   const [selectedStars, setSelectedStars] = useState([false, false, false, false, false]);
@@ -62,18 +63,54 @@ const ReviewDecline = ({ dealBuyerName, onClose, onSubmit, isSubmitting = false 
 
   const handleStarClick = (index) => {
     if (isSubmitting) return;
-    const newSelectedStars = [...selectedStars];
-    newSelectedStars[index] = !newSelectedStars[index];
-    setSelectedStars(newSelectedStars);
+    // If clicking first star and it's already selected, clear all stars
+    if (index === 0 && selectedStars[0]) {
+      setSelectedStars([false, false, false, false, false]);
+    } else {
+      const newSelectedStars = selectedStars.map((_, i) => i <= index);
+      setSelectedStars(newSelectedStars);
+    }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!reason) {
-      alert("Please select a reason for declining");
+      toast.error("Please select a reason for declining", {
+        position: "top-right",
+        autoClose: 3000
+      });
       return;
     }
-    onSubmit({ rating, feedback, reason });
-    setShowCloseButton(true);
+    
+    const reviewData = {
+      rating,
+      feedback,
+      reason,
+      isDecline: true,
+      path: "decline"
+    };
+
+    try {
+      const response = await onSubmit(reviewData);
+      
+      if (response && response.success) {
+        toast.success(response.message || "Review submitted successfully", {
+          position: "top-right",
+          autoClose: 3000
+        });
+        setShowCloseButton(true);
+      } else {
+        toast.error(response?.message || "Failed to process the request", {
+          position: "top-right",
+          autoClose: 3000
+        });
+      }
+    } catch (error) {
+      console.error('ReviewDecline Error:', error);
+      toast.error(error?.message || "Failed to submit review", {
+        position: "top-right",
+        autoClose: 3000
+      });
+    }
   };
 
   return (

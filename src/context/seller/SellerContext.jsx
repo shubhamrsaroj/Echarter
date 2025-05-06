@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useCallback, useEffect, useRef } from "react";
 import { SellerService } from "../../api/seller/SellerService";
 import { tokenHandler } from "../../utils/tokenHandler";
-import { toast } from "react-toastify";
 
 const SellerContext = createContext();
 
@@ -63,7 +62,6 @@ export const SellerProvider = ({ children }) => {
 
     // Only block concurrent fetches but allow immediate refetching when needed
     if (pendingFetchHavesRef.current) {
-      console.log('fetchHaves: Already fetching, wait for completion');
       return;
     }
 
@@ -71,7 +69,6 @@ export const SellerProvider = ({ children }) => {
     setLoading(true);
     
     try {
-      console.log('fetchHaves: Fetching haves for company', currentUser.comId);
       const data = await SellerService.getCompanyHaves(currentUser.comId);
       if (!data || !data.data) {
         setHaves([]);
@@ -80,7 +77,6 @@ export const SellerProvider = ({ children }) => {
       }
       setError(null);
     } catch (err) {
-      console.error('fetchHaves error:', err);
       setError(err.message);
       setHaves([]);
     } finally {
@@ -271,61 +267,37 @@ export const SellerProvider = ({ children }) => {
   }, []);
 
   const deleteConversationWithReview = useCallback(async (conversationId, reviewData) => {
-    if (!currentUser?.id || !currentUser?.comId) return;
+    if (!currentUser?.id || !currentUser?.comId) return null;
 
     setLoading(true);
     setDeleteSuccess(false);
+    
     try {
       const response = await SellerService.deleteConversation(
         conversationId,
         currentUser.id,
         currentUser.comId,
-        {
-          rating: reviewData.rating,
-          feedback: reviewData.feedback,
-          declineReason: reviewData.reason || reviewData.worked,
-          isUserDeleting: true,
-        }
+        reviewData
       );
 
-      setDeals(prevDeals =>
-        prevDeals.filter(deal =>
-          deal.conversationId !== conversationId &&
-          deal.threadId !== conversationId &&
-          deal.itineraryId !== conversationId
-        )
-      );
+      // Update the deals list to remove the deleted conversation
+      if (response?.success) {
+        setDeals(prevDeals =>
+          prevDeals.filter(deal =>
+            deal.conversationId !== conversationId &&
+            deal.threadId !== conversationId &&
+            deal.itineraryId !== conversationId
+          )
+        );
+        setDeleteSuccess(true);
+        setError(null);
+      }
 
-      setDeleteSuccess(response?.message || "Conversation deleted successfully!");
-      setError(null);
-      
-      // Show success toast
-      toast.success(response?.message || "Conversation deleted successfully!", {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true
-      });
-      
       return response;
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Failed to delete conversation";
-      setDeleteError(errorMessage);
-      setError(errorMessage);
+      setDeleteError(err.message || "Failed to handle conversation");
+      setError(err.message);
       setDeleteSuccess(false);
-      
-      // Show error toast
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true
-      });
-      
       throw err;
     } finally {
       setLoading(false);

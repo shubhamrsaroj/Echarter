@@ -158,10 +158,13 @@ const DealCard = () => {
         rating: data.rating,
         feedback: data.feedback,
         reason: data.reason,
+        isDecline: true,
       });
-      setApiResponse(response.data || response);
+      
+      // Return the entire response object to the ReviewDecline component
+      return response;
     } catch (error) {
-      setApiResponse({ error: error.message || "Failed to decline deal. Please try again." });
+      throw error;
     } finally {
       setDeclineInProgress(false);
     }
@@ -178,10 +181,13 @@ const DealCard = () => {
         rating: data.rating,
         feedback: data.feedback,
         worked: data.worked,
+        isDecline: false,
       });
-      setApiResponse(response.data || response);
+      
+      // Return the entire response object to the ReviewDelete component
+      return response;
     } catch (error) {
-      setApiResponse({ error: error.message || "Failed to delete deal. Please try again." });
+      throw error;
     } finally {
       setDeleteInProgress(false);
     }
@@ -206,19 +212,17 @@ const DealCard = () => {
       
       if (isTokenValid) {
         // Valid token path
-        console.log('Using existing ACS token - JWT is still valid');
         chatData = {
           threadId: deal.threadId,
           acsUserId: deal.acsUserId,
           token: deal.accessToken,
           message: deal.buyerName,
-          itineraryId: deal.itineraryId, // Add itineraryId to chatData
-          conversationId: deal.conversationId, // Add conversationId to chatData
-          sellerCompanyId: deal.sellerCompanyId // Add sellerCompanyId to chatData
+          itineraryId: deal.itineraryId,
+          conversationId: deal.conversationId,
+          sellerCompanyId: deal.sellerCompanyId
         };
       } else {
         // Invalid token path - Call API to refresh ACS token
-        console.log('Token invalid or expired, requesting new token from /api/SinglePoint/GetRefreshedAcsToken');
         const refreshedData = await AcsService.getRefreshedAcsToken();
         
         if (!refreshedData || !refreshedData.token) {
@@ -226,16 +230,16 @@ const DealCard = () => {
         }
         
         chatData = {
-          threadId: deal.threadId, // Use existing threadId from the deal
+          threadId: deal.threadId,
           acsUserId: refreshedData.acsUserId,
           token: refreshedData.token,
           message: deal.buyerName,
-          itineraryId: deal.itineraryId, // Add itineraryId to chatData
-          conversationId: deal.conversationId // Add conversationId to chatData
+          itineraryId: deal.itineraryId,
+          conversationId: deal.conversationId
         };
       }
       
-      // Set chat data and open chat - corresponds to "Open Chat related to ThreadID" in diagram
+      // Set chat data and open chat
       setChatData(chatData);
       setIsChatOpen(true);
       
@@ -244,7 +248,6 @@ const DealCard = () => {
       setDeclineDealId(null);
       setDeleteDealId(null);
     } catch (error) {
-      console.error('Error opening chat:', error);
       toast.error("Failed to open chat: " + (error.message || "Unknown error"), {
         position: "top-right",
         autoClose: 3000,
@@ -343,15 +346,11 @@ const DealCard = () => {
   useEffect(() => {
     if (apiResponse) {
       if (apiResponse.error) {
-        toast.error(apiResponse.error, {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        setDeleteDealId(null);
+        setDeclineDealId(null);
       } else if (apiResponse.message) {
-        toast.success(apiResponse.message, {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        setDeleteDealId(null);
+        setDeclineDealId(null);
       }
     }
   }, [apiResponse]);

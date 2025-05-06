@@ -118,7 +118,6 @@ export const getTailDetailsById = async (conversationId, sellerCompanyId) => {
 
     // Check if user company matches seller company
     const userCompanyMatchesSeller = String(userData.comId) === String(sellerCompanyId);
-    console.log("API Service - User company matches seller:", userCompanyMatchesSeller);
 
     const response = await api.get(`/api/SinglePoint/GetTailDetailsById`, {
       params: { conversationId }
@@ -127,7 +126,6 @@ export const getTailDetailsById = async (conversationId, sellerCompanyId) => {
     // If user company matches seller company, we always want to return a successful response
     // even if there's no data, to allow users to add their own aircraft
     if (userCompanyMatchesSeller) {
-      console.log("User company matches seller - returning success even with empty data");
       return {
         success: true,
         statusCode: 200,
@@ -144,7 +142,6 @@ export const getTailDetailsById = async (conversationId, sellerCompanyId) => {
     throw new Error(response.data?.message || 'Request failed');
     
   } catch (error) {
-    console.error('GetTailDetailsById:', error);
     throw error;
   }
 };

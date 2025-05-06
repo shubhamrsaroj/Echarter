@@ -20,6 +20,7 @@ export const SellerService = {
           params: { companyId }
         });
         return response.data;
+      // eslint-disable-next-line no-useless-catch
       } catch (error) {
         throw error;
       } finally {
@@ -107,27 +108,30 @@ export const SellerService = {
     }
   },
 
-  deleteConversation: async (conversationId, userId, declineData) => {
+  deleteConversation: async (conversationId, userId, companyId, reviewData) => {
     // eslint-disable-next-line no-useless-catch
     try {
       const requestBody = {
         conversationID: conversationId,
         reviewFor: userId,
-        path: declineData.declineReason === true || declineData.declineReason === false ? "Delete" : "decline",
-        rating: declineData.rating,
-        feedBack: declineData.feedback,
+        path: reviewData.isDecline ? "decline" : "Delete",
+        rating: reviewData.rating || 0,
+        feedBack: reviewData.feedback || "",
       };
-  
-      if (declineData.declineReason === true || declineData.declineReason === false) {
-        requestBody.dealDone = declineData.declineReason;
+
+      // For delete path
+      if (!reviewData.isDecline) {
+        requestBody.dealDone = reviewData.worked || false;
       } else {
-        requestBody.declineReason = declineData.declineReason;
+        // For decline path
+        requestBody.declineReason = reviewData.reason || "";
       }
-  
-      const response = await api.delete('/api/SinglePoint/DeleteConversation', {
+
+      const { data: response } = await api.delete('/api/SinglePoint/DeleteConversation', {
         data: requestBody
       });
-      return response.data;
+
+      return response;
     } catch (error) {
       throw error;
     }
