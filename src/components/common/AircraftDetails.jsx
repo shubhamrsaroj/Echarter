@@ -67,47 +67,23 @@ const AircraftDetails = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userCompanyMatchesSeller, setUserCompanyMatchesSeller] = useState(false);
-  const [showEmptyState, setShowEmptyState] = useState(false);
-  
+
   // Check if user company ID matches seller company ID
   useEffect(() => {
     if (tokenHandler.getToken() && sellerCompanyId) {
       const userDataFromToken = tokenHandler.parseUserFromToken(tokenHandler.getToken());
-      
-      // Set match status - convert both to strings for reliable comparison
       const matches = String(userDataFromToken?.comId) === String(sellerCompanyId);
       setUserCompanyMatchesSeller(matches);
     }
   }, [sellerCompanyId]);
 
-  // Handle loading state - two-phase approach to ensure correct sequence
+  // Simplified loading state management
   useEffect(() => {
-    // Always start with loading state for at least a short period
-    let dataTimer;
-    let emptyStateTimer;
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 600);
     
-    // Phase 1: If we have aircraft data, prepare to show it after a short delay
-    if (aircraft) {
-      dataTimer = setTimeout(() => {
-        setLoading(false); // Stop loading and show data
-      }, 600);
-    } 
-    // Phase 2: If no aircraft data, wait longer before showing empty state
-    else {
-      dataTimer = setTimeout(() => {
-        setLoading(false); // Stop loading first
-      }, 800);
-      
-      emptyStateTimer = setTimeout(() => {
-        setShowEmptyState(true); // Then allow empty state to show
-      }, 1000);
-    }
-    
-    // Cleanup timers on unmount
-    return () => {
-      clearTimeout(dataTimer);
-      if (emptyStateTimer) clearTimeout(emptyStateTimer);
-    };
+    return () => clearTimeout(timer);
   }, [aircraft]);
 
   // Fetch aircraft list when selector should be shown
@@ -242,12 +218,10 @@ const AircraftDetails = ({
 
   // Main render function with simplified conditions
   const renderContent = () => {
-    // First priority: Always show loading if loading state is true
     if (loading) {
       return <AircraftDetailsSkeleton />;
     }
     
-    // Second priority: Show selector if edit button was clicked
     if (showSelector) {
       return (
         <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -274,12 +248,11 @@ const AircraftDetails = ({
       );
     }
     
-    // Third priority: Show aircraft data if available
     if (currentAircraft) {
       return (
         <>
           {/* Aircraft details */}
-          <div className="mb-6">
+          <div className="mb-6 relative bg-white">
             <h3 className="text-xl font-semibold">{currentAircraft.type}</h3>
             <p className="text-lg font-bold mt-1">{currentAircraft.registration}</p>
             <p className="text-lg font-bold">{currentAircraft.seats} Seats</p>
@@ -287,7 +260,7 @@ const AircraftDetails = ({
           </div>
 
           {/* Aircraft properties */}
-          <div className="grid grid-cols-2 gap-x-6 gap-y-3 mb-6">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3 mb-6 relative bg-white">
             <div>
               <span className="text-black">Manufacture Year: </span>
               <span className="font-bold">{currentAircraft.manufactureYear}</span>
@@ -308,7 +281,7 @@ const AircraftDetails = ({
 
           {/* Images */}
           {currentAircraft.images && currentAircraft.images.length > 0 && (
-            <div className="mb-6">
+            <div className="mb-6 relative bg-white">
               <h3 className="font-semibold text-lg mb-4">Images</h3>
               <div className="grid grid-cols-2 gap-4">
                 {currentAircraft.images.map((image, index) => (
@@ -325,7 +298,7 @@ const AircraftDetails = ({
 
           {/* Features/Amenities */}
           {currentAircraft.features && Object.keys(currentAircraft.features).length > 0 && (
-            <div className="border border-gray-300 rounded-md p-5 mb-6">
+            <div className="border border-gray-300 rounded-md p-5 mb-6 relative bg-white">
               <h3 className="font-semibold text-lg mb-4">Amenities</h3>
               <div className="grid grid-cols-2 gap-4">
                 {Object.values(currentAircraft.features).map((feature, index) => (
@@ -346,7 +319,7 @@ const AircraftDetails = ({
 
           {/* Documents */}
           {currentAircraft.documents && currentAircraft.documents.length > 0 && (
-            <div>
+            <div className="relative bg-white">
               <h3 className="font-semibold text-lg mb-4">Documents</h3>
               <div className="space-y-4">
                 {currentAircraft.documents.map((doc, index) => (
@@ -369,26 +342,21 @@ const AircraftDetails = ({
       );
     }
 
-    // Fourth priority: Only show empty state if explicitly allowed and loading has finished
-    if (!loading && (showEmptyState || aircraft === undefined)) {
-      return (
-        <div className="flex flex-col items-center justify-center h-full text-center">
-          <p className="text-lg mb-4">No aircraft selected</p>
-          {sellerCompanyId && userCompanyMatchesSeller ? (
-            <p className="text-gray-600">
-              Please add aircraft by clicking on the pencil icon in the top left.
-            </p>
-          ) : (
-            <p className="text-gray-600">
-              No aircraft information available.
-            </p>
-          )}
-        </div>
-      );
-    }
-    
-    // If we get here, show a mini-loader while transitioning states
-    return <div className="flex justify-center items-center h-full"><div className="animate-pulse">Loading...</div></div>;
+    // Show empty state only if no aircraft data is available
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px] text-center px-4">
+        <p className="text-lg mb-4">No aircraft information available.</p>
+        {sellerCompanyId && userCompanyMatchesSeller ? (
+          <p className="text-gray-600">
+            Please add aircraft by clicking on the pencil icon in the top left.
+          </p>
+        ) : (
+          <p className="text-gray-600">
+            No aircraft information available.
+          </p>
+        )}
+      </div>
+    );
   };
 
   // Modify the shouldCloseComponent function to allow closing the panel
@@ -400,9 +368,9 @@ const AircraftDetails = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-[450px] w-[500px] max-w-full">
+    <div className="bg-white rounded-xl  overflow-hidden flex flex-col h-[650px] w-[650px] max-w-[90vw] relative ml-auto border border-black">
       {/* Header with Aircraft title and edit icon */}
-      <div className="flex justify-between items-center p-4 border-b">
+      <div className="flex justify-between items-center p-4 border-b relative z-30">
         <div className="flex items-center space-x-4">
           <h2 className="text-xl font-bold">Aircraft</h2>
           {/* Always show edit button if user company matches seller company */}
@@ -426,7 +394,13 @@ const AircraftDetails = ({
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        {renderContent()}
+        <div className="relative">
+          <div className="relative z-30 bg-white">
+            {renderContent()}
+          </div>
+          {/* Add padding at the bottom to prevent content from being hidden behind ribbons */}
+          <div className="h-16"></div>
+        </div>
       </div>
     </div>
   );

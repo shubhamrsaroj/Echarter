@@ -244,8 +244,8 @@ const ChatHeader = ({
 
       {/* Aircraft Details Overlay */}
       {showAircraftDetails && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-         <div className="w-[100%] max-w-lg max-h-[100vh] bg-white rounded-xl overflow-auto border border-black">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4 border border-black">
+         
             <AircraftDetails 
               aircraft={aircraftData} 
               onClose={handleCloseAircraftDetails}
@@ -254,7 +254,7 @@ const ChatHeader = ({
               onUpdate={handleAircraftUpdate}
               sellerCompanyId={chatData?.sellerCompanyId}
             />
-          </div>
+          
         </div>
       )}
     </>
