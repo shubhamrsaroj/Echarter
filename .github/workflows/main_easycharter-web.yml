@@ -13,6 +13,7 @@ env:
   NODE_ENV: production
   NODE_VERSION: '20.x'
   APP_NAME: 'easycharter-web'
+  VITE_BASE_URL: ${{ secrets.VITE_BASE_URL }}
 
 jobs:
   build:
