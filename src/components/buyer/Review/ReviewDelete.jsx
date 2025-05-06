@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Star, CircleHelp, X } from "lucide-react";
-import SpeechInput from "../../seller/Review/SpeechInput";
+import SpeechInput from "../../../components/seller/Review/SpeechInput";
 
-const ReviewDelete = ({ dealSellerName, conversationId, onClose, onSubmit, isSubmitting = false }) => {
+const ReviewDelete = ({ dealSellerName, conversationId, onClose, onSubmit, isSubmitting = false, path }) => {
   const [selectedStars, setSelectedStars] = useState([false, false, false, false, false]);
   const [feedback, setFeedback] = useState("");
   const [worked, setWorked] = useState(null);
@@ -11,8 +11,7 @@ const ReviewDelete = ({ dealSellerName, conversationId, onClose, onSubmit, isSub
 
   const handleStarClick = (index) => {
     if (isSubmitting) return;
-    const newSelectedStars = [...selectedStars];
-    newSelectedStars[index] = !newSelectedStars[index];
+    const newSelectedStars = selectedStars.map((_, i) => i <= index);
     setSelectedStars(newSelectedStars);
   };
 
@@ -21,7 +20,7 @@ const ReviewDelete = ({ dealSellerName, conversationId, onClose, onSubmit, isSub
       alert("Please select if it worked or not");
       return;
     }
-    onSubmit({ rating, feedback, worked, conversationId });
+    onSubmit({ rating, feedback, worked, conversationId, path });
   };
 
   return (

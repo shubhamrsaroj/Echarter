@@ -2,15 +2,16 @@ import api from '../axios.config';
 
 export const BuyerService = {
   // New DeleteConversation endpoint
-  deleteConversation: async (userId, companyId, declineData) => {
+  deleteConversation: async (declineData) => {
     // eslint-disable-next-line no-useless-catch
     try {
       const requestBody = {
-        reviewFor: userId,
-        path:  "Delete" ,
+        reviewFor: String(declineData.sellerCompanyId),
+        path: declineData.path,
         rating: declineData.rating, // Do not default to 0
         feedBack: declineData.feedback, // Do not default to ""
-        conversationId: declineData.conversationId
+        conversationId: declineData.conversationId,
+
       };
       const response = await api.delete('/api/SinglePoint/DeleteConversation', {
         data: requestBody

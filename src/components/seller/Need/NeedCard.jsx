@@ -53,25 +53,12 @@ const NeedCard = () => {
       setLocalLoading(true);
       
       if (!initialLoadComplete) {
-        // Set a maximum timeout to prevent infinite loading
-        const timeoutId = setTimeout(() => {
-          console.log('NeedCard: Safety timeout reached, forcing loading off');
-          setIsFirstLoad(false);
-          setInitialLoadComplete(true);
-          setLocalLoading(false);
-        }, 15000); // 15 seconds maximum timeout
-        
         fetchItinerary(currentUser.comId, 30)
           .finally(() => {
-            // Always mark first load as complete regardless of response
+            // Keep loading true until data is detected in the next useEffect
             setIsFirstLoad(false);
             setInitialLoadComplete(true);
-            clearTimeout(timeoutId); // Clear the timeout if API responds
           });
-          
-        return () => {
-          clearTimeout(timeoutId); // Clean up timeout if component unmounts
-        };
       }
     }
   }, [currentUser?.comId, fetchItinerary, initialLoadComplete]);
@@ -80,28 +67,13 @@ const NeedCard = () => {
   useEffect(() => {
     const companyKey = currentUser?.comId ? `company_${currentUser.comId}` : null;
     
-    console.log('NeedCard data monitor:', { 
-      companyKey, 
-      hasData: companyKey && itineraries[companyKey],
-      isArray: companyKey && itineraries[companyKey] && Array.isArray(itineraries[companyKey]),
-      hasCompanyKey: companyKey && Object.prototype.hasOwnProperty.call(itineraries, companyKey),
-      localLoading
-    });
-    
     // If we have the itineraries data and it's an array (actual data not just an empty object)
     if (companyKey && itineraries[companyKey] && Array.isArray(itineraries[companyKey])) {
-      console.log('NeedCard: Setting localLoading to false - array data detected');
       // Data has arrived, turn off loading
       setLocalLoading(false);
       
       // Update the reference for future comparisons
       prevItinerariesRef.current[companyKey] = itineraries[companyKey];
-    }
-    // Also check if we have received a response with companyKey but data is null/empty
-    else if (companyKey && Object.prototype.hasOwnProperty.call(itineraries, companyKey)) {
-      console.log('NeedCard: Setting localLoading to false - empty/null data detected');
-      // API responded with no data or empty data
-      setLocalLoading(false);
     }
   }, [itineraries, currentUser?.comId]);
 
@@ -149,65 +121,32 @@ const NeedCard = () => {
   // 1. First load is in progress
   // 2. Local loading state is true
   // 3. Global loading is true and we haven't completed initial load
-  // 4. We have a company ID but data isn't loaded yet (we haven't received any response)
+  // 4. We have a company ID but data isn't loaded yet
   const isLoading = 
     isFirstLoad || 
     localLoading || 
     (globalLoading && !initialLoadComplete) ||
-    (currentUser?.comId && !Object.prototype.hasOwnProperty.call(itineraries, companyKey));
+    (currentUser?.comId && !isDataLoaded);
 
   if (isLoading) {
-    return (
-      <div>
-        <SkeletonNeedCard />
-        
-        {/* Add retry button if loading takes too long */}
-        {initialLoadComplete && localLoading && (
-          <div className="mt-4 flex justify-center">
-            <button 
-              onClick={() => {
-                console.log('NeedCard: Manual retry triggered');
-                setLocalLoading(false); // Force stop loading
-                // Optionally refetch data
-                if (currentUser?.comId) {
-                  fetchItinerary(currentUser.comId, 30);
-                }
-              }}
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-black font-medium"
-            >
-              Loading taking too long? Click to refresh
-            </button>
-          </div>
-        )}
-      </div>
-    );
+    return <SkeletonNeedCard />;
   }
 
   // Handle Initiate button click with debounce
   const handleInitiateClick = (itineraryId) => {
     // Prevent rapid double-clicks
     if (isInitiating) {
-      console.log('handleInitiateClick: Already initiating, ignoring click');
       return;
     }
     
     // Check if it's the same itinerary we already have selected
     if (itineraryId === selectedItineraryId) {
-      console.log('handleInitiateClick: Same itinerary already selected, ignoring click');
       return;
     }
     
-    console.log('handleInitiateClick: Setting up itinerary view for', itineraryId);
     setIsInitiating(true);
     setSelectedItineraryId(itineraryId);
-    
-    // Fetch the itinerary data if needed
-    if (!itineraries[itineraryId] || !itineraries[itineraryId].itinerary) {
-      console.log('handleInitiateClick: Need to fetch itinerary data for', itineraryId);
-      fetchItinerary(itineraryId);
-    } else {
-      console.log('handleInitiateClick: Already have itinerary data for', itineraryId);
-    }
+    fetchItinerary(itineraryId);
     
     // Clear any existing timeout before setting a new one
     if (clickTimeoutRef.current) {
@@ -216,7 +155,6 @@ const NeedCard = () => {
     
     // Set a timeout to allow the next click
     clickTimeoutRef.current = setTimeout(() => {
-      console.log('handleInitiateClick: Reset initiating state after timeout');
       setIsInitiating(false);
     }, 1000); // 1 second debounce
   };
@@ -348,7 +286,6 @@ const NeedCard = () => {
               <>
                 {/* NeedItinerary Component */}
                 <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                  {console.log('Rendering NeedItinerary with loading state:', loadingItinerary)}
                   <NeedItinerary
                     itinerary={itineraries[selectedItineraryId] || []}
                     loading={loadingItinerary}

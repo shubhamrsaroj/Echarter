@@ -107,7 +107,7 @@ export const SellerService = {
     }
   },
 
-  deleteConversation: async (conversationId, userId, companyId, declineData) => {
+  deleteConversation: async (conversationId, userId, declineData) => {
     // eslint-disable-next-line no-useless-catch
     try {
       const requestBody = {

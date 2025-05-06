@@ -19,12 +19,14 @@ import 'react-toastify/dist/ReactToastify.css';
 // Personal Edit Form Component
 const PersonalEditForm = ({ userDetails, editedCurrency, onCurrencyChange, onSave, onCancel }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [editedName, setEditedName] = useState(userDetails?.normalizedName || "");
 
   const handleSavePersonal = async () => {
     try {
       setIsLoading(true);
       const updatedData = {
-        currency: editedCurrency
+        currency: editedCurrency,
+        name: editedName
       };
       await onSave("personal", updatedData);
     } finally {
@@ -40,12 +42,12 @@ const PersonalEditForm = ({ userDetails, editedCurrency, onCurrencyChange, onSav
       <div className="grid grid-cols-1 gap-4">
         <div className="flex items-center">
           <div className="flex-1">
-            <label className="text-sm text-gray-600">Name</label>
+            <label className="text-sm text-gray-600">Name *</label>
             <input
               type="text"
-              value={userDetails?.normalizedName || ""}
-              disabled
-              className="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg"
             />
           </div>
         </div>

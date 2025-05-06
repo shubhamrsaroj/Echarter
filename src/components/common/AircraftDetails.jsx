@@ -4,6 +4,7 @@ import AircraftSelector from './AircraftSelector';
 import SkeletonLoader from './SkeletonLoader';
 import { AircraftService } from '../../api/aircraft/AircraftService';
 import { tokenHandler } from '../../utils/tokenHandler';
+import { toast } from 'react-toastify';
 
 const AircraftDetailsSkeleton = () => {
   return (
@@ -54,8 +55,7 @@ const AircraftDetailsSkeleton = () => {
 
 const AircraftDetails = ({ 
   aircraft, 
-  onClose, 
-  loading: initialLoading = false, 
+  onClose,
   conversationId,
   onUpdate,
   sellerCompanyId
@@ -64,21 +64,53 @@ const AircraftDetails = ({
   const [selectedAircraft, setSelectedAircraft] = useState(null);
   const [aircraftList, setAircraftList] = useState([]);
   const [loadingAircraftList, setLoadingAircraftList] = useState(false);
-  const [loading, setLoading] = useState(initialLoading);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userCompanyMatchesSeller, setUserCompanyMatchesSeller] = useState(false);
+  const [showEmptyState, setShowEmptyState] = useState(false);
+  
+  // Check if user company ID matches seller company ID
+  useEffect(() => {
+    if (tokenHandler.getToken() && sellerCompanyId) {
+      const userDataFromToken = tokenHandler.parseUserFromToken(tokenHandler.getToken());
+      
+      // Set match status - convert both to strings for reliable comparison
+      const matches = String(userDataFromToken?.comId) === String(sellerCompanyId);
+      setUserCompanyMatchesSeller(matches);
+    }
+  }, [sellerCompanyId]);
 
-    // Add direct console log to check if component is rendering
-    // console.log('AircraftDetails component rendered');
-    // console.log('Token exists:', !!tokenHandler.getToken());
-    // console.log('Seller Company ID:', sellerCompanyId);
+  // Handle loading state - two-phase approach to ensure correct sequence
+  useEffect(() => {
+    // Always start with loading state for at least a short period
+    let dataTimer;
+    let emptyStateTimer;
     
-    // if (tokenHandler.getToken()) {
-    //   const userData = tokenHandler.parseUserFromToken(tokenHandler.getToken());
-    //   console.log('User data from token:', userData);
-    //   console.log('User Company ID:', userData?.comId);
-    // }
+    // Phase 1: If we have aircraft data, prepare to show it after a short delay
+    if (aircraft) {
+      dataTimer = setTimeout(() => {
+        setLoading(false); // Stop loading and show data
+      }, 600);
+    } 
+    // Phase 2: If no aircraft data, wait longer before showing empty state
+    else {
+      dataTimer = setTimeout(() => {
+        setLoading(false); // Stop loading first
+      }, 800);
+      
+      emptyStateTimer = setTimeout(() => {
+        setShowEmptyState(true); // Then allow empty state to show
+      }, 1000);
+    }
+    
+    // Cleanup timers on unmount
+    return () => {
+      clearTimeout(dataTimer);
+      if (emptyStateTimer) clearTimeout(emptyStateTimer);
+    };
+  }, [aircraft]);
 
-  // Fetch aircraft list when component mounts
+  // Fetch aircraft list when selector should be shown
   useEffect(() => {
     const fetchAircraftList = async () => {
       try {
@@ -87,8 +119,8 @@ const AircraftDetails = ({
         setAircraftList(data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching aircraft:', err);
         setError('Failed to load aircraft. Please try again.');
+        console.error('Error loading aircraft list:', err);
       } finally {
         setLoadingAircraftList(false);
       }
@@ -129,32 +161,50 @@ const AircraftDetails = ({
     };
   };
 
-  const handleUpdateSuccess = async (updatedAircraftData) => {
+  const handleUpdateSuccess = async (updatedAircraftData, isUserCompanyUpdate = false) => {
     try {
       setLoading(true);
+      
+      // Skip calling parent's onUpdate if company IDs match to prevent toast
+      const skipParentUpdate = isUserCompanyUpdate || userCompanyMatchesSeller;
+      
       if (updatedAircraftData) {
-        // Use the already fetched data if provided
-        if (onUpdate) {
-          onUpdate(updatedAircraftData); // Notify parent of update
+        if (onUpdate && !skipParentUpdate) {
+          // Only call parent's onUpdate if company IDs don't match
+          onUpdate(updatedAircraftData);
         }
+        
+        // Always update our local state
         aircraft = updatedAircraftData;
+        setSelectedAircraft(formatAircraftData(updatedAircraftData));
       } else {
         // Fallback to fetching all aircraft if no data provided
         const updatedAircraft = await AircraftService.getAllAircraft();
         // Get the latest selected aircraft data
         const latestAircraft = updatedAircraft.find(a => a.id === selectedAircraft?.id);
+        
         if (latestAircraft) {
-          if (onUpdate) {
-            onUpdate(latestAircraft); // Notify parent of update
+          if (onUpdate && !skipParentUpdate) {
+            // Only call parent's onUpdate if company IDs don't match
+            onUpdate(latestAircraft);
           }
-          aircraft = latestAircraft; // Update the current aircraft data
+          
+          // Always update our local state
+          aircraft = latestAircraft;
+          setSelectedAircraft(formatAircraftData(latestAircraft));
         }
+        
         setAircraftList(updatedAircraft);
       }
+      
+      // Close selector after successful update
       setShowSelector(false);
-      setSelectedAircraft(null);
     } catch (err) {
-      console.error('Error updating aircraft:', err);
+      if (!userCompanyMatchesSeller) {
+        // Only show error toast if company IDs don't match
+        toast.error('Failed to update aircraft details');
+        console.error('Error updating aircraft details:', err);
+      }
     } finally {
       setLoading(false);
     }
@@ -163,19 +213,190 @@ const AircraftDetails = ({
   // Use selected aircraft if available, otherwise use formatted API data
   const currentAircraft = selectedAircraft || formatAircraftData(aircraft);
 
-  useEffect(() => {
-    // Reset loading state when aircraft data changes
-    if (aircraft) {
-      setLoading(false);
-    }
-  }, [aircraft]);
-
   const handleEdit = () => {
     setShowSelector(true);
+    
+    // Ensure aircraft list is fetched if not already done
+    if (aircraftList.length === 0 && !loadingAircraftList) {
+      const fetchAircraftList = async () => {
+        try {
+          setLoadingAircraftList(true);
+          const data = await AircraftService.getAllAircraft(sellerCompanyId);
+          setAircraftList(data);
+          setError(null);
+        } catch (err) {
+          setError('Failed to load aircraft. Please try again.');
+          console.error('Error fetching aircraft list:', err);
+        } finally {
+          setLoadingAircraftList(false);
+        }
+      };
+      
+      fetchAircraftList();
+    }
   };
 
   const handleCloseSelector = () => {
     setShowSelector(false);
+  };
+
+  // Main render function with simplified conditions
+  const renderContent = () => {
+    // First priority: Always show loading if loading state is true
+    if (loading) {
+      return <AircraftDetailsSkeleton />;
+    }
+    
+    // Second priority: Show selector if edit button was clicked
+    if (showSelector) {
+      return (
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Select Aircraft</h3>
+            <button
+              onClick={handleCloseSelector}
+              className="text-black hover:text-black"
+              aria-label="Close selector"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <AircraftSelector 
+            onSelect={setSelectedAircraft}
+            conversationId={conversationId}
+            aircraftList={aircraftList}
+            loading={loadingAircraftList}
+            error={error}
+            onUpdateSuccess={handleUpdateSuccess}
+            userCompanyMatchesSeller={userCompanyMatchesSeller}
+          />
+        </div>
+      );
+    }
+    
+    // Third priority: Show aircraft data if available
+    if (currentAircraft) {
+      return (
+        <>
+          {/* Aircraft details */}
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold">{currentAircraft.type}</h3>
+            <p className="text-lg font-bold mt-1">{currentAircraft.registration}</p>
+            <p className="text-lg font-bold">{currentAircraft.seats} Seats</p>
+            <p className="text-md text-black mt-2">Categories: <span className="font-bold">{currentAircraft.categories}</span></p>
+          </div>
+
+          {/* Aircraft properties */}
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3 mb-6">
+            <div>
+              <span className="text-black">Manufacture Year: </span>
+              <span className="font-bold">{currentAircraft.manufactureYear}</span>
+            </div>
+            <div>
+              <span className="text-black">Refurbishment Year: </span>
+              <span className="font-bold">{currentAircraft.refurbishment}</span>
+            </div>
+            <div className="col-span-2">
+              <span className="text-black">Airworthiness validity: </span>
+              <span className="font-bold">{currentAircraft.airworthiness}</span>
+            </div>
+            <div className="col-span-2">
+              <span className="text-black">Insurance validity: </span>
+              <span className="font-bold">{currentAircraft.insuranceValidity}</span>
+            </div>
+          </div>
+
+          {/* Images */}
+          {currentAircraft.images && currentAircraft.images.length > 0 && (
+            <div className="mb-6">
+              <h3 className="font-semibold text-lg mb-4">Images</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {currentAircraft.images.map((image, index) => (
+                  <img 
+                    key={`image-${index}-${image}`}
+                    src={image}
+                    alt={`Aircraft ${index + 1}`}
+                    className="w-full h-32 object-cover rounded-lg"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Features/Amenities */}
+          {currentAircraft.features && Object.keys(currentAircraft.features).length > 0 && (
+            <div className="border border-gray-300 rounded-md p-5 mb-6">
+              <h3 className="font-semibold text-lg mb-4">Amenities</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {Object.values(currentAircraft.features).map((feature, index) => (
+                  <div key={`feature-${feature.name}-${index}`} className="flex items-center space-x-2">
+                    {feature.icon ? (
+                      <img src={feature.icon} alt={feature.name} className="w-5 h-5" />
+                    ) : (
+                      <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    <span className="capitalize">{feature.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Documents */}
+          {currentAircraft.documents && currentAircraft.documents.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-lg mb-4">Documents</h3>
+              <div className="space-y-4">
+                {currentAircraft.documents.map((doc, index) => (
+                  <div key={`doc-${doc.name}-${index}`} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                    <span className="flex items-center text-black">
+                      <FileText className="w-5 h-5 mr-2" />
+                      {doc.name}
+                    </span>
+                    <div className="flex space-x-2">
+                      <button className="p-1 hover:bg-gray-200 rounded-full">
+                        <ExternalLink className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      );
+    }
+
+    // Fourth priority: Only show empty state if explicitly allowed and loading has finished
+    if (!loading && (showEmptyState || aircraft === undefined)) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-center">
+          <p className="text-lg mb-4">No aircraft selected</p>
+          {sellerCompanyId && userCompanyMatchesSeller ? (
+            <p className="text-gray-600">
+              Please add aircraft by clicking on the pencil icon in the top left.
+            </p>
+          ) : (
+            <p className="text-gray-600">
+              No aircraft information available.
+            </p>
+          )}
+        </div>
+      );
+    }
+    
+    // If we get here, show a mini-loader while transitioning states
+    return <div className="flex justify-center items-center h-full"><div className="animate-pulse">Loading...</div></div>;
+  };
+
+  // Modify the shouldCloseComponent function to allow closing the panel
+  const shouldCloseComponent = () => {
+    // We always want to allow users to close the panel
+    if (onClose) {
+      onClose();
+    }
   };
 
   return (
@@ -184,8 +405,8 @@ const AircraftDetails = ({
       <div className="flex justify-between items-center p-4 border-b">
         <div className="flex items-center space-x-4">
           <h2 className="text-xl font-bold">Aircraft</h2>
-          {!loading && sellerCompanyId && tokenHandler.getToken() && 
-           String(tokenHandler.parseUserFromToken(tokenHandler.getToken())?.comId) === String(sellerCompanyId) && (
+          {/* Always show edit button if user company matches seller company */}
+          {sellerCompanyId && userCompanyMatchesSeller && (
             <button 
               className="w-7 h-7 flex items-center justify-center rounded-full bg-[#c1ff72] hover:bg-lime-500 transition"
               aria-label="Edit aircraft"
@@ -196,7 +417,7 @@ const AircraftDetails = ({
           )}
         </div>
         <button
-          onClick={onClose}
+          onClick={shouldCloseComponent}
           className="p-1 hover:bg-gray-100 rounded-full"
           aria-label="Close"
         >
@@ -205,127 +426,7 @@ const AircraftDetails = ({
       </div>
 
       <div className="flex-1 overflow-auto p-4">
-        {loading ? (
-          <AircraftDetailsSkeleton />
-        ) : !currentAircraft ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-black">No aircraft data available</p>
-          </div>
-        ) : (
-          <>
-            {/* Aircraft Selector */}
-            {showSelector && (
-              <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Select Aircraft</h3>
-                  <button
-                    onClick={handleCloseSelector}
-                    className="text-black hover:text-black"
-                    aria-label="Close selector"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <AircraftSelector 
-                  onSelect={setSelectedAircraft}
-                  conversationId={conversationId}
-                  aircraftList={aircraftList}
-                  loading={loadingAircraftList}
-                  error={error}
-                  onUpdateSuccess={handleUpdateSuccess}
-                />
-              </div>
-            )}
-
-            {/* Aircraft details */}
-            <div className="mb-6">
-              <h3 className="text-xl font-semibold">{currentAircraft.type}</h3>
-              <p className="text-lg font-bold mt-1">{currentAircraft.registration}</p>
-              <p className="text-lg font-bold">{currentAircraft.seats} Seats</p>
-              <p className="text-md text-black mt-2">Categories: <span className="font-bold">{currentAircraft.categories}</span></p>
-            </div>
-
-            {/* Aircraft properties */}
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 mb-6">
-              <div>
-                <span className="text-black">Manufacture Year: </span>
-                <span className="font-bold">{currentAircraft.manufactureYear}</span>
-              </div>
-              <div>
-                <span className="text-black">Refurbishment Year: </span>
-                <span className="font-bold">{currentAircraft.refurbishment}</span>
-              </div>
-              <div className="col-span-2">
-                <span className="text-black">Airworthiness validity: </span>
-                <span className="font-bold">{currentAircraft.airworthiness}</span>
-              </div>
-              <div className="col-span-2">
-                <span className="text-black">Insurance validity: </span>
-                <span className="font-bold">{currentAircraft.insuranceValidity}</span>
-              </div>
-            </div>
-
-            {/* Images */}
-            {currentAircraft.images && currentAircraft.images.length > 0 && (
-              <div className="mb-6">
-                <h3 className="font-semibold text-lg mb-4">Images</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {currentAircraft.images.map((image, index) => (
-                    <img 
-                      key={`image-${index}-${image}`}
-                      src={image}
-                      alt={`Aircraft ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Features/Amenities */}
-            {currentAircraft.features && Object.keys(currentAircraft.features).length > 0 && (
-              <div className="border border-gray-300 rounded-md p-5 mb-6">
-                <h3 className="font-semibold text-lg mb-4">Amenities</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {Object.values(currentAircraft.features).map((feature, index) => (
-                    <div key={`feature-${feature.name}-${index}`} className="flex items-center space-x-2">
-                      {feature.icon ? (
-                        <img src={feature.icon} alt={feature.name} className="w-5 h-5" />
-                      ) : (
-                        <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                      <span className="capitalize">{feature.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Documents */}
-            {currentAircraft.documents && currentAircraft.documents.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-lg mb-4">Documents</h3>
-                <div className="space-y-4">
-                  {currentAircraft.documents.map((doc, index) => (
-                    <div key={`doc-${doc.name}-${index}`} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                      <span className="flex items-center text-black">
-                        <FileText className="w-5 h-5 mr-2" />
-                        {doc.name}
-                      </span>
-                      <div className="flex space-x-2">
-                        <button className="p-1 hover:bg-gray-200 rounded-full">
-                          <ExternalLink className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
+        {renderContent()}
       </div>
     </div>
   );

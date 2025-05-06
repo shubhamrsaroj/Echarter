@@ -116,7 +116,9 @@ const ActivityCard = () => {
         rating: data.rating,
         feedback: data.feedback,
         worked: data.worked,
-        conversationId: selectedDeal.conversationId
+        conversationId: selectedDeal.conversationId,
+        sellerCompanyId: selectedDeal.sellerCompanyId,
+        path: data.path || selectedDeal.path || "Delete"
       });
       
       if (response.success) {

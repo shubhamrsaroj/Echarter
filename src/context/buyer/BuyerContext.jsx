@@ -135,13 +135,13 @@ export const BuyerProvider = ({ children }) => {
     setDeleteSuccess(false);
     try {
       const response = await BuyerService.deleteConversation(
-        currentUser.id,
-        currentUser.comId,
         {
           rating: reviewData.rating,
           feedback: reviewData.feedback,
           worked: reviewData.worked,
-          conversationId: reviewData.conversationId
+          conversationId: reviewData.conversationId,
+          sellerCompanyId: reviewData.sellerCompanyId,
+          path: reviewData.path || "Delete"
         }
       );
 

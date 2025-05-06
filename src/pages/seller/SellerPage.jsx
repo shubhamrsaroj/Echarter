@@ -19,25 +19,14 @@ const SellerPage = () => {
 
 
   const handleButtonClick = (section) => {
-    // If changing to Needs section, make sure we reset state first
-    if (section === "Needs" && activeSection !== "Needs") {
-      console.log('SellerPage: Switching to Needs section, reset itinerary state first');
-      resetItineraryState();
-    }
-    
     setActiveSection(section);
   };
 
   // Reset itinerary state when activeSection changes
   useEffect(() => {
-    // Clear itinerary state when changing sections
     if (activeSection !== "Deals") {
-      console.log('SellerPage: Resetting itinerary state when leaving Deals');
-      resetItineraryState();
+      resetItineraryState(); // Clear itinerary state when leaving Deals page
     }
-    
-    // Log the section change
-    console.log('SellerPage: Section changed to', activeSection || 'none');
   }, [activeSection, resetItineraryState]);
 
   return (

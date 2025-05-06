@@ -31,17 +31,17 @@ export const RecentItineraryProvider = ({ children }) => {
     }
   };
 
-  const updateItineraryText = async (itineraryId, text) => {
+  const updateItineraryText = async (itineraryId, text, needs = false) => {
     setUpdating(true);
     try {
-      const response = await updateItinerary(itineraryId, text);
+      const response = await updateItinerary(itineraryId, text, needs);
       
       if (response?.success) {
-        // Update the local state to reflect the change
+        // Update the local state to reflect both text and needs changes
         setRecentItineraries(prev => 
           prev.map(itinerary => 
             itinerary.itineraryID === itineraryId 
-              ? { ...itinerary, itineraryText: text }
+              ? { ...itinerary, itineraryText: text, needs: needs }
               : itinerary
           )
         );

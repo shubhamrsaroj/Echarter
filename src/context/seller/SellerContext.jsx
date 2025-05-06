@@ -60,9 +60,9 @@ export const SellerProvider = ({ children }) => {
   const fetchHaves = useCallback(async () => {
     if (!currentUser?.comId) return;
 
-    // Check if we're already fetching or if we've fetched recently (within last 2 seconds)
-    const now = Date.now();
-    if (pendingFetchHavesRef.current || (now - lastFetchHavesTimestamp.current < 2000)) {
+    // Only block concurrent fetches but allow immediate refetching when needed
+    if (pendingFetchHavesRef.current) {
+      console.log('fetchHaves: Already fetching, wait for completion');
       return;
     }
 
@@ -70,6 +70,7 @@ export const SellerProvider = ({ children }) => {
     setLoading(true);
     
     try {
+      console.log('fetchHaves: Fetching haves for company', currentUser.comId);
       const data = await SellerService.getCompanyHaves(currentUser.comId);
       if (!data || !data.data) {
         setHaves([]);
@@ -78,11 +79,13 @@ export const SellerProvider = ({ children }) => {
       }
       setError(null);
     } catch (err) {
+      console.error('fetchHaves error:', err);
       setError(err.message);
       setHaves([]);
     } finally {
       setLoading(false);
       pendingFetchHavesRef.current = false;
+      // Always update the timestamp regardless of success/failure
       lastFetchHavesTimestamp.current = Date.now();
     }
   }, [currentUser]);
@@ -138,11 +141,8 @@ export const SellerProvider = ({ children }) => {
     const isCompanyFetch = typeof days === 'number';
     const key = isCompanyFetch ? `company_${idOrCompanyId}` : idOrCompanyId;
     
-    console.log('fetchItinerary starting:', { key, isCompanyFetch, requestCached: !!requestCache[key] });
-    
     // Check if we have a pending request for this key
     if (requestCache[key]) {
-      console.log('fetchItinerary: Request already in progress for', key);
       return;
     }
     
@@ -155,15 +155,12 @@ export const SellerProvider = ({ children }) => {
     
     // Create a safety timeout to ensure loading state is reset
     const safetyTimeout = setTimeout(() => {
-      console.log('fetchItinerary: Safety timeout reached, forcing loading off for', key);
       setLoadingItinerary(false);
       delete requestCache[key];
     }, 12000); // 12 seconds safety timeout
 
     try {
-      console.log('fetchItinerary: Making API call for', key);
       const data = await SellerService.getItinerary(idOrCompanyId, days);
-      console.log('fetchItinerary: API response for', key, data);
       
       // Immediately reset loading state on response
       setLoadingItinerary(false);
@@ -172,7 +169,6 @@ export const SellerProvider = ({ children }) => {
         if (isCompanyFetch) {
           // New response structure for companyId and days
           const itineraryData = data.data.itineraries || [];
-          console.log('fetchItinerary: Company fetch result with', itineraryData.length, 'itineraries');
          
           setItineraries(prev => ({
             ...prev,
@@ -183,12 +179,6 @@ export const SellerProvider = ({ children }) => {
           const itineraryList = data?.data?.itineraries || [];
           const firstItinerary = itineraryList[0]?.itineraryResponseNewdata || {};
           const itineraryData = firstItinerary.itinerary || [];
-          
-          console.log('fetchItinerary: Individual itinerary fetch result', { 
-            hasItineraryList: itineraryList.length > 0,
-            hasFirstItinerary: !!firstItinerary,
-            hasItineraryData: itineraryData.length > 0
-          });
           
           setItineraries(prev => ({
             ...prev,
@@ -201,7 +191,6 @@ export const SellerProvider = ({ children }) => {
         }
         setItineraryError(null);
       } else {
-        console.log('fetchItinerary: API call failed or returned non-success for', key);
         setItineraries(prev => ({
           ...prev,
           [key]: null,
@@ -220,7 +209,6 @@ export const SellerProvider = ({ children }) => {
       setLoadingItinerary(false);
     } finally {
       // Always update loading state regardless of success or failure
-      console.log('fetchItinerary: Setting loadingItinerary to false for', key);
       setLoadingItinerary(false);
       
       // Clear the safety timeout
@@ -228,7 +216,6 @@ export const SellerProvider = ({ children }) => {
       
       // Clear the request cache after a short delay to prevent immediately sequential duplicates
       setTimeout(() => {
-        console.log('fetchItinerary: Clearing request cache for', key);
         delete requestCache[key];
       }, 2000); // 2 second delay
     }
@@ -328,7 +315,6 @@ export const SellerProvider = ({ children }) => {
   }, []);
 
   const resetItineraryState = useCallback(() => {
-    console.log('resetItineraryState: Clearing all itinerary state and cache');
     setItineraries({});
     setLoadingItinerary(false);
     setItineraryError(null);
