@@ -34,7 +34,7 @@ jobs:
           # Run the build
           npm run build --if-present
           # Remove dev dependencies and install only production dependencies
-          rm -rf node_modules
+          Remove-Item -Path node_modules -Recurse -Force -ErrorAction SilentlyContinue
           npm ci --omit=dev
 
       - name: Create deployment package
