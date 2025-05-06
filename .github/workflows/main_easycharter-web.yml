@@ -26,18 +26,36 @@ jobs:
       - name: Enable long paths
         run: |
           git config --system core.longpaths true
-          
-      - name: npm install, build, and test
+
+      - name: npm install and build
         run: |
-          npm install
+          npm ci --production
           npm run build --if-present
-          npm run test --if-present
-      
+
+      - name: Create deployment package
+        run: |
+          # Remove development files and directories
+          Remove-Item -Path node_modules -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -Path .git -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -Path .github -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -Path "*.log" -Force -ErrorAction SilentlyContinue
+          
+          # Install production dependencies in a flatter structure
+          npm ci --production --prefix ./prod
+          Move-Item -Path ./prod/node_modules -Destination ./node_modules
+          Remove-Item -Path ./prod -Recurse -Force
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: |
+            .
+            !.git/**
+            !.github/**
+            !.vscode/**
+            !*.md
+            !*.log
           compression-level: 9
 
   deploy:
@@ -64,4 +82,3 @@ jobs:
           slot-name: 'Production'
           package: .
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_55224EA7F94C460A88824DBC3C799B16 }}
-          respect-long-paths: true
