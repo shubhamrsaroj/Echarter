@@ -75,7 +75,6 @@ export const SellerService = {
       return response.data;
     } catch (error) {
       if (error.name === 'CanceledError' || error.name === 'AbortError' || error.message === 'canceled' || axios.isCancel(error)) {
-        console.log('Request was cancelled');
         const abortError = new Error('Request aborted');
         abortError.name = 'AbortError';
         throw abortError;

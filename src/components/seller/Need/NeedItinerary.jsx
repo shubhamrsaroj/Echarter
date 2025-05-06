@@ -10,10 +10,6 @@ const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId
 
   const handleConnect = async () => {
     if (!currentUser?.comId || !selectedItineraryId) {
-      console.error('Missing required data:', { 
-        comId: currentUser?.comId, 
-        itineraryId: selectedItineraryId 
-      });
       toast.error("Missing required data for chat initiation", {
         position: "top-right",
         autoClose: 3000,
@@ -23,10 +19,6 @@ const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId
 
     try {
       setIsConnecting(true);
-      console.log('Initiating chat with:', {
-        itineraryId: selectedItineraryId,
-        companyId: currentUser.comId
-      });
       
       const data = await AcsService.getChatThread({
         itineraryId: selectedItineraryId,
@@ -49,7 +41,6 @@ const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId
 
       onConnect(modifiedData);
     } catch (error) {
-      console.error('Error connecting to chat:', error);
       toast.error(error.message || "Failed to initiate chat", {
         position: "top-right",
         autoClose: 3000,

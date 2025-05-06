@@ -56,7 +56,6 @@ const NeedCard = () => {
         // Use the new fetchItinerary with companyId and days parameters
         fetchItinerary(currentUser.comId, 30)
           .finally(() => {
-            setIsFirstLoad(false);
             setInitialLoadComplete(true);
           });
       }
@@ -69,13 +68,14 @@ const NeedCard = () => {
     
     // If we have the itineraries data and it's an array (actual data not just an empty object)
     if (companyKey && itineraries[companyKey] && Array.isArray(itineraries[companyKey])) {
-      // Data has arrived, turn off loading
+      // Data has arrived, turn off all loading states
       setLocalLoading(false);
+      setIsFirstLoad(false);
       
       // Update the reference for future comparisons
       prevItinerariesRef.current[companyKey] = itineraries[companyKey];
     }
-  }, [itineraries, currentUser?.comId]);
+  }, [itineraries, currentUser?.comId, isFirstLoad, localLoading, globalLoading, initialLoadComplete]);
 
   // Handle info click
   const handleInfoClick = async () => {
@@ -84,7 +84,6 @@ const NeedCard = () => {
       const url = await getInfoContent('needs', 'info');
       setInfoUrl(url);
     } catch (error) {
-      console.error('Failed to fetch info:', error);
       toast.info(error.message || "Failed to load information", {
         position: "top-right",
         autoClose: 3000,
@@ -123,7 +122,7 @@ const NeedCard = () => {
   // 3. Global loading is true and we haven't completed initial load
   // 4. We have a company ID but data isn't loaded yet
   const isLoading = 
-    isFirstLoad || 
+    (isFirstLoad && localLoading) || // Only consider first load if local loading is also true
     localLoading || 
     (globalLoading && !initialLoadComplete) ||
     (currentUser?.comId && !isDataLoaded);
@@ -166,7 +165,6 @@ const NeedCard = () => {
   };
 
   const handleConnect = (data) => {
-    console.log('NeedCard - connecting with data:', data);
     setChatData(data);
   };
 

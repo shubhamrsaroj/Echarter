@@ -62,7 +62,6 @@ export const SellerProvider = ({ children }) => {
 
     // Only block concurrent fetches but allow immediate refetching when needed
     if (pendingFetchHavesRef.current) {
-      console.log('fetchHaves: Already fetching, wait for completion');
       return;
     }
 
@@ -70,7 +69,6 @@ export const SellerProvider = ({ children }) => {
     setLoading(true);
     
     try {
-      console.log('fetchHaves: Fetching haves for company', currentUser.comId);
       const data = await SellerService.getCompanyHaves(currentUser.comId);
       if (!data || !data.data) {
         setHaves([]);
@@ -79,7 +77,6 @@ export const SellerProvider = ({ children }) => {
       }
       setError(null);
     } catch (err) {
-      console.error('fetchHaves error:', err);
       setError(err.message);
       setHaves([]);
     } finally {
@@ -198,7 +195,6 @@ export const SellerProvider = ({ children }) => {
         setItineraryError("Failed to fetch itinerary");
       }
     } catch (err) {
-      console.error(`Error fetching itinerary for ${key}:`, err);
       setItineraryError(err.message || "Failed to fetch itinerary");
       setItineraries(prev => ({
         ...prev,
@@ -276,14 +272,12 @@ export const SellerProvider = ({ children }) => {
     setDeleteSuccess(false);
     
     try {
-      console.log('Context sending reviewData:', reviewData);
       const response = await SellerService.deleteConversation(
         conversationId,
         currentUser.id,
         currentUser.comId,
         reviewData
       );
-      console.log('Context received response:', response);
 
       // Update the deals list to remove the deleted conversation
       if (response?.success) {
@@ -301,7 +295,6 @@ export const SellerProvider = ({ children }) => {
       // Return the response without any transformation
       return response;
     } catch (err) {
-      console.error('Context Error:', err);
       setDeleteError(err.message || "Failed to handle conversation");
       setError(err.message);
       setDeleteSuccess(false);

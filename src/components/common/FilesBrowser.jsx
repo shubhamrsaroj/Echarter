@@ -370,10 +370,7 @@ const FilesBrowser = ({ onClose, chatData, onFilesChange }) => {
         ) : error ? (
           <div className="flex flex-col justify-center items-center h-full py-8">
             <div className="text-center">
-              <div className="rounded-full bg-red-100 p-3 inline-flex mb-3">
-                <X className="h-6 w-6 text-red-500" />
-              </div>
-              <p className="text-red-500 text-sm mb-2">{error}</p>
+              <p className="text-black text-md mb-2">{error}</p>
             </div>
           </div>
         ) : files.length > 0 ? (
