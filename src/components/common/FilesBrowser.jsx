@@ -238,8 +238,8 @@ const FilesBrowser = ({ onClose, chatData, onFilesChange }) => {
     setIsSharing(true);
     
     try {
-      await conversationService.addConversationFiles(chatData.conversationId, uploadedFileUrls);
-      toast.success("Files shared successfully");
+      const response = await conversationService.addConversationFiles(chatData.conversationId, uploadedFileUrls);
+      toast.success(response.message || "Files shared successfully");
       setShowUploadSection(false);
       setUploadedFileUrls([]);
       
@@ -249,51 +249,6 @@ const FilesBrowser = ({ onClose, chatData, onFilesChange }) => {
       toast.error(error.message || "Failed to share files");
     } finally {
       setIsSharing(false);
-    }
-  };
-
-  // Add the handleDownload function to force download behavior
-  const handleDownload = async (url, fileName) => {
-    try {
-      // Create XHR request
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', url, true);
-      xhr.responseType = 'blob';
-
-      xhr.onload = function() {
-        if (this.status === 200) {
-          // Create blob link to download
-          const blob = new Blob([this.response], { type: 'application/octet-stream' });
-          const downloadUrl = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.style.display = 'none';
-          link.href = downloadUrl;
-          link.download = fileName || 'downloaded-file';
-
-          // Append to html link element page
-          document.body.appendChild(link);
-          
-          // Start download
-          link.click();
-          
-          // Clean up and remove the link
-          link.parentNode.removeChild(link);
-          window.URL.revokeObjectURL(downloadUrl);
-        } else {
-          toast.error('Failed to download file. Please try again.');
-        }
-      };
-
-      xhr.onerror = function() {
-        // Handle network errors
-        toast.error('Network error occurred while downloading. Please check your connection and try again.');
-      };
-
-      // Start the download
-      xhr.send();
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download file. Please try again.');
     }
   };
 
@@ -411,28 +366,7 @@ const FilesBrowser = ({ onClose, chatData, onFilesChange }) => {
       {/* File List */}
       <div className="flex-1 overflow-auto px-4 py-2">
         {loading ? (
-          <div className="space-y-6">
-            {[...Array(2)].map((_, sectionIndex) => (
-              <div key={sectionIndex} className="mb-6">
-                <SkeletonLoader className="mb-4 w-1/3" />
-                <div className="space-y-2">
-                  {[...Array(3)].map((_, fileIndex) => (
-                    <div key={fileIndex} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                      <div className="flex-1">
-                        <SkeletonLoader className="w-3/4 mb-1" />
-                        <SkeletonLoader className="w-1/4" height={12} />
-                      </div>
-                      <div className="flex space-x-2">
-                        <SkeletonLoader variant="circle" width={24} height={24} />
-                        <SkeletonLoader variant="circle" width={24} height={24} />
-                        <SkeletonLoader variant="circle" width={24} height={24} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          <SkeletonLoader count={3} height="60px" className="mb-2" />
         ) : error ? (
           <div className="flex flex-col justify-center items-center h-full py-8">
             <div className="text-center">
@@ -477,13 +411,14 @@ const FilesBrowser = ({ onClose, chatData, onFilesChange }) => {
                           <Trash2 className="w-4 h-4 text-black" />
                         )}
                       </button>
-                      <button 
-                        onClick={() => handleDownload(file.url, file.name)}
+                      <a 
+                        href={file.url} 
+                        download={file.name}
                         className="p-1 hover:bg-gray-200 rounded" 
                         aria-label="Download file"
                       >
                         <Download className="w-4 h-4 text-black" />
-                      </button>
+                      </a>
                     </div>
                   </div>
                 ))}

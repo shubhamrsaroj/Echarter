@@ -56,21 +56,26 @@ export const conversationService = {
         throw new Error('File URLs are required');
       }
       
-      const formData = new FormData();
-      formData.append('ConversationId', conversationId);
+      // Create payload according to the API expectation
+      const payload = {
+        conversationId: conversationId,
+        files: fileUrls
+      };
       
-      // Add files as a JSON string array instead of individual form fields
-      formData.append('files', JSON.stringify(fileUrls));
-      
-      const response = await api.post('/api/SinglePoint/AddConversationFiles', formData, {
+      const response = await api.post('/api/SinglePoint/AddConversationFiles', payload, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'application/json'
         }
       });
       
       // Check if the response has data and is successful
       if (response.data && response.data.success) {
-        return response.data.data || { success: true };
+        // Return the full response data including message and data
+        return {
+          success: response.data.success,
+          message: response.data.message,
+          data: response.data.data || { success: true }
+        };
       }
       
       // If API returns a specific error message, use it
