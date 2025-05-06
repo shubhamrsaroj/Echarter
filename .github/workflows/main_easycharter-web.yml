@@ -27,23 +27,22 @@ jobs:
         run: |
           git config --system core.longpaths true
 
-      - name: npm install and build
+      - name: Install dependencies and build
         run: |
-          npm ci --production
+          # Install all dependencies first (including dev dependencies needed for build)
+          npm ci
+          # Run the build
           npm run build --if-present
+          # Remove dev dependencies and install only production dependencies
+          rm -rf node_modules
+          npm ci --omit=dev
 
       - name: Create deployment package
         run: |
-          # Remove development files and directories
-          Remove-Item -Path node_modules -Recurse -Force -ErrorAction SilentlyContinue
+          # Remove unnecessary files and directories
           Remove-Item -Path .git -Recurse -Force -ErrorAction SilentlyContinue
           Remove-Item -Path .github -Recurse -Force -ErrorAction SilentlyContinue
           Remove-Item -Path "*.log" -Force -ErrorAction SilentlyContinue
-          
-          # Install production dependencies in a flatter structure
-          npm ci --production --prefix ./prod
-          Move-Item -Path ./prod/node_modules -Destination ./node_modules
-          Remove-Item -Path ./prod -Recurse -Force
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
