@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useCallback, useEffect, useRef } from "react";
 import { SellerService } from "../../api/seller/SellerService";
 import { tokenHandler } from "../../utils/tokenHandler";
+import { toast } from "react-toastify";
 
 const SellerContext = createContext();
 
@@ -297,11 +298,34 @@ export const SellerProvider = ({ children }) => {
 
       setDeleteSuccess(response?.message || "Conversation deleted successfully!");
       setError(null);
+      
+      // Show success toast
+      toast.success(response?.message || "Conversation deleted successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      });
+      
       return response;
     } catch (err) {
-      setDeleteError(err.message || "Failed to delete conversation. Please try again.");
-      setError(err.message);
+      const errorMessage = err.response?.data?.message || err.message || "Failed to delete conversation";
+      setDeleteError(errorMessage);
+      setError(errorMessage);
       setDeleteSuccess(false);
+      
+      // Show error toast
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      });
+      
       throw err;
     } finally {
       setLoading(false);
