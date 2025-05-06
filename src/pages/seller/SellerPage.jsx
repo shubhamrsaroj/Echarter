@@ -24,9 +24,14 @@ const SellerPage = () => {
 
   // Reset itinerary state when activeSection changes
   useEffect(() => {
+    // Clear itinerary state when changing sections
     if (activeSection !== "Deals") {
-      resetItineraryState(); // Clear itinerary state when leaving Deals page
+      console.log('SellerPage: Resetting itinerary state when leaving Deals');
+      resetItineraryState();
     }
+    
+    // Log the section change
+    console.log('SellerPage: Section changed to', activeSection || 'none');
   }, [activeSection, resetItineraryState]);
 
   return (

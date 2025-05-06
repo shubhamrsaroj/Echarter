@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PlaneTakeoff, PlaneLanding, ArrowRight, X } from "lucide-react";
 import { useSellerContext } from "../../../context/seller/SellerContext";
 import { AcsService } from "../../../api/Acs/AcsService";
@@ -7,6 +7,35 @@ import { toast } from "react-toastify";
 const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId, onConnect, buyerName }) => {
   const { currentUser } = useSellerContext();
   const [isConnecting, setIsConnecting] = useState(false);
+  const [localLoading, setLocalLoading] = useState(loading);
+  
+  // Add timeout to prevent infinite loading
+  useEffect(() => {
+    setLocalLoading(loading);
+    
+    // If loading is true, set a timeout to turn it off after 10 seconds
+    let timeoutId = null;
+    if (loading) {
+      timeoutId = setTimeout(() => {
+        console.log('NeedItinerary: Loading timeout reached, forcing loading off');
+        setLocalLoading(false);
+      }, 10000); // 10 seconds timeout
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [loading]);
+  
+  console.log('NeedItinerary rendered with:', { 
+    loading,
+    localLoading,
+    hasItinerary: !!itinerary,
+    isItineraryArray: Array.isArray(itinerary),
+    itineraryLength: Array.isArray(itinerary?.itinerary) ? itinerary.itinerary.length : 0,
+    error,
+    selectedItineraryId
+  });
 
   const handleConnect = async () => {
     if (!currentUser?.comId || !selectedItineraryId) {
@@ -59,7 +88,9 @@ const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId
     }
   };
 
-  if (loading) {
+  // Early return for loading state to prevent flickering between loading and data states
+  if (localLoading) {
+    console.log('NeedItinerary showing loading skeleton');
     return (
       <div className="bg-[#f6f6f6] rounded-xl border border-black p-4 md:p-6 w-full relative animate-pulse">
         <div className="relative">

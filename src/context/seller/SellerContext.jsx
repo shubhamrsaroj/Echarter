@@ -138,8 +138,11 @@ export const SellerProvider = ({ children }) => {
     const isCompanyFetch = typeof days === 'number';
     const key = isCompanyFetch ? `company_${idOrCompanyId}` : idOrCompanyId;
     
+    console.log('fetchItinerary starting:', { key, isCompanyFetch, requestCached: !!requestCache[key] });
+    
     // Check if we have a pending request for this key
     if (requestCache[key]) {
+      console.log('fetchItinerary: Request already in progress for', key);
       return;
     }
     
@@ -151,14 +154,15 @@ export const SellerProvider = ({ children }) => {
     setItineraryError(null);
 
     try {
-      
+      console.log('fetchItinerary: Making API call for', key);
       const data = await SellerService.getItinerary(idOrCompanyId, days);
-      
+      console.log('fetchItinerary: API response for', key, data);
       
       if (data?.success && data?.statusCode === 200) {
         if (isCompanyFetch) {
           // New response structure for companyId and days
           const itineraryData = data.data.itineraries || [];
+          console.log('fetchItinerary: Company fetch result with', itineraryData.length, 'itineraries');
          
           setItineraries(prev => ({
             ...prev,
@@ -169,6 +173,12 @@ export const SellerProvider = ({ children }) => {
           const itineraryList = data?.data?.itineraries || [];
           const firstItinerary = itineraryList[0]?.itineraryResponseNewdata || {};
           const itineraryData = firstItinerary.itinerary || [];
+          
+          console.log('fetchItinerary: Individual itinerary fetch result', { 
+            hasItineraryList: itineraryList.length > 0,
+            hasFirstItinerary: !!firstItinerary,
+            hasItineraryData: itineraryData.length > 0
+          });
           
           setItineraries(prev => ({
             ...prev,
@@ -181,6 +191,7 @@ export const SellerProvider = ({ children }) => {
         }
         setItineraryError(null);
       } else {
+        console.log('fetchItinerary: API call failed or returned non-success for', key);
         setItineraries(prev => ({
           ...prev,
           [key]: null,
@@ -195,12 +206,15 @@ export const SellerProvider = ({ children }) => {
         [key]: null,
       }));
     } finally {
+      // Always update loading state regardless of success or failure
+      console.log('fetchItinerary: Setting loadingItinerary to false for', key);
+      setLoadingItinerary(false);
+      
       // Clear the request cache after a short delay to prevent immediately sequential duplicates
       setTimeout(() => {
+        console.log('fetchItinerary: Clearing request cache for', key);
         delete requestCache[key];
       }, 2000); // 2 second delay
-      
-      setLoadingItinerary(false);
     }
   }, []);
 
@@ -298,10 +312,24 @@ export const SellerProvider = ({ children }) => {
   }, []);
 
   const resetItineraryState = useCallback(() => {
+    console.log('resetItineraryState: Clearing all itinerary state and cache');
     setItineraries({});
     setLoadingItinerary(false);
     setItineraryError(null);
     setShowItinerary(null);
+    
+    // Clear all request cache entries
+    Object.keys(requestCache).forEach(key => {
+      delete requestCache[key];
+    });
+    
+    // Also clear pendingRequests and timestamps
+    Object.keys(pendingRequests).forEach(key => {
+      delete pendingRequests[key];
+    });
+    Object.keys(lastFetchTimestamps).forEach(key => {
+      delete lastFetchTimestamps[key];
+    });
   }, []);
 
   const resetAllState = useCallback(() => {
