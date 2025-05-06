@@ -130,7 +130,6 @@ export const SellerProvider = ({ children }) => {
   }, [currentUser]);
 
   const fetchItinerary = useCallback(async (idOrCompanyId, days) => {
-   
     if (!idOrCompanyId) {
       return;
     }
@@ -149,18 +148,9 @@ export const SellerProvider = ({ children }) => {
     setShowItinerary(isCompanyFetch ? null : idOrCompanyId);
     setLoadingItinerary(true);
     setItineraryError(null);
-    
-    // Create a safety timeout to ensure loading state is reset
-    const safetyTimeout = setTimeout(() => {
-      setLoadingItinerary(false);
-      delete requestCache[key];
-    }, 12000); // 12 seconds safety timeout
 
     try {
       const data = await SellerService.getItinerary(idOrCompanyId, days);
-      
-      // Immediately reset loading state on response
-      setLoadingItinerary(false);
       
       if (data?.success && data?.statusCode === 200) {
         if (isCompanyFetch) {
@@ -201,20 +191,12 @@ export const SellerProvider = ({ children }) => {
         ...prev,
         [key]: null,
       }));
-      
-      // Ensure loading is set to false in case of error
-      setLoadingItinerary(false);
     } finally {
-      // Always update loading state regardless of success or failure
+      // Always update loading state and clear cache
       setLoadingItinerary(false);
       
-      // Clear the safety timeout
-      clearTimeout(safetyTimeout);
-      
-      // Clear the request cache after a short delay to prevent immediately sequential duplicates
-      setTimeout(() => {
-        delete requestCache[key];
-      }, 2000); // 2 second delay
+      // Clear the request cache immediately
+      delete requestCache[key];
     }
   }, []);
 
