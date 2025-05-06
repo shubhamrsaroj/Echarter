@@ -53,12 +53,25 @@ const NeedCard = () => {
       setLocalLoading(true);
       
       if (!initialLoadComplete) {
+        // Set a maximum timeout to prevent infinite loading
+        const timeoutId = setTimeout(() => {
+          console.log('NeedCard: Safety timeout reached, forcing loading off');
+          setIsFirstLoad(false);
+          setInitialLoadComplete(true);
+          setLocalLoading(false);
+        }, 15000); // 15 seconds maximum timeout
+        
         fetchItinerary(currentUser.comId, 30)
           .finally(() => {
             // Always mark first load as complete regardless of response
             setIsFirstLoad(false);
             setInitialLoadComplete(true);
+            clearTimeout(timeoutId); // Clear the timeout if API responds
           });
+          
+        return () => {
+          clearTimeout(timeoutId); // Clean up timeout if component unmounts
+        };
       }
     }
   }, [currentUser?.comId, fetchItinerary, initialLoadComplete]);
@@ -144,7 +157,30 @@ const NeedCard = () => {
     (currentUser?.comId && !Object.prototype.hasOwnProperty.call(itineraries, companyKey));
 
   if (isLoading) {
-    return <SkeletonNeedCard />;
+    return (
+      <div>
+        <SkeletonNeedCard />
+        
+        {/* Add retry button if loading takes too long */}
+        {initialLoadComplete && localLoading && (
+          <div className="mt-4 flex justify-center">
+            <button 
+              onClick={() => {
+                console.log('NeedCard: Manual retry triggered');
+                setLocalLoading(false); // Force stop loading
+                // Optionally refetch data
+                if (currentUser?.comId) {
+                  fetchItinerary(currentUser.comId, 30);
+                }
+              }}
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-black font-medium"
+            >
+              Loading taking too long? Click to refresh
+            </button>
+          </div>
+        )}
+      </div>
+    );
   }
 
   // Handle Initiate button click with debounce

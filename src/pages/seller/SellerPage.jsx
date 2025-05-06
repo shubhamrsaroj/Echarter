@@ -19,6 +19,12 @@ const SellerPage = () => {
 
 
   const handleButtonClick = (section) => {
+    // If changing to Needs section, make sure we reset state first
+    if (section === "Needs" && activeSection !== "Needs") {
+      console.log('SellerPage: Switching to Needs section, reset itinerary state first');
+      resetItineraryState();
+    }
+    
     setActiveSection(section);
   };
 

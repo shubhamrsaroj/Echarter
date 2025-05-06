@@ -152,11 +152,21 @@ export const SellerProvider = ({ children }) => {
     setShowItinerary(isCompanyFetch ? null : idOrCompanyId);
     setLoadingItinerary(true);
     setItineraryError(null);
+    
+    // Create a safety timeout to ensure loading state is reset
+    const safetyTimeout = setTimeout(() => {
+      console.log('fetchItinerary: Safety timeout reached, forcing loading off for', key);
+      setLoadingItinerary(false);
+      delete requestCache[key];
+    }, 12000); // 12 seconds safety timeout
 
     try {
       console.log('fetchItinerary: Making API call for', key);
       const data = await SellerService.getItinerary(idOrCompanyId, days);
       console.log('fetchItinerary: API response for', key, data);
+      
+      // Immediately reset loading state on response
+      setLoadingItinerary(false);
       
       if (data?.success && data?.statusCode === 200) {
         if (isCompanyFetch) {
@@ -205,10 +215,16 @@ export const SellerProvider = ({ children }) => {
         ...prev,
         [key]: null,
       }));
+      
+      // Ensure loading is set to false in case of error
+      setLoadingItinerary(false);
     } finally {
       // Always update loading state regardless of success or failure
       console.log('fetchItinerary: Setting loadingItinerary to false for', key);
       setLoadingItinerary(false);
+      
+      // Clear the safety timeout
+      clearTimeout(safetyTimeout);
       
       // Clear the request cache after a short delay to prevent immediately sequential duplicates
       setTimeout(() => {

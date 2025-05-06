@@ -11,19 +11,23 @@ const NeedItinerary = ({ itinerary, loading, error, onClose, selectedItineraryId
   
   // Add timeout to prevent infinite loading
   useEffect(() => {
+    console.log('NeedItinerary loading state changed:', loading);
     setLocalLoading(loading);
     
-    // If loading is true, set a timeout to turn it off after 10 seconds
+    // If loading is true, set a timeout to turn it off after 8 seconds
     let timeoutId = null;
     if (loading) {
       timeoutId = setTimeout(() => {
         console.log('NeedItinerary: Loading timeout reached, forcing loading off');
         setLocalLoading(false);
-      }, 10000); // 10 seconds timeout
+      }, 8000); // 8 seconds timeout - shorter to be more responsive
     }
     
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      if (timeoutId) {
+        console.log('NeedItinerary: Cleaning up loading timeout');
+        clearTimeout(timeoutId);
+      }
     };
   }, [loading]);
   
