@@ -228,7 +228,7 @@ const NeedCard = () => {
                 </div>
               )}
               <div
-                className={`border border-black rounded-lg relative p-4 mb-4 overflow-hidden z-20 ${
+                className={`border border-black rounded-lg relative p-4 mb-4 overflow-hidden ${
                   selectedItineraryId === need.id
                    ? 'ring-2 ring-black bg-blue-50 shadow-lg transform scale-[1.02] transition-all'
                 : 'bg-white'

@@ -67,6 +67,7 @@ const AircraftDetails = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userCompanyMatchesSeller, setUserCompanyMatchesSeller] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Check if user company ID matches seller company ID
   useEffect(() => {
@@ -77,41 +78,66 @@ const AircraftDetails = ({
     }
   }, [sellerCompanyId]);
 
-  // Simplified loading state management
+  // Initialize component and handle loading state
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 600);
+    let mounted = true;
     
-    return () => clearTimeout(timer);
-  }, [aircraft]);
-
-  // Fetch aircraft list when selector should be shown
-  useEffect(() => {
-    const fetchAircraftList = async () => {
+    const initializeComponent = async () => {
       try {
-        setLoadingAircraftList(true);
-        const data = await AircraftService.getAllAircraft(sellerCompanyId);
-        setAircraftList(data);
-        setError(null);
-      } catch (err) {
-        setError('Failed to load aircraft. Please try again.');
-        console.error('Error loading aircraft list:', err);
-      } finally {
-        setLoadingAircraftList(false);
+        // Set initial loading state
+        if (mounted) setLoading(true);
+        
+        // Wait for a minimum loading time for UX consistency
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        if (!mounted) return;
+        
+        // Format aircraft data if available
+        if (aircraft) {
+          const formattedData = formatAircraftData(aircraft);
+          setSelectedAircraft(formattedData);
+        }
+        
+        // Mark as initialized and stop loading
+        setIsInitialized(true);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error initializing component:', error);
+        if (mounted) {
+          setError('Failed to initialize aircraft details');
+          setLoading(false);
+        }
       }
     };
 
-    if (showSelector && sellerCompanyId) {
-      fetchAircraftList();
-    } else if (showSelector && !sellerCompanyId) {
-      setError('Seller company ID is required to load aircraft');
-    }
-  }, [showSelector, sellerCompanyId]);
+    // Start initialization
+    initializeComponent();
+
+    // Cleanup function
+    return () => {
+      mounted = false;
+    };
+  }, [aircraft]); // Only re-run when aircraft prop changes
 
   // Format the API response data to match our display needs
   const formatAircraftData = (apiData) => {
     if (!apiData) return null;
+    
+    // Check if the API data has any meaningful content
+    const hasContent = apiData.aircraft_Type_Name || 
+                      apiData.tail || 
+                      apiData.tail_Max_Pax || 
+                      apiData.yom || 
+                      apiData.yor || 
+                      apiData.airworthinessValidity || 
+                      apiData.insuranceValidity || 
+                      apiData.categories ||
+                      (apiData.images && apiData.images.length > 0) ||
+                      (apiData.privateFiles && apiData.privateFiles.length > 0) ||
+                      (apiData.publicFiles && apiData.publicFiles.length > 0) ||
+                      (apiData.amenities && apiData.amenities.length > 0);
+    
+    if (!hasContent) return null;
     
     return {
       type: apiData.aircraft_Type_Name || '',
@@ -186,9 +212,6 @@ const AircraftDetails = ({
     }
   };
 
-  // Use selected aircraft if available, otherwise use formatted API data
-  const currentAircraft = selectedAircraft || formatAircraftData(aircraft);
-
   const handleEdit = () => {
     setShowSelector(true);
     
@@ -218,10 +241,21 @@ const AircraftDetails = ({
 
   // Main render function with simplified conditions
   const renderContent = () => {
-    if (loading) {
+    // Always show loading skeleton until initialization is complete
+    if (loading || !isInitialized) {
       return <AircraftDetailsSkeleton />;
     }
+
+    // Show error state if there's an error
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[500px] text-center px-4">
+          <p className="text-lg text-red-600 mb-4">{error}</p>
+        </div>
+      );
+    }
     
+    // Show selector if it's open
     if (showSelector) {
       return (
         <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -247,7 +281,9 @@ const AircraftDetails = ({
         </div>
       );
     }
-    
+
+    // Show aircraft details if we have data
+    const currentAircraft = selectedAircraft || formatAircraftData(aircraft);
     if (currentAircraft) {
       return (
         <>
@@ -342,7 +378,7 @@ const AircraftDetails = ({
       );
     }
 
-    // Show empty state only if no aircraft data is available
+    // Show empty state only after initialization and when we have no data
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px] text-center px-4">
         <p className="text-lg mb-4">No aircraft information available.</p>
@@ -352,7 +388,7 @@ const AircraftDetails = ({
           </p>
         ) : (
           <p className="text-gray-600">
-            No aircraft information available.
+            Please select an aircraft to view details.
           </p>
         )}
       </div>
