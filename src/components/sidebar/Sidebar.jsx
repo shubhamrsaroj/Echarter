@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -7,7 +7,8 @@ import {
   MessagesSquare,
   Gem,
   User,
-  CircleHelp
+  CircleHelp,
+  ChevronRight
 } from 'lucide-react';
 import { AuthContext } from '../../context/auth/AuthContext';
 import { tokenHandler } from '../../utils/tokenHandler';
@@ -15,6 +16,7 @@ import { tokenHandler } from '../../utils/tokenHandler';
 const Sidebar = () => {
   const { logout } = useContext(AuthContext);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
 
   // Get user role from token
@@ -50,11 +52,22 @@ const Sidebar = () => {
     navigate('/profile');
     setProfileDropdownOpen(false);
   };
+  
   return (
-    <div className="hidden md:flex flex-col w-60 bg-gray-50 border-r border-gray-200 shadow-sm">
+    <div 
+      className={`hidden md:flex flex-col bg-gray-50 border-r border-gray-200 shadow-sm transition-all duration-300 ease-in-out ${
+        expanded ? 'w-60' : 'w-20'
+      }`}
+      onMouseEnter={() => setExpanded(true)}
+      onMouseLeave={() => setExpanded(false)}
+    >
       {/* Logo Section */}
-      <div className="flex items-center justify-center h-20 p-4">
-        <img src={logo} alt="EasyCharter Logo" className="h-25 w-auto rounded-2xl" />
+      <div className={`flex items-center ${expanded ? 'justify-center' : 'justify-center'} h-20 p-4`}>
+        {expanded ? (
+          <img src={logo} alt="EasyCharter Logo" className="h-25 w-auto rounded-2xl" />
+        ) : (
+          <img src={logo} alt="EasyCharter Logo" className="h-10 w-auto rounded-2xl" />
+        )}
       </div>
 
       {/* Navigation Links */}
@@ -64,13 +77,13 @@ const Sidebar = () => {
             key={item.name}
             to={item.path}
             className={({ isActive }) =>
-              `flex flex-col items-center px-4 py-2 text-sm font-medium rounded-md transition ${
+              `flex ${expanded ? 'flex-col' : 'justify-center'} items-center px-4 py-2 text-sm font-medium rounded-md transition ${
                 isActive ? "bg-gray-100" : "hover:bg-gray-200"
               }`
             }
           >
             <span className="text-black mb-1">{item.icon}</span>
-            <span className="text-black text-xs">{item.name}</span>
+            {expanded && <span className="text-black text-xs">{item.name}</span>}
           </NavLink>
         ))}
       </nav>
@@ -80,13 +93,13 @@ const Sidebar = () => {
         <div className="relative">
           <button
             onClick={toggleProfileDropdown}
-            className="flex flex-col items-center w-full px-4 py-3 text-sm font-medium rounded-md hover:bg-gray-200 transition"
+            className={`flex ${expanded ? 'flex-col' : 'justify-center'} items-center w-full px-4 py-3 text-sm font-medium rounded-md hover:bg-gray-200 transition`}
           >
             <CircleUserRound size={30} className="text-black mb-1" />
-            <span className="text-black text-xs">Profile</span>
+            {expanded && <span className="text-black text-xs">Profile</span>}
           </button>
 
-          {profileDropdownOpen && (
+          {profileDropdownOpen && expanded && (
             <div className="absolute bottom-full left-0 w-full bg-white border border-gray-300 rounded-lg shadow-md z-10 mb-2">
               <button
                 onClick={handleViewProfile}
@@ -110,14 +123,19 @@ const Sidebar = () => {
         <NavLink
           to="/help"
           className={({ isActive }) =>
-            `flex flex-col items-center px-4 py-3 text-sm font-medium rounded-md mt-3 transition ${
+            `flex ${expanded ? 'flex-col' : 'justify-center'} items-center px-4 py-3 text-sm font-medium rounded-md mt-3 transition ${
               isActive ? "bg-gray-200" : "hover:bg-gray-200"
             }`
           }
         >
           <CircleHelp size={30} className="text-black mb-1" />
-          <span className="text-black text-xs">Help</span>
+          {expanded && <span className="text-black text-xs">Help</span>}
         </NavLink>
+      </div>
+
+      {/* Collapse indicator */}
+      <div className={`absolute top-1/2 -right-3 bg-gray-100 rounded-full p-1 border border-gray-200 shadow-sm ${expanded ? 'opacity-100' : 'opacity-0'} transition-opacity`}>
+        <ChevronRight size={16} className="text-gray-500" />
       </div>
     </div>
   );

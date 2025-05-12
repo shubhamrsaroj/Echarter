@@ -21,7 +21,6 @@ const ChatHeader = ({
   itineraryData,
   loadingItinerary,
   disableDefaultItinerary = false,
-
 }) => {
   const [showLocalItinerary, setShowLocalItinerary] = useState(showItinerary);
   const [showLocalFilesBrowser, setShowLocalFilesBrowser] = useState(false);
@@ -30,7 +29,6 @@ const ChatHeader = ({
   const [aircraftData, setAircraftData] = useState(null);
   const [loadingAircraft, setLoadingAircraft] = useState(false);
 
-  // Update local state when props change
   React.useEffect(() => {
     setShowLocalItinerary(showItinerary);
   }, [showItinerary]);
@@ -54,12 +52,8 @@ const ChatHeader = ({
   };
 
   const handleLocalFilesClick = () => {
-    // Check if we have a conversation ID before showing files browser
     if (!chatData?.conversationId) {
-      console.warn('No conversation ID available for files');
-      // Show toast message
       toast.info('Please send a message first before accessing files');
-      // Don't open the files browser if there's no conversationId
       return;
     }
     
@@ -67,36 +61,34 @@ const ChatHeader = ({
       handleFilesClick();
     }
     
-    // Toggle files browser
     setShowLocalFilesBrowser(!showLocalFilesBrowser);
   };
 
   const handleFilesChange = (updatedFiles) => {
     setFilesList(updatedFiles);
-    // In a real app, you would save these changes to the backend
   };
 
   const handleAircraftClick = async () => {
-    if (!chatData?.conversationId ) {
+    if (!chatData?.conversationId) {
       toast.info('Please send a message first before accessing equipment details');
       return;
     }
 
-    setLoadingAircraft(true);
     setShowAircraftDetails(true);
+    setLoadingAircraft(true);
 
     try {
       const response = await getTailDetailsById(chatData.conversationId, chatData.sellerCompanyId);
-      if (response.success && response.statusCode === 200) {
-        setAircraftData(response.data);
+      setAircraftData(response.data);
+    } catch (error) {
+      if (error.message === 'Invalid user data') {
+        toast.warning('User data could not be validated, some features may be limited', {
+          autoClose: 5000
+        });
       } else {
-        toast.error(response.message || 'Failed to load equipment details');
+        toast.error(error.message || 'Failed to load equipment details');
         setShowAircraftDetails(false);
       }
-    } catch (error) {
-      console.error('Error loading equipment details:', error);
-      toast.error(error.message || 'Failed to load equipment details');
-      setShowAircraftDetails(false);
     } finally {
       setLoadingAircraft(false);
     }
@@ -105,7 +97,7 @@ const ChatHeader = ({
   const handleCloseItinerary = () => {
     setShowLocalItinerary(false);
     if (handleItineraryClick) {
-      handleItineraryClick(); // Toggle it off
+      handleItineraryClick();
     }
   };
 
@@ -115,14 +107,13 @@ const ChatHeader = ({
 
   const handleCloseAircraftDetails = () => {
     setShowAircraftDetails(false);
-    setAircraftData(null); // Reset aircraft data when closing
+    setAircraftData(null);
   };
 
   const handleAircraftUpdate = (updatedData) => {
-    setAircraftData(updatedData); // Update aircraft data when changes occur
+    setAircraftData(updatedData);
   };
 
-  // Helper function to render the appropriate itinerary component
   const renderItineraryComponent = () => {
     const commonProps = {
       itinerary: itineraryData || {},
@@ -150,7 +141,6 @@ const ChatHeader = ({
   return (
     <>
       <div className="bg-white border-b border-gray-200 rounded-t-xl">
-        {/* Info */}
         <div className="px-4 py-3 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             {isInCall && (
@@ -171,7 +161,6 @@ const ChatHeader = ({
           )}
         </div>
 
-        {/* Action Buttons */}
         <div className="px-4 py-2 flex justify-between items-center bg-white">
           <div className="flex space-x-6">
             <button 
@@ -219,7 +208,6 @@ const ChatHeader = ({
         </div>
       </div>
 
-      {/* Itinerary Overlay - Only show if not using external itinerary handling */}
       {!disableDefaultItinerary && showLocalItinerary && chatData?.itineraryId && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="w-[90%] max-w-2xl max-h-[90vh] bg-white rounded-xl overflow-auto">
@@ -228,7 +216,6 @@ const ChatHeader = ({
         </div>
       )}
       
-      {/* Files Browser Overlay */}
       {showLocalFilesBrowser && (
         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="w-[100%] max-w-lg max-h-[100vh] bg-white rounded-xl overflow-auto border border-black">
@@ -242,10 +229,8 @@ const ChatHeader = ({
         </div>
       )}
 
-      {/* Aircraft Details Overlay */}
       {showAircraftDetails && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4 border border-black">
-         
             <AircraftDetails 
               aircraft={aircraftData} 
               onClose={handleCloseAircraftDetails}
@@ -254,7 +239,6 @@ const ChatHeader = ({
               onUpdate={handleAircraftUpdate}
               sellerCompanyId={chatData?.sellerCompanyId}
             />
-          
         </div>
       )}
     </>

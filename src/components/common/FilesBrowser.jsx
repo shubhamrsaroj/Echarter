@@ -13,12 +13,22 @@ const formatFileData = (data, messageTitle) => {
     formattedFiles.push({
       id: 1,
       title: messageTitle || 'Conversation Files',
-      files: data.conversationFiles.map(file => ({
-        id: file.id,
-        name: file.name,
-        uploadedBy: file.createdBy || 'User',
-        url: file.url
-      }))
+      files: data.conversationFiles.map(file => {
+        // Extract filename from URL, ensuring we always have a name
+        let filename = '';
+        if (file.url) {
+          const urlParts = file.url.split('/');
+          const filenameWithParams = urlParts[urlParts.length - 1];
+          filename = filenameWithParams.split('?')[0]; // Remove query params if any
+        }
+        
+        return {
+          id: file.id,
+          name: file.name || filename, // Use filename from URL if name not provided
+          uploadedBy: file.createdBy || 'User',
+          url: file.url
+        };
+      })
     });
   }
   
@@ -26,12 +36,22 @@ const formatFileData = (data, messageTitle) => {
     formattedFiles.push({
       id: 2,
       title: 'Company Files',
-      files: data.companyPublicFiles.map(file => ({
-        id: file.id,
-        name: file.name,
-        uploadedBy: file.createdBy || '',
-        url: file.url
-      }))
+      files: data.companyPublicFiles.map(file => {
+        // Extract filename from URL, ensuring we always have a name
+        let filename = '';
+        if (file.url) {
+          const urlParts = file.url.split('/');
+          const filenameWithParams = urlParts[urlParts.length - 1];
+          filename = filenameWithParams.split('?')[0]; // Remove query params if any
+        }
+        
+        return {
+          id: file.id,
+          name: file.name || filename, // Use filename from URL if name not provided
+          uploadedBy: file.createdBy || '',
+          url: file.url
+        };
+      })
     });
   }
   
@@ -252,6 +272,45 @@ const FilesBrowser = ({ onClose, chatData, onFilesChange }) => {
     }
   };
 
+  // Simplified download function that avoids CORS issues
+  const handleDownload = (url, filename) => {
+    try {
+      // For Azure Blob Storage URLs, we can add a response-content-disposition header
+      // to force download rather than preview
+      let downloadUrl = url;
+      
+      // Check if it's an Azure Blob Storage URL
+      if (url.includes('blob.core.windows.net')) {
+        // Add a separator based on whether the URL already has query parameters
+        const separator = url.includes('?') ? '&' : '?';
+        
+        // Add the content disposition header to force download with the filename
+        downloadUrl = `${url}${separator}response-content-disposition=attachment;filename=${encodeURIComponent(filename)}`;
+      }
+      
+      // Create an invisible anchor element for download
+      const downloadLink = document.createElement('a');
+      downloadLink.href = downloadUrl;
+      downloadLink.download = filename; // Set the download attribute
+      downloadLink.target = '_blank'; // Fallback for some browsers
+      downloadLink.rel = 'noopener noreferrer';
+      downloadLink.style.display = 'none';
+      
+      // Append to the document, click it, and then remove it
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      
+      // Clean up after a short delay to ensure download starts
+      setTimeout(() => {
+        document.body.removeChild(downloadLink);
+      }, 100);
+      
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download the file. Please try again or contact support.');
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-[450px] w-[500px] max-w-full">
       {/* Header with Files title and + icon */}
@@ -408,14 +467,13 @@ const FilesBrowser = ({ onClose, chatData, onFilesChange }) => {
                           <Trash2 className="w-4 h-4 text-black" />
                         )}
                       </button>
-                      <a 
-                        href={file.url} 
-                        download={file.name}
+                      <button 
+                        onClick={() => handleDownload(file.url, file.name)}
                         className="p-1 hover:bg-gray-200 rounded" 
                         aria-label="Download file"
                       >
                         <Download className="w-4 h-4 text-black" />
-                      </a>
+                      </button>
                     </div>
                   </div>
                 ))}

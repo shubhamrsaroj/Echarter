@@ -106,10 +106,15 @@ const AircraftDetails = ({
         if (mounted) {
           setError('Failed to initialize aircraft details');
           setLoading(false);
+          setIsInitialized(true); // Ensure we mark as initialized even on error
         }
       }
     };
 
+    // Reset state when aircraft changes
+    setIsInitialized(false);
+    setSelectedAircraft(null);
+    
     // Start initialization
     initializeComponent();
 
@@ -139,6 +144,7 @@ const AircraftDetails = ({
     
     if (!hasContent) return null;
     
+    // Return formatted aircraft data
     return {
       type: apiData.aircraft_Type_Name || '',
       registration: apiData.tail || '',
@@ -241,7 +247,7 @@ const AircraftDetails = ({
 
   // Main render function with simplified conditions
   const renderContent = () => {
-    // Always show loading skeleton until initialization is complete
+    // Show loading skeleton until initialization is complete
     if (loading || !isInitialized) {
       return <AircraftDetailsSkeleton />;
     }
@@ -282,8 +288,10 @@ const AircraftDetails = ({
       );
     }
 
-    // Show aircraft details if we have data
+    // Check for current aircraft data
     const currentAircraft = selectedAircraft || formatAircraftData(aircraft);
+    
+    // Show aircraft details if we have data
     if (currentAircraft) {
       return (
         <>
@@ -378,7 +386,7 @@ const AircraftDetails = ({
       );
     }
 
-    // Show empty state only after initialization and when we have no data
+    // Empty state - only show this when fully loaded and initialized with no data
     return (
       <div className="flex flex-col items-center justify-center min-h-[500px] text-center px-4">
         <p className="text-lg mb-4">No aircraft information available.</p>

@@ -104,7 +104,7 @@ const DealCard = () => {
             position: "top-right",
             autoClose: 3000,
           });
-          navigate('/itinerary', { state: { copiedText: itineraryText } });
+          navigate('/search', { state: { copiedText: itineraryText } });
         })
         .catch((error) => {
           console.error("Failed to copy text: ", error);

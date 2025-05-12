@@ -155,6 +155,20 @@ export default function SearchInput({ onSearch, showRecentSearches, onToggleRece
     };
   }, []);
 
+  // Listen for copiedText changes and update input if it changes
+  useEffect(() => {
+    if (location.state?.copiedText) {
+      setText(location.state.copiedText);
+      saveTextToStorage(location.state.copiedText);
+      // Optionally clear copiedText from state to prevent repeated updates
+      window.history.replaceState(
+        { ...window.history.state, usr: { ...window.history.state?.usr, copiedText: undefined } },
+        ''
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.copiedText]);
+
   const handleMicClick = () => {
     if (!isListening) {
       startRecognition();
