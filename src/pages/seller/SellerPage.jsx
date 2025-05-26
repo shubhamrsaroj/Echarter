@@ -6,7 +6,7 @@ import NeedCard from "../../components/seller/Need/NeedCard";
 import { useSellerContext } from "../../context/seller/SellerContext";
 import { tokenHandler } from "../../utils/tokenHandler";
 
-const SellerPage = () => {
+const SellerMarketPage = () => {
   const [activeSection, setActiveSection] = React.useState(null);
   const { resetItineraryState } = useSellerContext();
 
@@ -39,4 +39,4 @@ const SellerPage = () => {
   );
 };
 
-export default SellerPage;
+export default SellerMarketPage;

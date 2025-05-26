@@ -1,43 +1,22 @@
 import React, { useContext, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  Search,
   CircleUserRound,
   LogOut,
-  MessagesSquare,
-  Gem,
   User,
   CircleHelp,
+  ChevronLeft,
   ChevronRight
 } from 'lucide-react';
 import { AuthContext } from '../../context/auth/AuthContext';
 import { tokenHandler } from '../../utils/tokenHandler';
+import sidebarLogo from '../../assets/sidebar_logo.svg';
 
-const Sidebar = () => {
+const Sidebar = ({ onExpandChange }) => {
   const { logout } = useContext(AuthContext);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
-
-  // Get user role from token
-  const token = tokenHandler.getToken();
-  const userData = token ? tokenHandler.parseUserFromToken(token) : null;
-  const userRoles = (userData?.role || '').split(',').map(role => role.trim());
-
-  const canSeeSellers = userRoles.some(role => ['Broker', 'Operator'].includes(role));
-  // const canSeeSellers = userRoles.some(role => ['Broker', 'Operator','User'].includes(role));
-
-  const baseNavLinks = [
-    { name: 'Search', path: '/search', icon: <Search size={30} /> },
-    { name: 'Activity', path: '/conversation', icon: <MessagesSquare size={30} /> },
-  ];
-
-  // Add Sellers link conditionally
-  const navLinks = canSeeSellers 
-    ? [...baseNavLinks.slice(0, 1), { name: 'Sellers', path: '/seller', icon: <Gem size={30} /> }, ...baseNavLinks.slice(1)]
-    : baseNavLinks;
-
-  const logo = import.meta.env.VITE_LOGO;
 
   const handleLogout = () => {
     tokenHandler.clearAllTokens();
@@ -52,68 +31,76 @@ const Sidebar = () => {
     navigate('/profile');
     setProfileDropdownOpen(false);
   };
+
+  const toggleSidebar = () => {
+    setExpanded(!expanded);
+    onExpandChange?.(!expanded);
+  };
   
   return (
     <div 
-      className={`hidden md:flex flex-col bg-gray-50 border-r border-gray-200 shadow-sm transition-all duration-300 ease-in-out ${
-        expanded ? 'w-60' : 'w-20'
-      }`}
-      onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
+      className={`fixed left-0 top-0 h-screen bg-[#f0f7ff] border-r border-gray-200 transition-all duration-300 ease-in-out ${
+        expanded ? 'w-48' : 'w-16'
+      } flex flex-col`}
     >
-      {/* Logo Section */}
-      <div className={`flex items-center ${expanded ? 'justify-center' : 'justify-center'} h-20 p-4`}>
-        {expanded ? (
-          <img src={logo} alt="EasyCharter Logo" className="h-25 w-auto rounded-2xl" />
-        ) : (
-          <img src={logo} alt="EasyCharter Logo" className="h-10 w-auto rounded-2xl" />
-        )}
+      {/* Toggle Button */}
+      <div className={`absolute -right-3 z-20 transition-all duration-300 ${
+        expanded ? 'top-8' : 'top-28'
+      }`}>
+        <button
+          onClick={toggleSidebar}
+          className="flex items-center justify-center w-6 h-6 bg-white border border-gray-300 rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        >
+          {expanded ? (
+            <ChevronLeft className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors duration-200" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors duration-200" />
+          )}
+        </button>
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 px-3 py-4 space-y-2">
-        {navLinks.map((item) => (
-          <NavLink
-            key={item.name}
-            to={item.path}
-            className={({ isActive }) =>
-              `flex ${expanded ? 'flex-col' : 'justify-center'} items-center px-4 py-2 text-sm font-medium rounded-md transition ${
-                isActive ? "bg-gray-100" : "hover:bg-gray-200"
-              }`
-            }
-          >
-            <span className="text-black mb-1">{item.icon}</span>
-            {expanded && <span className="text-black text-xs">{item.name}</span>}
-          </NavLink>
-        ))}
-      </nav>
+      {/* Logo Section */}
+      <div className={`flex items-center justify-center transition-all duration-300 ${
+        expanded ? 'h-28 px-4 py-4' : 'h-24 px-2 py-3'
+      }`}>
+        <img 
+          src={sidebarLogo} 
+          alt="EasyCharter Logo" 
+          className={`transition-all duration-300 object-contain ${
+            expanded ? 'h-20 w-auto max-w-full' : 'h-12 w-auto'
+          }`}
+        />
+      </div>
+
+      {/* Empty Navigation Section */}
+      <div className="flex-1"></div>
 
       {/* Profile & Help Section */}
-      <div className="mt-auto px-3 py-4">
-        <div className="relative">
+      <div className="mt-auto">
+        <div className="relative px-0.5 mb-1">
           <button
             onClick={toggleProfileDropdown}
-            className={`flex ${expanded ? 'flex-col' : 'justify-center'} items-center w-full px-4 py-3 text-sm font-medium rounded-md hover:bg-gray-200 transition`}
+            className={`flex flex-col items-center w-full px-2 py-3.5 text-xs font-medium hover:bg-blue-50 transition-all duration-200 rounded-lg mx-1`}
           >
-            <CircleUserRound size={30} className="text-black mb-1" />
-            {expanded && <span className="text-black text-xs">Profile</span>}
+            <CircleUserRound size={36} className="text-gray-700" />
+            {expanded && <span className="text-gray-700 text-xs mt-2">Profile</span>}
           </button>
 
           {profileDropdownOpen && expanded && (
-            <div className="absolute bottom-full left-0 w-full bg-white border border-gray-300 rounded-lg shadow-md z-10 mb-2">
+            <div className="absolute bottom-full left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10 mb-1 overflow-hidden">
               <button
                 onClick={handleViewProfile}
-                className="flex items-center w-full px-4 py-3 text-sm font-medium hover:bg-gray-200"
+                className="flex items-center w-full px-3 py-2.5 text-xs font-medium hover:bg-blue-50 transition-colors"
               >
-                <User size={30} className="mr-3 text-black" />
-                <span className="text-black">View Profile</span>
+                <User size={26} className="mr-2 text-gray-700" />
+                <span className="text-gray-700">View Profile</span>
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full px-4 py-3 text-sm font-medium hover:bg-gray-200"
+                className="flex items-center w-full px-3 py-2.5 text-xs font-medium hover:bg-blue-50 transition-colors"
               >
-                <LogOut size={30} className="mr-3 text-black" />
-                <span className="text-black">Logout</span>
+                <LogOut size={26} className="mr-2 text-gray-700" />
+                <span className="text-gray-700">Logout</span>
               </button>
             </div>
           )}
@@ -123,19 +110,14 @@ const Sidebar = () => {
         <NavLink
           to="/help"
           className={({ isActive }) =>
-            `flex ${expanded ? 'flex-col' : 'justify-center'} items-center px-4 py-3 text-sm font-medium rounded-md mt-3 transition ${
-              isActive ? "bg-gray-200" : "hover:bg-gray-200"
+            `flex flex-col items-center px-2 py-3.5 text-xs font-medium transition-all duration-200 rounded-lg mx-1 ${
+              isActive ? "bg-blue-50" : "hover:bg-blue-50"
             }`
           }
         >
-          <CircleHelp size={30} className="text-black mb-1" />
-          {expanded && <span className="text-black text-xs">Help</span>}
+          <CircleHelp size={36} className="text-gray-700" />
+          {expanded && <span className="text-gray-700 text-xs mt-2">Help</span>}
         </NavLink>
-      </div>
-
-      {/* Collapse indicator */}
-      <div className={`absolute top-1/2 -right-3 bg-gray-100 rounded-full p-1 border border-gray-200 shadow-sm ${expanded ? 'opacity-100' : 'opacity-0'} transition-opacity`}>
-        <ChevronRight size={16} className="text-gray-500" />
       </div>
     </div>
   );
