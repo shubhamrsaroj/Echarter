@@ -11,10 +11,10 @@ const SubNavigation = ({ activeTab, activeSubTab, onSubTabChange }) => {
           <button
             key={subtab}
             onClick={() => onSubTabChange(subtab)}
-            className={`py-3 px-2 text-sm font-medium transition-colors relative whitespace-nowrap ${
+            className={`py-3 px-2 text-sm transition-colors relative whitespace-nowrap ${
               activeSubTab === subtab
-                ? 'text-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'font-bold text-black'
+                : 'text-black hover:text-gray-900'
             }`}
           >
             {subtab}

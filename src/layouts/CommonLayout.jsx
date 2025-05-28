@@ -13,7 +13,7 @@ const CommonLayout = ({ children }) => {
     <div className="flex h-screen bg-white overflow-hidden">
       <Sidebar onExpandChange={handleExpandChange} />
       <div className={`flex-1 overflow-auto ${sidebarExpanded ? 'ml-48' : 'ml-16'} transition-all duration-300 ease-in-out`}>
-        <div className="p-6">
+        <div className="p-4">
           {children}
         </div>
       </div>

@@ -6,7 +6,8 @@ import {
   User,
   CircleHelp,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MessagesSquare
 } from 'lucide-react';
 import { AuthContext } from '../../context/auth/AuthContext';
 import { tokenHandler } from '../../utils/tokenHandler';
@@ -41,15 +42,15 @@ const Sidebar = ({ onExpandChange }) => {
     <div 
       className={`fixed left-0 top-0 h-screen bg-[#f0f7ff] border-r border-gray-200 transition-all duration-300 ease-in-out ${
         expanded ? 'w-48' : 'w-16'
-      } flex flex-col`}
+      } flex flex-col z-10`}
     >
-      {/* Toggle Button */}
-      <div className={`absolute -right-3 z-20 transition-all duration-300 ${
-        expanded ? 'top-8' : 'top-28'
+      {/* Professional Toggle Button */}
+      <div className={`absolute -right-4 z-20 transition-all duration-300 ${
+        expanded ? 'top-8' : 'top-20'
       }`}>
         <button
           onClick={toggleSidebar}
-          className="flex items-center justify-center w-6 h-6 bg-white border border-gray-300 rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          className="flex items-center justify-center w-8 h-8 bg-white border border-gray-300 rounded-full shadow-md hover:shadow-lg hover:bg-gray-50 transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
         >
           {expanded ? (
             <ChevronLeft className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors duration-200" />
@@ -59,7 +60,7 @@ const Sidebar = ({ onExpandChange }) => {
         </button>
       </div>
 
-      {/* Logo Section */}
+      {/* Logo Section with Professional Scaling */}
       <div className={`flex items-center justify-center transition-all duration-300 ${
         expanded ? 'h-28 px-4 py-4' : 'h-24 px-2 py-3'
       }`}>
@@ -72,8 +73,20 @@ const Sidebar = ({ onExpandChange }) => {
         />
       </div>
 
-      {/* Empty Navigation Section */}
-      <div className="flex-1"></div>
+      {/* Navigation Section */}
+      <div className="flex-1 px-0.5 mt-4">
+        <NavLink
+          to="/conversation"
+          className={({ isActive }) =>
+            `flex flex-col items-center w-full px-2 py-3.5 text-xs font-medium transition-all duration-200 rounded-lg mx-1 ${
+              isActive ? "bg-blue-50" : "hover:bg-blue-50"
+            }`
+          }
+        >
+          <MessagesSquare size={36} className="text-gray-700" />
+          {expanded && <span className="text-gray-700 text-xs mt-2">Activity</span>}
+        </NavLink>
+      </div>
 
       {/* Profile & Help Section */}
       <div className="mt-auto">

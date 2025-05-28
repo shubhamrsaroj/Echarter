@@ -3,7 +3,7 @@ import React, { useState } from "react";
 // Import dashboard components
 import TopNavigation from "../../components/seller-market/common/navigation/TopNavigation";
 import SubNavigation from "../../components/seller-market/common/navigation/SubNavigation";
-import Sidebar from "../../components/seller-market/common/sidebar/Sidebar";
+import SellerSidebar from "../../components/seller-market/common/SellerSidebar";
 import ContentRenderer from "../../components/seller-market/ContentRenderer";
 import { navigationConfig } from "../../components/seller-market/common/navigation/navigationConfig";
 
@@ -39,8 +39,8 @@ const SellerMarketPage = () => {
       
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
-        <Sidebar />
+        {/* Left SellerSidebar */}
+        <SellerSidebar />
         
         {/* Main Content */}
         <ContentRenderer 

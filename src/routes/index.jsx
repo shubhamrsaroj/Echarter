@@ -24,7 +24,7 @@ import UserProfilePage from '../pages/profile/UserProfilePage';
 import CommonLayout from '../layouts/CommonLayout';
 
 // Context providers
-import { SellerProvider } from '../context/seller/SellerContext';
+import { PipelineProvider } from '../context/seller-market/SellerMarketContext';
 import { BuyerProvider } from '../context/buyer/BuyerContext';
 import { SearchProvider } from '../context/CharterSearch/SearchContext';
 import { UserDetailsProvider } from '../context/profile/UserDetailsContext';
@@ -93,7 +93,7 @@ export const routes = [
   // Protected Routes with Seller Provider - only for seller users
   { 
     path: "/market", 
-    element: !hasSellerAccess() ? <Navigate to="/search" replace /> : wrapWithProvider(SellerProvider, <SellerMarketPage />)
+    element: !hasSellerAccess() ? <Navigate to="/search" replace /> : wrapWithProvider(PipelineProvider, <SellerMarketPage />)
   },
 
   // Protected Routes with both Buyer and Search Provider
