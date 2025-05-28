@@ -48,6 +48,11 @@ export const PipelineProvider = ({ children }) => {
   // Add state for search form prefill data
   const [searchFormPrefillData, setSearchFormPrefillData] = useState(null);
 
+  // Add state for companies by category
+  const [companiesByCategory, setCompaniesByCategory] = useState([]);
+  const [companiesByCategoryLoading, setCompaniesByCategoryLoading] = useState(false);
+  const [companiesByCategoryError, setCompaniesByCategoryError] = useState(null);
+
   const pendingRequestId = useRef(null);
   const requestTimeoutRef = useRef(null);
 
@@ -464,6 +469,33 @@ export const PipelineProvider = ({ children }) => {
     }
   }, [getAllTasks]);
 
+  // Add getCompaniesByCategory function
+  const getCompaniesByCategory = useCallback(async (payload) => {
+    if (!payload || !payload.ids || payload.ids.length === 0) {
+      return null;
+    }
+    
+    setCompaniesByCategoryLoading(true);
+    setCompaniesByCategoryError(null);
+    
+    try {
+      const response = await SellerMarketService.getCompaniesByCategory(payload);
+      
+      if (response.success && response.data) {
+        setCompaniesByCategory(response.data || []);
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to fetch companies by category');
+      }
+    } catch (err) {
+      setCompaniesByCategoryError(err.message || 'Error fetching companies by category');
+      console.error(err);
+      return null;
+    } finally {
+      setCompaniesByCategoryLoading(false);
+    }
+  }, []);
+
   return (
     <SellerMarketContext.Provider value={{ 
       needsRefresh,
@@ -511,7 +543,11 @@ export const PipelineProvider = ({ children }) => {
       itineraryDetailsLoading,
       itineraryDetailsError,
       searchFormPrefillData,
-      clearSearchFormPrefillData
+      clearSearchFormPrefillData,
+      companiesByCategory,
+      companiesByCategoryLoading,
+      companiesByCategoryError,
+      getCompaniesByCategory
     }}>
       {children}
     </SellerMarketContext.Provider>

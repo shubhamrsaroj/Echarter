@@ -56,14 +56,15 @@ const Search = () => {
       {!optionsLoading && !optionsError && optionsData && (
         <div className="flex flex-col md:flex-row gap-6 relative">
           {/* Left side - Cards */}
-          <div className="w-full md:w-1/2 space-y-6">
-            <BaseCard itineraryData={optionsData} />
+          <div className="w-full md:w-2/3 space-y-6">
+            
             <MatchCard match={optionsData.match} />
             <DateAdjustment adjustment={optionsData.dateAdjustment} />
+            <BaseCard itineraryData={optionsData} />
           </div>
           
           {/* Right side - Map (Sticky) */}
-          <div className="w-full md:w-1/2">
+          <div className="w-full md:w-1/3">
             <div className="sticky top-4">
               <RouteMap itineraryData={optionsData} />
             </div>

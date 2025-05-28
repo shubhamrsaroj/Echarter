@@ -135,4 +135,14 @@ export const SellerMarketService = {
       throw error;
     }
   },
+
+  getCompaniesByCategory: async (payload) => {
+    try {
+      const response = await api.post('/api/SinglePoint/GetCompaniesByCategory', payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching companies by category:', error);
+      throw error;
+    }
+  },
 };

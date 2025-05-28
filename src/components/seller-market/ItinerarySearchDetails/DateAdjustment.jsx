@@ -1,45 +1,68 @@
-import { Info } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import PropTypes from 'prop-types';
+import { useState } from 'react';
 
 const DateAdjustment = ({ adjustment = {} }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   // If ids array is empty, don't render the component
   if (!adjustment.ids || adjustment.ids.length === 0) {
     return null;
   }
 
+  const toggleCard = () => {
+    setIsExpanded(prev => !prev);
+  };
+
   return (
-    <div className="bg-white rounded-xl border border-b-3 p-6 relative">
-      <div className="absolute top-4 right-4 text-right">
-        <h3 className="font-semibold text-xl text-black">{adjustment.title}</h3>
-        <div className="flex items-center justify-end mt-2">
-          <button 
-            className="hover:bg-gray-100 p-1 rounded-full transition-colors"
-          >
-            <Info className="text-gray-700 ml-1" size={20} />
-          </button>
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Main card content */}
+      <div 
+        className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+        onClick={toggleCard}
+      >
+        <div className="flex items-center">
+          {/* Left section - Image and Title */}
+          <div className="flex items-center space-x-6 flex-grow">
+            <img
+              src={adjustment.image}
+              alt="Adjustment"
+              className="w-16 h-16 rounded-full border border-gray-200 object-cover"
+            />
+            <h3 className="font-semibold text-lg text-black">{adjustment.title}</h3>
+          </div>
+          
+          {/* Right section - Nearby badge and Arrow icon */}
+          <div className="flex items-center space-x-3">
+            <div className="bg-[#c1ff72] py-1 px-3 rounded-lg">
+              <span className="font-medium text-black text-sm">
+                {adjustment.count} Nearby
+              </span>
+            </div>
+            
+            <div className="bg-blue-500 rounded-full p-2">
+              {isExpanded ? (
+                <ChevronUp size={16} className="text-white" />
+              ) : (
+                <ChevronDown size={16} className="text-white" />
+              )}
+            </div>
+          </div>
         </div>
       </div>
       
-      <div className="flex items-center mb-2">
-        <img
-          src={adjustment.image}
-          alt="Adjustment"
-          className="w-24 h-24 rounded-full border border-gray-200 object-cover"
-        />
-      </div>
-      
-      <div className="flex items-center justify-between mt-4">
-        <div className="bg-[#c1ff72] py-1 px-3 rounded-lg inline-block">
-          <span className="font-medium text-black text-sm">
-            {adjustment.count} Nearby
-          </span>
+      {/* Expandable content */}
+      {isExpanded && (
+        <div className="px-4 pb-4 border-t border-gray-100 bg-gray-50">
+          <div className="pt-3">
+            {adjustment.message && (
+              <p className="text-gray-700 text-sm leading-relaxed">
+                {adjustment.message}
+              </p>
+            )}
+          </div>
         </div>
-        <button 
-          className="bg-black text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md transition-all hover:bg-gray-800"
-        >
-          {adjustment.button}
-        </button>
-      </div>
+      )}
     </div>
   );
 };
