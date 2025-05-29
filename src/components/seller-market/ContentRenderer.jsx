@@ -4,6 +4,9 @@ import Directory from './market/Directory';
 import Needs from './market/Needs';
 import Haves from './market/Haves';
 import Airports from './market/Airports';
+import Profile from './company/Profile';
+import Teams from './company/Teams';
+import Reviews from './company/Reviews';
 
 // Import components for other tabs as needed
 
@@ -17,7 +20,11 @@ const ContentRenderer = ({ activeTab, activeSubTab }) => {
       'Market-Needs': Needs,
       'Market-Haves': Haves,
       'Market-Manage Haves': Haves,
-      'Market-Airports': Airports
+      'Market-Airports': Airports,
+
+      'Company-Profile': Profile,
+      'Company-Teams': Teams,
+      'Company-Reviews': Reviews
       
       // Add other components as they are implemented
     };

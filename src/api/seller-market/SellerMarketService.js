@@ -158,6 +158,41 @@ export const SellerMarketService = {
     }
   },
 
+  // Added getTrustScore API
+  getTrustScoreInfo: async (topic, category) => {
+    try {
+      const response = await api.get(`/api/SinglePoint/GetInfo?topic=${topic}&category=${category}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching single point info:', error);
+      throw error;
+    }
+  },
+//Added getInfo API
+  getInfo: async (topic, category) => {
+    try {
+      const response = await api.get(`/api/SinglePoint/GetInfo?topic=${topic}&category=${category}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching single point info:', error);
+      throw error;
+    }
+  },
+
+  //Added getReviews API
+  getReviews : async (id) => {
+    try {
+      const response = await api.get(`/api/SinglePoint/GetReviews?isFor=true&companyId=${id}`, {
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      throw error;
+    }
+  },
+  
+  
+
   getItineraryById: async (id) => {
     try {
       const response = await api.get(`/api/singlePoint/GetItinerary?Id=${id}`);
