@@ -21,8 +21,11 @@ const Tasks = () => {
   } = useContext(SellerMarketContext);
 
   useEffect(() => {
-    getAllTasks();
-  }, [getAllTasks]);
+    // Only fetch tasks if they're not already loaded
+    if (!tasks || tasks.length === 0) {
+      getAllTasks();
+    }
+  }, [getAllTasks, tasks]);
 
   const isDatePassed = (dateString) => {
     if (!dateString) return false;

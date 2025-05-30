@@ -13,6 +13,38 @@ export const SellerMarketService = {
     }
   },
   
+  getAllAircraftTypesDetails: async () => {
+    try {
+      const response = await api.get('/api/SinglePoint/GetAllAircraftTypesDetails');
+      // Extract the data array from the response and ensure it's an array
+      const data = response.data?.data || [];
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Error fetching aircraft types details:', error);
+      throw error;
+    }
+  },
+  
+  getCompanyTails: async (companyId) => {
+    try {
+      if (!companyId) {
+        throw new Error('Company ID is required');
+      }
+      
+      const response = await api.get('/api/SinglePoint/GetCompaniesById', {
+        params: { id: companyId }
+      });
+      
+      if (response.data.success && response.data.data?.tailInfo) {
+        return response.data.data.tailInfo || [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching company tails:', error);
+      throw error;
+    }
+  },
+  
   searchAirportByITAService: async (query) => {
     try {
       const response = await api.get(`/api/Markets/SearchAirportByITA_ICO_NAME_LOCATION`, {
@@ -145,4 +177,26 @@ export const SellerMarketService = {
       throw error;
     }
   },
+
+  getAllCompanyHaves: async (companyId) => {
+    try {
+      const response = await api.get(`/api/SinglePoint/GetAllCompanyHaves?companyId=${companyId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching company haves:', error);
+      throw error;
+    }
+  },
+  
+  deleteHave: async (haveId) => {
+    try {
+      const response = await api.delete(`/api/SinglePoint/DeleteHaves?Id=${haveId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting have:', error);
+      throw error;
+    }
+  }
 };
+
+export default SellerMarketService;

@@ -20,6 +20,16 @@ export const getEquipmentService = async () => {
   return response.data;
 };
 
+export const getAvailabilityService = async () => {
+  const response = await api.get('/api/SinglePoint/GetInfo', {
+    params: {
+      topic: 'availability',
+      category: 'dropdown'
+    }
+  });
+  return response.data;
+};
+
 export const getCrmCategoriesService = async () => {
   const response = await api.get('/api/SinglePoint/GetInfo', {
     params: {

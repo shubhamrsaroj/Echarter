@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { Search, Pencil } from 'lucide-react';
 import { SellerMarketContext } from '../../../context/seller-market/SellerMarketContext';
 
@@ -11,11 +11,17 @@ const RecentSearch = () => {
     getOptionsbyItineraryId,
     getItineraryById
   } = useContext(SellerMarketContext);
+  
+  // Use a ref to track if data has been loaded already
+  const dataLoadedRef = useRef(false);
 
   useEffect(() => {
-    // Fetch recent searches when component mounts
-    getUserItineraries(7); // Get itineraries for the last 7 days
-  }, [getUserItineraries]);
+    // Only fetch data if it hasn't been loaded yet or if there's an error
+    if (!dataLoadedRef.current && !itinerariesLoading && (!userItineraries || userItineraries.length === 0 || itinerariesError)) {
+      getUserItineraries(7); // Get itineraries for the last 7 days
+      dataLoadedRef.current = true;
+    }
+  }, [getUserItineraries, userItineraries, itinerariesLoading, itinerariesError]);
 
   const handleItineraryClick = (itineraryId) => {
     getOptionsbyItineraryId(itineraryId);

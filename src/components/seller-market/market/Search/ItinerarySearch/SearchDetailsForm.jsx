@@ -1,11 +1,11 @@
 import { useState, useEffect, useContext, useRef } from 'react';
 import { Plus, Trash2, ArrowUpDown, MoreHorizontal, ChevronDown, Loader2, Clock, User2, ListFilter } from 'lucide-react';
 import PropTypes from 'prop-types';
-import { SellerMarketContext } from '../../../context/seller-market/SellerMarketContext';
+import { SellerMarketContext } from '../../../../../context/seller-market/SellerMarketContext';
 import DateAndTime from './DateAndTime';
 import AirpotSelector from './AirpotSelector';
 import FlightDetailsTooltip from './FlightDetailsTooltip';
-import { getTripCategoryService, getEquipmentService } from '../../../api/GetInfo/GetInfo.service';
+import { getTripCategoryService, getEquipmentService } from '../../../../../api/GetInfo/GetInfo.service';
 import { calculateDistance, calculateFlightTime, calculateDateTimes } from './SearchCalculations';
 import { calculateTooltipFlightData, updateTooltipTimes } from './tooltipCalculations';
 

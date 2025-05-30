@@ -19,6 +19,16 @@ export const PipelineProvider = ({ children }) => {
   const [aircraftLoading, setAircraftLoading] = useState(false);
   const [aircraftError, setAircraftError] = useState(null);
   
+  // Add state for company tails
+  const [companyTails, setCompanyTails] = useState([]);
+  const [companyTailsLoading, setCompanyTailsLoading] = useState(false);
+  const [companyTailsError, setCompanyTailsError] = useState(null);
+  
+  // Add state for aircraft types details
+  const [aircraftTypesDetails, setAircraftTypesDetails] = useState([]);
+  const [aircraftTypesDetailsLoading, setAircraftTypesDetailsLoading] = useState(false);
+  const [aircraftTypesDetailsError, setAircraftTypesDetailsError] = useState(null);
+  
   const [airports, setAirports] = useState([]);
   const [airportLoading, setAirportLoading] = useState(false);
   const [airportError, setAirportError] = useState(null);
@@ -53,6 +63,11 @@ export const PipelineProvider = ({ children }) => {
   const [companiesByCategoryLoading, setCompaniesByCategoryLoading] = useState(false);
   const [companiesByCategoryError, setCompaniesByCategoryError] = useState(null);
 
+  // Add state for company haves
+  const [companyHaves, setCompanyHaves] = useState([]);
+  const [companyHavesLoading, setCompanyHavesLoading] = useState(false);
+  const [companyHavesError, setCompanyHavesError] = useState(null);
+
   const pendingRequestId = useRef(null);
   const requestTimeoutRef = useRef(null);
 
@@ -71,6 +86,51 @@ export const PipelineProvider = ({ children }) => {
       getCompanyById(companyId);
     }
   }, [companyId]);
+
+  // Add method to get all company tails
+  const getAllCompanyTails = useCallback(async () => {
+    if (!companyId) {
+      // Try to get companyId from token
+      const token = tokenHandler.getToken();
+      const userData = token ? tokenHandler.parseUserFromToken(token) : null;
+      if (!userData || !userData.comId) {
+        setCompanyTailsError('Company ID not found');
+        return [];
+      }
+    }
+    
+    setCompanyTailsLoading(true);
+    setCompanyTailsError(null);
+    try {
+      const data = await SellerMarketService.getCompanyTails(companyId);
+      setCompanyTails(data);
+      return data;
+    } catch (err) {
+      setCompanyTailsError(err.message || 'Failed to fetch company tails');
+      return [];
+    } finally {
+      setCompanyTailsLoading(false);
+    }
+  }, [companyId]);
+  
+  // Add method to get all aircraft types details
+  const getAllAircraftTypesDetails = useCallback(async () => {
+    setAircraftTypesDetailsLoading(true);
+    setAircraftTypesDetailsError(null);
+    try {
+      const response = await SellerMarketService.getAllAircraftTypesDetails();
+      console.log("API Response for Aircraft Types:", response);
+      // Ensure we set an array even if the response is not what we expected
+      setAircraftTypesDetails(Array.isArray(response) ? response : []);
+      return response;
+    } catch (err) {
+      setAircraftTypesDetailsError(err.message || 'Failed to fetch aircraft types details');
+      setAircraftTypesDetails([]);
+      return [];
+    } finally {
+      setAircraftTypesDetailsLoading(false);
+    }
+  }, []);
 
   const getAllAircraftTypes = async () => {
     setAircraftLoading(true);
@@ -471,7 +531,14 @@ export const PipelineProvider = ({ children }) => {
 
   // Add getCompaniesByCategory function
   const getCompaniesByCategory = useCallback(async (payload) => {
-    if (!payload || !payload.ids || payload.ids.length === 0) {
+    // For match and dateAdjustment paths, check for ids
+    if ((payload.path === "match" || payload.path === "dateAdjustment") && 
+        (!payload.ids || payload.ids.length === 0)) {
+      return null;
+    }
+    
+    // For base path, check for required parameters
+    if (payload.path === "base" && (!payload.category || !payload.fromCoordinates || !payload.toCoordinates)) {
       return null;
     }
     
@@ -496,6 +563,58 @@ export const PipelineProvider = ({ children }) => {
     }
   }, []);
 
+  // Add getAllCompanyHaves function
+  const getAllCompanyHaves = useCallback(async (companyId) => {
+    if (!companyId) {
+      // If no companyId is provided, try to get it from the token
+      const token = tokenHandler.getToken();
+      const userData = token ? tokenHandler.parseUserFromToken(token) : null;
+      companyId = userData?.comId;
+      
+      if (!companyId) {
+        throw new Error("Company ID not found");
+      }
+    }
+    
+    setCompanyHavesLoading(true);
+    setCompanyHavesError(null);
+    
+    try {
+      const response = await SellerMarketService.getAllCompanyHaves(companyId);
+      
+      if (response.success && response.data) {
+        setCompanyHaves(response.data.haves || []);
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to fetch company haves');
+      }
+    } catch (err) {
+      setCompanyHavesError(err.message || 'Error fetching company haves');
+      console.error(err);
+      return null;
+    } finally {
+      setCompanyHavesLoading(false);
+    }
+  }, []);
+
+  // Add deleteHave function
+  const deleteHave = useCallback(async (haveId) => {
+    try {
+      const response = await SellerMarketService.deleteHave(haveId);
+      
+      if (response.success) {
+        // Refresh the haves list after successful deletion
+        await getAllCompanyHaves(companyId);
+        return response;
+      } else {
+        throw new Error(response.message || 'Failed to delete have');
+      }
+    } catch (err) {
+      console.error('Error deleting have:', err);
+      throw err;
+    }
+  }, [getAllCompanyHaves, companyId]);
+
   return (
     <SellerMarketContext.Provider value={{ 
       needsRefresh,
@@ -504,6 +623,19 @@ export const PipelineProvider = ({ children }) => {
       aircraftLoading,
       aircraftError,
       getAllAircraftTypes,
+      
+      // Add new values for company tails
+      companyTails,
+      companyTailsLoading,
+      companyTailsError,
+      getAllCompanyTails,
+      
+      // Add new values for aircraft types details
+      aircraftTypesDetails,
+      aircraftTypesDetailsLoading,
+      aircraftTypesDetailsError,
+      getAllAircraftTypesDetails,
+      
       airports,
       airportLoading,
       airportError,
@@ -547,7 +679,12 @@ export const PipelineProvider = ({ children }) => {
       companiesByCategory,
       companiesByCategoryLoading,
       companiesByCategoryError,
-      getCompaniesByCategory
+      getCompaniesByCategory,
+      companyHaves,
+      companyHavesLoading,
+      companyHavesError,
+      getAllCompanyHaves,
+      deleteHave
     }}>
       {children}
     </SellerMarketContext.Provider>

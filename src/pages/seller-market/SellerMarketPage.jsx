@@ -22,6 +22,9 @@ const SellerMarketPage = () => {
     setActiveSubTab(subtab);
   };
 
+  // Check if sidebar should be hidden
+  const hideSidebar = activeSubTab === 'Haves';
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       {/* Header Navigation */}
@@ -39,8 +42,8 @@ const SellerMarketPage = () => {
       
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left SellerSidebar */}
-        <SellerSidebar />
+        {/* Left SellerSidebar - Only show if not on Haves tab */}
+        {!hideSidebar && <SellerSidebar activeSubTab={activeSubTab} />}
         
         {/* Main Content */}
         <ContentRenderer 

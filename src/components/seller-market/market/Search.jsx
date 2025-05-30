@@ -1,8 +1,8 @@
-import React, { useContext, useEffect } from 'react';
-import SearchDetailsForm from '../ItinerarySearch/SearchDetailsForm';
-import BaseCard from '../ItinerarySearchDetails/BaseCard';
-import MatchCard from '../ItinerarySearchDetails/MatchCard';
-import DateAdjustment from '../ItinerarySearchDetails/DateAdjustment';
+import React, { useContext, useEffect, useState } from 'react';
+import SearchDetailsForm from './Search/ItinerarySearch/SearchDetailsForm';
+import BaseCard from './Search/ItinerarySearchDetails/BaseCard';
+import MatchCard from './Search/ItinerarySearchDetails/MatchCard';
+import DateAdjustment from './Search/ItinerarySearchDetails/DateAdjustment';
 import RouteMap from '../common/RouteMap';
 import { SellerMarketContext } from '../../../context/seller-market/SellerMarketContext';
 
@@ -15,6 +15,9 @@ const Search = () => {
     getOptionsbyItineraryId,
     selectedItineraryId
   } = useContext(SellerMarketContext);
+  
+  // State for map hover functionality
+  const [hoveredFlightCoords, setHoveredFlightCoords] = useState(null);
 
   // If we have a selected itinerary ID but no options data, fetch it
   useEffect(() => {
@@ -58,15 +61,23 @@ const Search = () => {
           {/* Left side - Cards */}
           <div className="w-full md:w-2/3 space-y-6">
             
-            <MatchCard match={optionsData.match} />
-            <DateAdjustment adjustment={optionsData.dateAdjustment} />
+            <MatchCard 
+              match={optionsData.match} 
+              setHoveredFlightCoords={setHoveredFlightCoords} 
+            />
+            <DateAdjustment adjustment={optionsData.dateAdjustment}
+             setHoveredFlightCoords={setHoveredFlightCoords} 
+             />
             <BaseCard itineraryData={optionsData} />
           </div>
           
           {/* Right side - Map (Sticky) */}
           <div className="w-full md:w-1/3">
             <div className="sticky top-4">
-              <RouteMap itineraryData={optionsData} />
+              <RouteMap 
+                itineraryData={optionsData} 
+                hoveredFlightCoords={hoveredFlightCoords} 
+              />
             </div>
           </div>
         </div>

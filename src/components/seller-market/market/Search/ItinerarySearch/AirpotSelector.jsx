@@ -2,7 +2,7 @@ import { Search, PlaneTakeoff, PlaneLanding } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { useState, useContext, useCallback, useEffect } from 'react';
 import { Autocomplete, useLoadScript } from '@react-google-maps/api';
-import { SellerMarketContext } from '../../../context/seller-market/SellerMarketContext';
+import { SellerMarketContext } from '../../../../../context/seller-market/SellerMarketContext';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
@@ -313,7 +313,7 @@ const AirpotSelector = ({
       {hasError && (
         <div className="text-red-600 text-xs mt-1">Required field</div>
       )}
-      {(isSearching && (searchTerm.length >= 2 || airportLoading || airportError)) && (
+      {(isSearching && (searchTerm.length >= 3 || airportLoading || airportError)) && (
         <div className="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white border-2 border-black rounded shadow-lg airport-suggestions">
           {airportLoading ? (
             <div className="p-2 text-center">Loading...</div>
