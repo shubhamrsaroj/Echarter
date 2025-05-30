@@ -35,15 +35,9 @@ const Profile = () => {
   const [showReview, setShowReview] = useState(false);
   const { getTrustScoreInfo } = useContext(SellerMarketContext);
   const { getInfo } = useContext(SellerMarketContext);
-  const [showModal, setShowModal] = useState(false);
-
-
-  console.log(companyData);
-  
+  const [showModal, setShowModal] = useState(false);  
 
   const [activeTab, setActiveTab] = useState(navigationConfig.Company.subtabs);
-
-  
 
   if (showReview) {
     // Show only Review UI — no Profile content here

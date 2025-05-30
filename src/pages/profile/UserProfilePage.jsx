@@ -1,33 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import AboutMe from '../../components/profile/AboutMe';
-import UserDetailsGridLoader from '../../components/profile/UserDetailsGridLoader';
-import { useUserDetails } from "../../context/profile/UserDetailsContext";
+import React, { useState } from "react";
+
+// Import dashboard components
+import UserProfileTopNavigation from "../../components/profile/profileNavigation/UserProfileTopNavigation";
+import UserProfileContentRender from "../../components/profile/UserProfileContentRender";
 
 const UserProfilePage = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const { fetchUserDetails, fetchCompanyDetails } = useUserDetails();
+  // Dashboard state
+  const [activeTab, setActiveTab] = useState('Profile');
 
-  useEffect(() => {
-    const fetchAllDetails = async () => {
-      try {
-        // Fetch both user and company details concurrently
-        await Promise.all([
-          fetchUserDetails(),
-          fetchCompanyDetails()
-        ]);
-      } catch (err) {
-        console.error("Failed to fetch details:", err);
-      } finally {
-        setIsLoading(false); // Only set loading false after both requests complete
-      }
-    };
+  // Handlers for dashboard navigation
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
 
-    fetchAllDetails();
-  }, [fetchUserDetails, fetchCompanyDetails]);
 
   return (
-    <div> 
-      {isLoading ? <UserDetailsGridLoader /> : <AboutMe />}
+    <div className="h-screen flex flex-col bg-gray-100">
+      {/* Header Navigation */}
+      <UserProfileTopNavigation
+        activeTab={activeTab} 
+        onTabChange={handleTabChange} 
+      />
+      
+      {/* Main Content Area */}
+      <div className="flex flex-1 overflow-hidden">
+        <UserProfileContentRender 
+          activeTab={activeTab}
+        />
+      </div>
     </div>
   );
 };

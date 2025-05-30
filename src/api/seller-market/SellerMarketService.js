@@ -168,16 +168,6 @@ export const SellerMarketService = {
       throw error;
     }
   },
-//Added getInfo API
-  getInfo: async (topic, category) => {
-    try {
-      const response = await api.get(`/api/SinglePoint/GetInfo?topic=${topic}&category=${category}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching single point info:', error);
-      throw error;
-    }
-  },
 
   //Added getReviews API
   getReviews : async (id) => {

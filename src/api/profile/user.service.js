@@ -1,4 +1,3 @@
-
 // import { tokenHandler } from '../../utils/tokenHandler';
 // import api from '../axios.config';
 
@@ -53,17 +52,17 @@
 //       if (!token) {
 //         throw new Error("No authentication token found");
 //       }
-  
+
 //       const userData = tokenHandler.parseUserFromToken(token);
 //       if (!userData || !userData.comId) {
 //         throw new Error("Company ID not found in user token");
 //       }
-  
+
 //       // Fetch company details
 //       const response = await api.get("/api/SinglePoint/GetCompaniesById", {
 //         params: { id: userData.comId },
 //       });
-  
+
 //       // Validate response structure
 //       if (response.data?.success && response.data.data) {
 //         return response.data.data; // Return the company object directly
@@ -75,20 +74,17 @@
 //       throw error;
 //     }
 //   },
-  
 
 // };
 
-
-
-import { tokenHandler } from '../../utils/tokenHandler';
-import api from '../axios.config';
+import { tokenHandler } from "../../utils/tokenHandler";
+import api from "../axios.config";
 
 export const userService = {
   async getUserDetailsById(id) {
     try {
       if (!id) {
-        throw new Error('User ID is required to fetch user details');
+        throw new Error("User ID is required to fetch user details");
       }
 
       const response = await api.get(`/api/SinglePoint/GetUserDetailsById`, {
@@ -99,19 +95,20 @@ export const userService = {
         return response.data.data.userInfo;
       } else {
         throw new Error(
-          response.data?.message || 'Failed to fetch user details: Invalid response format'
+          response.data?.message ||
+            "Failed to fetch user details: Invalid response format"
         );
       }
     } catch (error) {
-      console.error('Error fetching user details:', {
+      console.error("Error fetching user details:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
       });
       throw new Error(
         error.response?.data?.message ||
-        error.message ||
-        'Failed to fetch user details'
+          error.message ||
+          "Failed to fetch user details"
       );
     }
   },
@@ -119,28 +116,34 @@ export const userService = {
   async updateUserProfile(profileData) {
     try {
       if (!profileData || !profileData.id) {
-        throw new Error('Profile data and user ID are required to update the profile');
+        throw new Error(
+          "Profile data and user ID are required to update the profile"
+        );
       }
 
-      const response = await api.post(`/api/SinglePoint/UpdateUserProfile`, profileData);
+      const response = await api.post(
+        `/api/SinglePoint/UpdateUserProfile`,
+        profileData
+      );
 
       if (response.data?.success) {
         return response.data;
       } else {
         throw new Error(
-          response.data?.message || 'Failed to update user profile: Invalid response format'
+          response.data?.message ||
+            "Failed to update user profile: Invalid response format"
         );
       }
     } catch (error) {
-      console.error('Error updating user profile:', {
+      console.error("Error updating user profile:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
       });
       throw new Error(
         error.response?.data?.message ||
-        error.message ||
-        'Failed to update user profile'
+          error.message ||
+          "Failed to update user profile"
       );
     }
   },
@@ -148,7 +151,7 @@ export const userService = {
   async sendMobileVerificationOTP(phoneNo) {
     try {
       if (!phoneNo) {
-        throw new Error('Phone number is required to send verification OTP');
+        throw new Error("Phone number is required to send verification OTP");
       }
 
       const response = await api.patch(
@@ -159,19 +162,20 @@ export const userService = {
         return response.data;
       } else {
         throw new Error(
-          response.data?.message || 'Failed to send mobile verification OTP: Invalid response format'
+          response.data?.message ||
+            "Failed to send mobile verification OTP: Invalid response format"
         );
       }
     } catch (error) {
-      console.error('Error sending mobile verification OTP:', {
+      console.error("Error sending mobile verification OTP:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
       });
       throw new Error(
         error.response?.data?.message ||
-        error.message ||
-        'Failed to send mobile verification OTP'
+          error.message ||
+          "Failed to send mobile verification OTP"
       );
     }
   },
@@ -179,30 +183,33 @@ export const userService = {
   async verifyMobileOTP(phoneNo, otp) {
     try {
       if (!phoneNo || !otp) {
-        throw new Error('Phone number and OTP are required to verify');
+        throw new Error("Phone number and OTP are required to verify");
       }
 
       const response = await api.patch(
-        `/api/Account/MobileVerification?phoneNo=${encodeURIComponent(phoneNo)}&otp=${encodeURIComponent(otp)}`
+        `/api/Account/MobileVerification?phoneNo=${encodeURIComponent(
+          phoneNo
+        )}&otp=${encodeURIComponent(otp)}`
       );
 
       if (response.data?.success) {
         return response.data;
       } else {
         throw new Error(
-          response.data?.message || 'Failed to verify mobile OTP: Invalid response format'
+          response.data?.message ||
+            "Failed to verify mobile OTP: Invalid response format"
         );
       }
     } catch (error) {
-      console.error('Error verifying mobile OTP:', {
+      console.error("Error verifying mobile OTP:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
       });
       throw new Error(
         error.response?.data?.message ||
-        error.message ||
-        'Failed to verify mobile OTP'
+          error.message ||
+          "Failed to verify mobile OTP"
       );
     }
   },
@@ -211,15 +218,15 @@ export const userService = {
     try {
       const token = tokenHandler.getToken();
       if (!token) {
-        throw new Error('No authentication token found');
+        throw new Error("No authentication token found");
       }
 
       const userData = tokenHandler.parseUserFromToken(token);
       if (!userData || !userData.comId) {
-        throw new Error('Company ID not found in user token');
+        throw new Error("Company ID not found in user token");
       }
 
-      const response = await api.get('/api/SinglePoint/GetCompaniesById', {
+      const response = await api.get("/api/SinglePoint/GetCompaniesById", {
         params: { id: userData.comId },
       });
 
@@ -227,20 +234,33 @@ export const userService = {
         return response.data.data;
       } else {
         throw new Error(
-          response.data?.message || 'Failed to fetch company details: Invalid response format'
+          response.data?.message ||
+            "Failed to fetch company details: Invalid response format"
         );
       }
     } catch (error) {
-      console.error('Failed to fetch company:', {
+      console.error("Failed to fetch company:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
       });
       throw new Error(
         error.response?.data?.message ||
-        error.message ||
-        'Failed to fetch company details'
+          error.message ||
+          "Failed to fetch company details"
       );
+    }
+  },
+
+  async searchCompanies({ comName = comName }) {
+    const response = await api.get(`/api/SinglePoint/SearchCompanies`, {
+      params: { comName },
+    });
+
+    if (response.data?.success) {
+      return response.data;
+    } else {
+      throw new Error(response.data?.message || "Invalid response from API");
     }
   },
 };
