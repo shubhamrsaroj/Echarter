@@ -5,7 +5,7 @@ import Tasks from './TaskSection/Tasks';
 
 const SellerSidebar = ({ activeSubTab }) => {
   // Don't show RecentSearch for these subtabs
-  const hideRecentSearch = ['Directory', 'Needs', 'Haves', 'Airports'].includes(activeSubTab);
+  const hideRecentSearch = ['Directory', 'Needs', 'Manage Haves', 'Airports'].includes(activeSubTab);
 
   // Use useMemo to prevent Tasks from re-rendering when navigation changes
   const tasksComponent = useMemo(() => <Tasks />, []);

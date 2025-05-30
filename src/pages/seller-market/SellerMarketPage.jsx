@@ -23,7 +23,7 @@ const SellerMarketPage = () => {
   };
 
   // Check if sidebar should be hidden
-  const hideSidebar = activeSubTab === 'Haves';
+  const hideSidebar = activeSubTab === 'Manage Haves';
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">

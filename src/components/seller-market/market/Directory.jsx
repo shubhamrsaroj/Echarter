@@ -19,7 +19,7 @@ const Directory = () => {
           className={`px-4 py-2 font-medium rounded-md ${activeTab === 'have' ? 'bg-teal-200 text-black' : 'bg-teal-300 text-black'}`}
           onClick={() => setActiveTab('have')}
         >
-          Have
+          Haves
         </button>
       </div>
 

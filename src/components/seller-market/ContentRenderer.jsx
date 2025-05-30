@@ -16,6 +16,7 @@ const ContentRenderer = ({ activeTab, activeSubTab }) => {
       'Market-Directory': Directory,
       'Market-Needs': Needs,
       'Market-Haves': Haves,
+      'Market-Manage Haves': Haves,
       'Market-Airports': Airports
       
       // Add other components as they are implemented

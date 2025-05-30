@@ -7,7 +7,7 @@ import AirpotSelector from './AirpotSelector';
 import FlightDetailsTooltip from './FlightDetailsTooltip';
 import { getTripCategoryService, getEquipmentService } from '../../../../../api/GetInfo/GetInfo.service';
 import { calculateDistance, calculateFlightTime, calculateDateTimes } from './SearchCalculations';
-import { calculateTooltipFlightData, updateTooltipTimes } from './tooltipCalculations';
+import { calculateTooltipFlightData, updateTooltipTimes, formatUTCOffset } from './tooltipCalculations';
 
 const SearchDetailsForm = ({ onFormChange }) => {
   const { 
@@ -349,7 +349,8 @@ const SearchDetailsForm = ({ onFormChange }) => {
     const fieldType = id.toString().includes('_from') ? 'from' : 'to';
     
     // Get shift minutes and timezone from airport data
-    const shiftMins = airport.shiftMins;
+    // Use default value for shiftMins (330 for UTC+5:30) if not provided, especially for Google Places
+    const shiftMins = airport.shiftMins !== undefined ? airport.shiftMins : 330;
     
     // Create coordinates object from the API response
     const coordinates = { 
@@ -373,6 +374,7 @@ const SearchDetailsForm = ({ onFormChange }) => {
           [`${fieldType}Country`]: currentCountry,
           [`${fieldType}Place`]: airport.airportName || airport.formatted_address || airport.name || '',
           [`${fieldType}State`]: airport.state || '',
+          [`${fieldType}Tz`]: formatUTCOffset(shiftMins),
           country: currentCountry
         };
 

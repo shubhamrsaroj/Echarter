@@ -64,15 +64,12 @@ const AirpotSelector = ({
   }, [sessionToken]);
 
   const handlePlaceSelect = useCallback(async () => {
-    console.log('Place selection triggered');
     if (!autocomplete) {
-      console.log('No autocomplete instance');
       return;
     }
 
     try {
       const place = autocomplete.getPlace();
-      console.log('Selected place:', place);
 
       if (!place || !place.place_id) {
         // If we don't have full place details, try to get them
@@ -80,7 +77,6 @@ const AirpotSelector = ({
           const service = new window.google.maps.places.AutocompleteService();
           service.getPlacePredictions({
             input: searchTerm,
-            componentRestrictions: { country: 'in' },
             types: ['establishment', 'geocode'],
             sessionToken: sessionToken
           }, (predictions, status) => {
@@ -103,20 +99,18 @@ const AirpotSelector = ({
 
       processPlace(place);
 
-    } catch (error) {
-      console.error('Error in place selection:', error);
+    } catch {
+      // Silently handle error
     }
   }, [autocomplete, searchTerm, sessionToken, getPlaceDetails]);
 
   const processPlace = useCallback((place) => {
     if (!place || !place.geometry) {
-      console.log('Invalid place data');
       return;
     }
 
     // Extract address components
     const addressComponents = place.address_components || [];
-    console.log('Address components:', addressComponents);
     
     // Get the most specific name first
     const locality = addressComponents.find(c => c.types.includes('sublocality_level_1'))?.long_name
@@ -151,13 +145,14 @@ const AirpotSelector = ({
       country: country,
       formatted_address: place.formatted_address,
       utc_offset: place.utc_offset || 330,
+      utc_offset_minutes: place.utc_offset_minutes,
+      shiftMins: place.utc_offset || place.utc_offset_minutes ,
       geometry: place.geometry,
       name: place.name,
       lat: place.geometry.location.lat(),
       long: place.geometry.location.lng()
     };
 
-    console.log('Processed place data:', placeData);
     setDisplayValue(displayName);
     onSelectAirport(id, placeData);
     setIsSearching(false);
@@ -169,7 +164,6 @@ const AirpotSelector = ({
   }, [id, onSelectAirport]);
 
   const handleAutocompleteLoad = useCallback((auto) => {
-    console.log('Autocomplete loaded');
     setAutocomplete(auto);
   }, []);
 
@@ -249,7 +243,6 @@ const AirpotSelector = ({
             onLoad={handleAutocompleteLoad}
             onPlaceChanged={handlePlaceSelect}
             options={{
-              componentRestrictions: { country: 'in' },
               types: ['establishment', 'geocode'],
               fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id', 'utc_offset'],
               sessionToken: sessionToken

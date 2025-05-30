@@ -99,8 +99,10 @@ const Sidebar = ({ onExpandChange }) => {
             {expanded && <span className="text-gray-700 text-xs mt-2">Profile</span>}
           </button>
 
-          {profileDropdownOpen && expanded && (
-            <div className="absolute bottom-full left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10 mb-1 overflow-hidden">
+          {profileDropdownOpen && (
+            <div className={`absolute bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden ${
+              expanded ? 'bottom-full left-0 w-full mb-1' : 'left-full bottom-0 mb-0 ml-1 w-36'
+            }`}>
               <button
                 onClick={handleViewProfile}
                 className="flex items-center w-full px-3 py-2.5 text-xs font-medium hover:bg-blue-50 transition-colors"

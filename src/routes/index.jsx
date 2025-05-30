@@ -34,8 +34,12 @@ import { tokenHandler } from '../utils/tokenHandler';
 const hasSellerAccess = () => {
   const token = tokenHandler.getToken();
   const userData = token ? tokenHandler.parseUserFromToken(token) : null;
-  const userRoles = (userData?.role || '').split(',').map(role => role.trim());
-  return userRoles.some(role => ['Broker', 'Operator'].includes(role));
+  
+  const userRoles = (userData?.role || '').split(',').map(role => role.trim().toLowerCase());
+  
+  const result = userRoles.some(role => ['broker', 'operator'].includes(role.toLowerCase()));
+  
+  return result;
 };
 
 // Helper function to wrap routes with common layout and appropriate provider
@@ -51,6 +55,7 @@ const wrapWithProvider = (Provider, Component) => (
 const wrapWithMultipleProviders = (Providers, Component) => (
   <ProtectedRoute>
     <CommonLayout>
+      {/* eslint-disable-next-line no-unused-vars */}
       {Providers.reduce((acc, Provider) => (
         <Provider>{acc}</Provider>
       ), Component)}
@@ -67,33 +72,82 @@ export const routes = [
   // Protected Routes with search Provider - only for non-seller users
   { 
     path: "/search", 
-    element: hasSellerAccess() ? <Navigate to="/market" replace /> : wrapWithProvider(SearchProvider, <SearchInputPage />)
+    element: <ProtectedRoute>
+      {() => {
+        if (hasSellerAccess()) {
+          return <Navigate to="/market" replace />;
+        }
+        return <CommonLayout><SearchProvider><SearchInputPage /></SearchProvider></CommonLayout>;
+      }}
+    </ProtectedRoute>
   },
   { 
     path: "/search-details", 
-    element: hasSellerAccess() ? <Navigate to="/market" replace /> : wrapWithProvider(SearchProvider, <SearchDetailPage />)
+    element: <ProtectedRoute>
+      {() => {
+        if (hasSellerAccess()) {
+          return <Navigate to="/market" replace />;
+        }
+        return <CommonLayout><SearchProvider><SearchDetailPage /></SearchProvider></CommonLayout>;
+      }}
+    </ProtectedRoute>
   },
   { 
     path: "/search/broker-details", 
-    element: hasSellerAccess() ? <Navigate to="/market" replace /> : wrapWithProvider(SearchProvider, <BrokerDetailPage />)
+    element: <ProtectedRoute>
+      {() => {
+        if (hasSellerAccess()) {
+          return <Navigate to="/market" replace />;
+        }
+        return <CommonLayout><SearchProvider><BrokerDetailPage /></SearchProvider></CommonLayout>;
+      }}
+    </ProtectedRoute>
   },
   { 
     path: "/search/base-details", 
-    element: hasSellerAccess() ? <Navigate to="/market" replace /> : wrapWithProvider(SearchProvider, <BaseDetailPage />)
+    element: <ProtectedRoute>
+      {() => {
+        if (hasSellerAccess()) {
+          return <Navigate to="/market" replace />;
+        }
+        return <CommonLayout><SearchProvider><BaseDetailPage /></SearchProvider></CommonLayout>;
+      }}
+    </ProtectedRoute>
   },
   { 
     path: "/search/match-details", 
-    element: hasSellerAccess() ? <Navigate to="/market" replace /> : wrapWithProvider(SearchProvider, <MatchDetailPage />)
+    element: <ProtectedRoute>
+      {() => {
+        if (hasSellerAccess()) {
+          return <Navigate to="/market" replace />;
+        }
+        return <CommonLayout><SearchProvider><MatchDetailPage /></SearchProvider></CommonLayout>;
+      }}
+    </ProtectedRoute>
   },
   { 
     path: "/search/date-adjustment-details", 
-    element: hasSellerAccess() ? <Navigate to="/market" replace /> : wrapWithProvider(SearchProvider, <DateAdjustmentDetailPage />)
+    element: <ProtectedRoute>
+      {() => {
+        if (hasSellerAccess()) {
+          return <Navigate to="/market" replace />;
+        }
+        return <CommonLayout><SearchProvider><DateAdjustmentDetailPage /></SearchProvider></CommonLayout>;
+      }}
+    </ProtectedRoute>
   },
 
   // Protected Routes with Seller Provider - only for seller users
   { 
     path: "/market", 
-    element: !hasSellerAccess() ? <Navigate to="/search" replace /> : wrapWithProvider(PipelineProvider, <SellerMarketPage />)
+    element: <ProtectedRoute>
+      {() => {
+        if (!hasSellerAccess()) {
+          return <Navigate to="/search" replace />;
+        }
+        return <CommonLayout><PipelineProvider><SellerMarketPage /></PipelineProvider></CommonLayout>;
+      }}
+    </ProtectedRoute>
   },
 
   // Protected Routes with both Buyer and Search Provider

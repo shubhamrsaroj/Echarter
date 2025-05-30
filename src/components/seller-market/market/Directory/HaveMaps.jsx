@@ -5,14 +5,15 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { GoogleMap, useLoadScript } from '@react-google-maps/api';
 import * as haveData from './map-data/have.json';
 
-const MAX_ENTRIES = 400;
+const MAX_ENTRIES = 350;
 
-const HaveMaps = () => {
+const HaveMaps = ({ isVisible = true }) => {
     const [map, setMap] = useState(null);
     const [flightPaths, setFlightPaths] = useState([]);
     const [error, _setError] = useState(null);
 
     const polylineRefs = useRef([]);
+    const markerRefs = useRef([]);
     
     const googleMapsApiKey = import.meta.env.VITE_GOOGLE_API_KEY;
 
@@ -23,6 +24,7 @@ const HaveMaps = () => {
 
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey,
+        googleMapsApiClientId: 'have-maps-client',
     });
 
     const calculateCurvedPath = useCallback((start, end) => {
@@ -138,10 +140,17 @@ const HaveMaps = () => {
     useEffect(() => {
         if (!map || !window.google || !flightPaths.length) return;
 
+        // Clear previous polylines
         polylineRefs.current.forEach(line => {
             if (line) line.setMap(null);
         });
         polylineRefs.current = [];
+
+        // Clear previous markers
+        markerRefs.current.forEach(marker => {
+            if (marker) marker.setMap(null);
+        });
+        markerRefs.current = [];
 
         flightPaths.forEach(path => {
             const polyline = new window.google.maps.Polyline({
@@ -216,9 +225,33 @@ const HaveMaps = () => {
                 toInfoWindow.open(map, toMarker);
             });
 
-            polylineRefs.current.push(fromMarker, toMarker);
+            // Store markers in separate ref
+            markerRefs.current.push(fromMarker, toMarker);
         });
     }, [map, flightPaths]);
+
+    // Cleanup effect to properly handle unmounting
+    useEffect(() => {
+        return () => {
+            // Clear all map objects when component unmounts
+            if (polylineRefs.current) {
+                polylineRefs.current.forEach(line => {
+                    if (line) line.setMap(null);
+                });
+            }
+            if (markerRefs.current) {
+                markerRefs.current.forEach(marker => {
+                    if (marker) marker.setMap(null);
+                });
+            }
+            setMap(null);
+        };
+    }, []);
+
+    // Only render the map when the component is visible
+    if (!isVisible) {
+        return null;
+    }
 
     if (loadError || error) return (
         <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4 w-full">
@@ -234,7 +267,7 @@ const HaveMaps = () => {
                     <GoogleMap
                         key={`map-${flightPaths.length}`}
                         mapContainerStyle={mapContainerStyle}
-                        zoom={2}
+                        zoom={3}
                         center={{ lat: 40.703700, lng: -40.714776 }}
                         onLoad={onMapLoad}
                         options={{

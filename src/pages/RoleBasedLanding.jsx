@@ -6,8 +6,10 @@ const RoleBasedLanding = () => {
   // Get user role from token
   const token = tokenHandler.getToken();
   const userData = token ? tokenHandler.parseUserFromToken(token) : null;
-  const userRoles = (userData?.role || '').split(',').map(role => role.trim());
-  const hasSellerAccess = userRoles.some(role => ['Broker', 'Operator'].includes(role));
+  
+  const userRoles = (userData?.role || '').split(',').map(role => role.trim().toLowerCase());
+  
+  const hasSellerAccess = userRoles.some(role => ['broker', 'operator'].includes(role.toLowerCase()));
 
   if (!token) {
     return <Navigate to="/login" replace />;

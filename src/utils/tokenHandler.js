@@ -56,12 +56,20 @@ export const tokenHandler = {
     try {
       const decoded = jwtDecode.jwtDecode(token);
 
+      // Get the role value and normalize it
+      const roleValue = decoded.Role || decoded.role || '';
+      const normalizedRole = roleValue
+        .split(',')
+        .map(r => r.trim())
+        .filter(r => r) // Remove empty strings
+        .join(',');
+
       // Map the payload fields, handling possible variations in field names
       const userData = {
         id: decoded.UserId || decoded.userId || decoded.sub || decoded.id, // Handle different naming conventions
         name: decoded.Name || decoded.name || decoded.fullName || '',
         email: decoded.Email || decoded.email || '',
-        role: decoded.Role || decoded.role || '',
+        role: normalizedRole, // Use the normalized role string
         comId: decoded.ComId || decoded.comId || decoded.companyId || '',
         PhoneNumber: decoded.PhoneNumber || decoded.phoneNumber || decoded.phone || '',
         Currency: decoded.Currency || decoded.currency || '',

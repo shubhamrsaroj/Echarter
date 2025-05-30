@@ -16,5 +16,10 @@ export const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return user ? children : <Navigate to="/login" />;
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  // Handle function children or regular children
+  return typeof children === 'function' ? children() : children;
 };
