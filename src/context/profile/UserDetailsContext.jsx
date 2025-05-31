@@ -134,6 +134,7 @@ export const UserDetailsProvider = ({ children }) => {
     }
   }, []);
 
+
   const clearUserDetails = useCallback(() => {
     setUserDetails(null);
     setCompany(null);

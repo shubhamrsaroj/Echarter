@@ -12,16 +12,14 @@ import {
 import { SellerMarketContext } from "../../../context/seller-market/SellerMarketContext";
 
 const Review = () => {
-  const { companyId, selectedReviews, companyData, getReviews } = useContext(SellerMarketContext);
+  const { companyId, selectedReviews, companyData, getReviews } =
+    useContext(SellerMarketContext);
 
   useEffect(() => {
     if (companyId) {
       getReviews(companyId);
     }
   }, [companyId, getReviews]);
-
-  console.log(selectedReviews);
-  
 
   const renderStars = (rating) => {
     const filledStars = Math.floor(rating);
@@ -84,7 +82,6 @@ const Review = () => {
           ) : (
             <p>No selected reviews to show</p>
           )}
-
         </div>
 
         {/* RIGHT SIDE: Trust Score */}
@@ -124,13 +121,15 @@ const Review = () => {
                   <span>Average Rating : {companyData.averageRating}</span>
                 </div>
                 <div className="p-1">
-                  <span>Total Reviews</span> : <span>{companyData.totalReviews}</span>
+                  <span>Total Reviews</span> :{" "}
+                  <span>{companyData.totalReviews}</span>
                 </div>
                 <div className="p-1">
                   <span>dealsDone</span> : <span>{companyData.dealsDone}</span>
                 </div>
                 <div className="p-1">
-                  <span>dealsDeclined</span> : <span>{companyData.dealsDeclined}</span>
+                  <span>dealsDeclined</span> :{" "}
+                  <span>{companyData.dealsDeclined}</span>
                 </div>
               </div>
             </div>

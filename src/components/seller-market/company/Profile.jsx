@@ -39,11 +39,11 @@ const Profile = () => {
 
   const [activeTab, setActiveTab] = useState(navigationConfig.Company.subtabs);
 
-  if (showReview) {
-    // Show only Review UI — no Profile content here
-    return <Reviews onBack={() => {
-      setShowReview(false)}} />;
-  }
+  // if (showReview) {
+  //   // Show only Review UI — no Profile content here
+  //   return <Reviews onBack={() => {
+  //     setShowReview(false)}} />;
+  // }
 
   return (
     <div className="bg-white p-6">
@@ -124,7 +124,7 @@ const Profile = () => {
               <h2 className="text-xl font-semibold text-gray-900 mb-1">
                 Trust Score
               </h2>
-              <p
+              {/* <p
                 className="text-sm text-blue-600 cursor-pointer mb-0"
                 onClick={() => {
                   setActiveTab("Reviews");
@@ -132,7 +132,7 @@ const Profile = () => {
                 }} // Show Review UI
               >
                 Reviews
-              </p>
+              </p> */}
               <p
                 className="text-sm text-blue-600 cursor-pointer"
                 onClick={getTrustScoreInfo} // directly call context function

@@ -4,7 +4,6 @@ import { SellerMarketContext } from "../../../context/seller-market/SellerMarket
 
 const Teams = () => {
   const {teamUserInfo} = useContext(SellerMarketContext);
-  console.log(teamUserInfo);
   const [isExpanded, setIsExpanded] = useState(false);
   
   

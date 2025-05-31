@@ -251,7 +251,7 @@ export const userService = {
       );
     }
   },
-
+  
   async searchCompanies({ comName = comName }) {
     const response = await api.get(`/api/SinglePoint/SearchCompanies`, {
       params: { comName },
@@ -263,4 +263,5 @@ export const userService = {
       throw new Error(response.data?.message || "Invalid response from API");
     }
   },
-};
+    
+}

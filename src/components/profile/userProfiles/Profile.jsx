@@ -162,9 +162,7 @@ const Profile = () => {
         const data = await fetchCompanyDetails(company.id);
         console.log(userDetails.email);
         
-        // processCountUser(data.userInfo.length, company, userDetails);
-
-        processCountUser(0, company, userDetails);
+        processCountUser(data.userInfo.length, company, userDetails);
       } catch (err) {
         console.error("Error fetching company:", err);
         setIsCompanySelected(false); // Reset on error
@@ -175,19 +173,18 @@ const Profile = () => {
 
   const processCountUser = useCallback(
     (userCount, company, userDetails) => {
-      console.log(userDetails);
+      
       
       const userDomain = userDetails?.email?.split("@")[1]?.toLowerCase() || "";
-      console.log(userDomain);
+      
 
-      // const companyDomain = company?.email?.split("@")[1]?.toLowerCase() || "";
+      const companyDomain = company?.email?.split("@")[1]?.toLowerCase() || "";
 
       setPopup({
         show: true,
         type:
           userCount === 0
-            ? // ? userDomain === companyDomain
-              userDomain === "instacharter.app"
+             ? userDomain === companyDomain  
               ? "claim"
               : "unauthorized"
             : "accountExist",

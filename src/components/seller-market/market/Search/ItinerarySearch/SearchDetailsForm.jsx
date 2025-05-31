@@ -23,6 +23,9 @@ const SearchDetailsForm = ({ onFormChange }) => {
     updateItinerary,
     getOptionsbyItineraryId
   } = useContext(SellerMarketContext);
+
+  console.log(airports + " airports");
+  
   
   const [flightDetails, setFlightDetails] = useState([{
     id: 1,
