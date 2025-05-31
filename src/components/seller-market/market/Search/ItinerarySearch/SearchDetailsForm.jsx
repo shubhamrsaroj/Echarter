@@ -981,7 +981,7 @@ const SearchDetailsForm = ({ onFormChange }) => {
               <div className="w-56 ml-4">
                 {/* Empty space for alignment */}
               </div>
-              <div className="ml-4">
+              <div className="w-[100px] ml-4">
                 <div className="text-sm font-medium">Pax</div>
               </div>
             </div>
@@ -1039,8 +1039,8 @@ const SearchDetailsForm = ({ onFormChange }) => {
                       />
                     </div>
                   <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <div className={`w-[100px] border-2 ${hasError(detail.id, 'pax') ? 'border-red-600 bg-red-50' : 'border-black'} rounded bg-white text-black`}>
+                    <div className="relative w-[100px]">
+                      <div className={`w-full border-2 ${hasError(detail.id, 'pax') ? 'border-red-600 bg-red-50' : 'border-black'} rounded bg-white text-black`}>
                         <div className="flex items-center h-[36px]">
                           <div className="flex items-center justify-center ml-2">
                             <User2 className="w-5 h-5 text-gray-600" />
