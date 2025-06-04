@@ -41,28 +41,30 @@ const FlightDetailsTooltip = ({
   return (
     <div 
       ref={tooltipRef}
-      className="absolute z-50 bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-[700px] -right-2 top-10"
+      className="absolute z-50 bg-[#F3F3F3] border border-gray-200 rounded-lg shadow-lg p-4 w-[700px] -right-2 top-12"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="absolute -top-2 right-4 w-4 h-4 bg-white border-t border-l border-gray-200 transform rotate-45"></div>
+      <div className="absolute -top-2 right-4 w-4 h-4 bg-[#F3F3F3] border-t border-l border-gray-200 transform rotate-45"></div>
       <div className="space-y-4">
         {/* Aircraft Selection */}
-        <div>
-          <label className="block text-sm font-medium text-black mb-1">Aircraft</label>
-          <AircraftSelector
-            id={detailId}
-            selectedAircraft={selectedAircraft}
-            showDropdown={showAircraftDropdown ? detailId : null}
-            toggleDropdown={handleAircraftDropdown}
-            aircraftTypes={aircraftTypes}
-            loading={aircraftLoading}
-            error={aircraftError}
-            onSelectAircraft={onSelectAircraft}
-          />
+        <div className="w-full">
+          <div className="w-[250px] mx-auto text-left">
+            <AircraftSelector
+              id={detailId}
+              selectedAircraft={selectedAircraft}
+              showDropdown={showAircraftDropdown ? detailId : null}
+              toggleDropdown={handleAircraftDropdown}
+              aircraftTypes={aircraftTypes}
+              loading={aircraftLoading}
+              error={aircraftError}
+              onSelectAircraft={onSelectAircraft}
+              label="Select Aircraft Type"
+            />
+          </div>
         </div>
 
         {/* Flight Information Display */}
-        <div className="bg-gray-50 p-4 rounded-xl">
+        <div className="bg-[#F3F3F3] p-4 rounded-xl">
           <div className="flex flex-col items-center">
             {/* Distance and Aircraft labels at the top */}
             <div className="flex justify-between w-full mb-0">
@@ -94,7 +96,7 @@ const FlightDetailsTooltip = ({
               {/* Flight Time Input */}
               <div className="flex items-center">
                 <div className="w-[80px] h-[2px] bg-black"></div>
-                <div className="w-[100px] h-12 border-2 border-black rounded-lg flex items-center justify-center relative">
+                <div className="w-[100px] h-12 border-2 border-black rounded-lg flex items-center justify-center relative bg-white">
                   <input
                     type="text"
                     value={detail.flightTime ? detail.flightTime.replace(' hrs', '') : '--'}

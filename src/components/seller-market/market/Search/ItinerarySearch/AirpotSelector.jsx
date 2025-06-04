@@ -1,8 +1,9 @@
-import { Search, PlaneTakeoff, PlaneLanding } from 'lucide-react';
+import { PlaneTakeoff, PlaneLanding } from 'lucide-react';
 import PropTypes from 'prop-types';
 import { useState, useContext, useCallback, useEffect } from 'react';
-import { Autocomplete, useLoadScript } from '@react-google-maps/api';
+import { useLoadScript } from '@react-google-maps/api';
 import { SellerMarketContext } from '../../../../../context/seller-market/SellerMarketContext';
+import { AutoComplete } from 'primereact/autocomplete';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
@@ -16,15 +17,14 @@ const AirpotSelector = ({
   airportError,
   onSelectAirport,
   placeholder,
-  hasError
+  hasError,
+  height
 }) => {
-  const [isSearching, setIsSearching] = useState(false);
-  const [autocomplete, setAutocomplete] = useState(null);
   const [sessionToken, setSessionToken] = useState(null);
   const [displayValue, setDisplayValue] = useState(selectedAirport || '');
+  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const { isGooglePlacesEnabled } = useContext(SellerMarketContext);
   
-
   // Determine if this is a "from" or "to" field based on the id
   const isFromField = id.toString().includes('_from');
   const IconComponent = isFromField ? PlaneTakeoff : PlaneLanding;
@@ -63,47 +63,6 @@ const AirpotSelector = ({
       });
     });
   }, [sessionToken]);
-
-  const handlePlaceSelect = useCallback(async () => {
-    if (!autocomplete) {
-      return;
-    }
-
-    try {
-      const place = autocomplete.getPlace();
-
-      if (!place || !place.place_id) {
-        // If we don't have full place details, try to get them
-        const predictions = await new Promise((resolve) => {
-          const service = new window.google.maps.places.AutocompleteService();
-          service.getPlacePredictions({
-            input: searchTerm,
-            types: ['establishment', 'geocode'],
-            sessionToken: sessionToken
-          }, (predictions, status) => {
-            if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-              resolve(predictions);
-            } else {
-              resolve([]);
-            }
-          });
-        });
-
-        if (predictions && predictions.length > 0) {
-          const details = await getPlaceDetails(predictions[0].place_id);
-          if (details) {
-            processPlace(details);
-          }
-        }
-        return;
-      }
-
-      processPlace(place);
-
-    } catch {
-      // Silently handle error
-    }
-  }, [autocomplete, searchTerm, sessionToken, getPlaceDetails]);
 
   const processPlace = useCallback((place) => {
     if (!place || !place.geometry) {
@@ -156,7 +115,6 @@ const AirpotSelector = ({
 
     setDisplayValue(displayName);
     onSelectAirport(id, placeData);
-    setIsSearching(false);
     
     // Generate a new session token after successful selection
     if (window.google?.maps?.places) {
@@ -164,38 +122,120 @@ const AirpotSelector = ({
     }
   }, [id, onSelectAirport]);
 
-  const handleAutocompleteLoad = useCallback((auto) => {
-    setAutocomplete(auto);
-  }, []);
+  const handleGooglePlaceSearch = async (event) => {
+    const query = event.query;
+    
+    if (!query || query.length < 2 || !isLoaded || !window.google || !window.google.maps || !window.google.maps.places) {
+      return;
+    }
+    
+    try {
+      const predictions = await new Promise((resolve) => {
+        const service = new window.google.maps.places.AutocompleteService();
+        service.getPlacePredictions({
+          input: query,
+          types: ['establishment', 'geocode'],
+          sessionToken: sessionToken
+        }, (predictions, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+            resolve(predictions);
+          } else {
+            resolve([]);
+          }
+        });
+      });
+      
+      setFilteredSuggestions(predictions);
+    } catch (error) {
+      console.error('Error fetching place predictions:', error);
+    }
+  };
 
-  // Helper function to format airport display in dropdown
-  const formatAirportDisplay = (airport) => {
+  const handlePlaceSelect = async (event) => {
+    const selectedPlace = event.value;
+    
+    if (!selectedPlace || !selectedPlace.place_id) return;
+    
+    try {
+      const placeDetails = await getPlaceDetails(selectedPlace.place_id);
+      if (placeDetails) {
+        processPlace(placeDetails);
+      }
+    } catch (error) {
+      console.error('Error getting place details:', error);
+    }
+  };
+
+  const handleAirportSearch = (event) => {
+    const query = event.query;
+    
+    // Update the search term in the parent component
+    if (handleSearchChange) {
+      handleSearchChange({ target: { value: query } });
+    }
+    
+    // Get airport data safely, whether the input is an array or an object with a data property
+    const airportData = Array.isArray(airports) ? airports : airports?.data || [];
+    
+    // Filter airports based on the query
+    if (query.length >= 2 && !isGooglePlacesEnabled) {
+      setFilteredSuggestions(airportData);
+    } else {
+      setFilteredSuggestions([]);
+    }
+  };
+  
+  const handleAirportSelect = (event) => {
+    const airport = event.value;
+    if (airport) {
+      onSelectAirport(id, airport);
+    }
+  };
+
+  // Helper function to format airport item in dropdown
+  const airportItemTemplate = (airport) => {
     const cityCountry = airport.city && airport.country 
       ? `${airport.city}, ${airport.country}` 
       : airport.city || airport.country || '';
     
     return (
       <div>
-        <div className="font-medium">{airport.airportName} ({airport.iata})</div>
+        <div className="font-medium">{airport.airportName || airport.name} {airport.iata ? `(${airport.iata})` : ''}</div>
         {cityCountry && <div className="text-xs text-gray-600">{cityCountry}</div>}
       </div>
     );
   };
 
-  // Get airport data safely, whether the input is an array or an object with a data property
-  const airportData = Array.isArray(airports) ? airports : airports?.data || [];
+  const googlePlaceItemTemplate = (prediction) => {
+    return (
+      <div>
+        <div className="font-medium">{prediction.description || prediction.structured_formatting?.main_text}</div>
+        {prediction.structured_formatting?.secondary_text && (
+          <div className="text-xs text-gray-600">{prediction.structured_formatting.secondary_text}</div>
+        )}
+      </div>
+    );
+  };
+
+  // Define custom styles with height if provided
+  const customStyles = height ? { height, width: '100%' } : { width: '100%' };
+  const customInputStyles = height ? { height: '100%', width: '100%' } : { width: '100%' };
 
   if (isGooglePlacesEnabled) {
     if (!GOOGLE_MAPS_API_KEY) {
       return (
         <div className="relative">
-          <div className={`w-full border-2 ${hasError ? 'border-red-600 bg-red-50' : 'border-black'} rounded bg-white text-black`}>
-            <div className="flex items-center h-[36px]">
+          <div 
+            className={`w-full border-2 ${hasError ? 'border-red-600 bg-red-50' : 'border-black'} rounded bg-white text-black`}
+            style={customStyles}
+          >
+            <div className="flex items-center h-full">
               <IconComponent className={`w-4 h-4 text-gray-600 ml-3`} />
               <input 
                 className="w-full border-none outline-none px-3 py-[0.375rem] text-sm bg-transparent placeholder-gray-500"
                 placeholder="Google Maps API key is missing"
                 disabled
+                style={customInputStyles}
               />
             </div>
           </div>
@@ -206,13 +246,17 @@ const AirpotSelector = ({
     if (loadError) {
       return (
         <div className="relative">
-          <div className={`w-full border-2 ${hasError ? 'border-red-600 bg-red-50' : 'border-black'} rounded bg-white text-black`}>
-            <div className="flex items-center h-[36px]">
+          <div 
+            className={`w-full border-2 ${hasError ? 'border-red-600 bg-red-50' : 'border-black'} rounded bg-white text-black`}
+            style={customStyles}
+          >
+            <div className="flex items-center h-full">
               <IconComponent className={`w-4 h-4 text-gray-600 ml-3`} />
               <input 
                 className="w-full border-none outline-none px-3 py-[0.375rem] text-sm bg-transparent placeholder-gray-500"
                 placeholder="Error loading Google Maps"
                 disabled
+                style={customInputStyles}
               />
             </div>
           </div>
@@ -223,13 +267,17 @@ const AirpotSelector = ({
     if (!isLoaded) {
       return (
         <div className="relative">
-          <div className={`w-full border-2 ${hasError ? 'border-red-600 bg-red-50' : 'border-black'} rounded bg-white text-black`}>
-            <div className="flex items-center h-[36px]">
+          <div 
+            className={`w-full border-2 ${hasError ? 'border-red-600 bg-red-50' : 'border-black'} rounded bg-white text-black`}
+            style={customStyles}
+          >
+            <div className="flex items-center h-full">
               <IconComponent className={`w-4 h-4 text-gray-600 ml-3`} />
               <input 
                 className="w-full border-none outline-none px-3 py-[0.375rem] text-sm bg-transparent placeholder-gray-500"
                 placeholder="Loading Google Maps..."
                 disabled
+                style={customInputStyles}
               />
             </div>
           </div>
@@ -237,36 +285,30 @@ const AirpotSelector = ({
       );
     }
 
+    // PrimeReact AutoComplete with Google Places
     return (
-      <div className="relative">
-        <div className={`w-full border-2 ${hasError ? 'border-red-600 bg-red-50' : 'border-black'} rounded bg-white text-black`}>
-          <Autocomplete
-            onLoad={handleAutocompleteLoad}
-            onPlaceChanged={handlePlaceSelect}
-            options={{
-              types: ['establishment', 'geocode'],
-              fields: ['address_components', 'formatted_address', 'geometry', 'name', 'place_id', 'utc_offset'],
-              sessionToken: sessionToken
+      <div className="relative w-full">
+        <span className={`p-input-icon-left w-full ${hasError ? 'p-error' : ''}`}>
+          <IconComponent className="pi-icon-left" />
+          <AutoComplete
+            value={displayValue}
+            suggestions={filteredSuggestions}
+            completeMethod={handleGooglePlaceSearch}
+            onChange={(e) => setDisplayValue(e.value)}
+            onSelect={handlePlaceSelect}
+            field="description"
+            itemTemplate={googlePlaceItemTemplate}
+            placeholder={placeholder || "Search for airports..."}
+            className={`w-full ${hasError ? 'p-invalid' : ''}`}
+            style={customStyles}
+            inputStyle={customInputStyles}
+            pt={{
+              root: { className: 'h-full w-full' },
+              input: { className: 'h-full w-full' },
+              container: { className: 'h-full w-full' }
             }}
-          >
-            <div className="flex items-center h-[36px]">
-              <IconComponent className={`w-4 h-4 text-gray-600 ml-3`} />
-              <input
-                type="text"
-                className="w-full border-none outline-none px-3 py-[0.375rem] text-sm bg-transparent placeholder-gray-500"
-                placeholder={placeholder || "Search for airports..."}
-                value={displayValue}
-                onChange={(e) => {
-                  setDisplayValue(e.target.value);
-                  if (handleSearchChange) {
-                    handleSearchChange(e);
-                  }
-                }}
-                onFocus={() => setIsSearching(true)}
-              />
-            </div>
-          </Autocomplete>
-        </div>
+          />
+        </span>
         {hasError && (
           <div className="text-red-600 text-xs mt-1">Required field</div>
         )}
@@ -274,65 +316,41 @@ const AirpotSelector = ({
     );
   }
 
+  // PrimeReact AutoComplete with custom airport data
   return (
-    <div className="relative">
-      <div className={`w-full border-2 ${hasError ? 'border-red-600 bg-red-50' : 'border-black'} rounded bg-white text-black`}>
-        <div className="flex items-center h-[36px]">
-          <IconComponent className="w-4 h-4 text-gray-600 ml-3" />
-          {!isSearching && selectedAirport ? (
-            <div 
-              className="w-full cursor-text truncate px-3 py-[0.375rem] text-sm"
-              onClick={() => setIsSearching(true)}
-            >
-              {selectedAirport}
-            </div>
-          ) : (
-            <input 
-              className="w-full border-none outline-none px-3 py-[0.375rem] text-sm bg-transparent placeholder-gray-500"
-              placeholder={placeholder || "Search airport..."}
-              value={searchTerm}
-              onChange={handleSearchChange}
-              onFocus={() => setIsSearching(true)}
-              onBlur={(e) => {
-                setTimeout(() => {
-                  if (!e.relatedTarget?.closest('.airport-suggestions')) {
-                    setIsSearching(false);
-                  }
-                }, 200);
-              }}
-            />
-          )}
-        </div>
-      </div>
+    <div className="relative w-full">
+      <span className={`p-input-icon-left w-full ${hasError ? 'p-error' : ''}`}>
+        <IconComponent className="pi-icon-left" />
+        <AutoComplete
+          value={displayValue || searchTerm}
+          suggestions={filteredSuggestions}
+          completeMethod={handleAirportSearch}
+          onChange={(e) => {
+            setDisplayValue(e.value);
+            if (handleSearchChange) {
+              handleSearchChange({ target: { value: e.value } });
+            }
+          }}
+          onSelect={handleAirportSelect}
+          field="airportName"
+          itemTemplate={airportItemTemplate}
+          placeholder={placeholder || "Search airport..."}
+          className={`w-full ${hasError ? 'p-invalid' : ''}`}
+          loading={airportLoading ? airportLoading.toString() : undefined}
+          style={customStyles}
+          inputStyle={customInputStyles}
+          pt={{
+            root: { className: 'h-full w-full' },
+            input: { className: 'h-full w-full' },
+            container: { className: 'h-full w-full' }
+          }}
+        />
+      </span>
       {hasError && (
         <div className="text-red-600 text-xs mt-1">Required field</div>
       )}
-      {(isSearching && (searchTerm.length >= 3 || airportLoading || airportError)) && (
-        <div className="absolute z-10 w-full mt-1 max-h-60 overflow-auto bg-white border-2 border-black rounded shadow-lg airport-suggestions">
-          {airportLoading ? (
-            <div className="p-2 text-center">Loading...</div>
-          ) : airportError ? (
-            <div className="p-2 text-center text-red-500">Error loading airports</div>
-          ) : (
-            airportData.length > 0 ? (
-              airportData.map((airport, index) => (
-                <div 
-                  key={index} 
-                  className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => {
-                    onSelectAirport(id, airport);
-                    setIsSearching(false);
-                  }}
-                  tabIndex={0}
-                >
-                  {formatAirportDisplay(airport)}
-                </div>
-              ))
-            ) : (
-              <div className="p-2 text-center">No airports found</div>
-            )
-          )}
-        </div>
+      {airportError && (
+        <div className="text-red-600 text-xs mt-1">Error loading airports</div>
       )}
     </div>
   );
@@ -363,7 +381,8 @@ AirpotSelector.propTypes = {
   airportError: PropTypes.any,
   onSelectAirport: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
-  hasError: PropTypes.bool
+  hasError: PropTypes.bool,
+  height: PropTypes.string
 };
 
 export default AirpotSelector;

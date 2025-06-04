@@ -1,15 +1,48 @@
 import { useState, useEffect, useContext, useRef } from 'react';
-import { Plus, Trash2, ArrowUpDown, MoreHorizontal, ChevronDown, Loader2, Clock, User2, ListFilter } from 'lucide-react';
+import { Trash2, ArrowUpDown, ChevronDown,  Clock} from 'lucide-react';
 import PropTypes from 'prop-types';
 import { SellerMarketContext } from '../../../../../context/seller-market/SellerMarketContext';
-import DateAndTime from './DateAndTime';
 import AirpotSelector from './AirpotSelector';
 import FlightDetailsTooltip from './FlightDetailsTooltip';
 import { getTripCategoryService, getEquipmentService } from '../../../../../api/GetInfo/GetInfo.service';
 import { calculateDistance, calculateFlightTime, calculateDateTimes } from './SearchCalculations';
 import { calculateTooltipFlightData, updateTooltipTimes, formatUTCOffset } from './tooltipCalculations';
 
-const SearchDetailsForm = ({ onFormChange }) => {
+// Import PrimeReact components
+import { Dropdown } from 'primereact/dropdown';
+import { Button } from 'primereact/button';
+import { InputNumber } from 'primereact/inputnumber'; 
+import { Calendar } from 'primereact/calendar';
+import { Checkbox } from 'primereact/checkbox';
+
+// Create a wrapper component for DateAndTime using PrimeReact Calendar
+const CalendarDateTimeWrapper = ({ selected, onChange, placeholder, hasError }) => {
+  return (
+    <Calendar 
+      value={selected} 
+      onChange={(e) => onChange(e.value)} 
+      showTime 
+      hourFormat="24"
+      placeholder={placeholder}
+      className={`w-full ${hasError ? 'p-invalid' : ''}`}
+      pt={{
+        input: { className: 'h-full w-full' },
+        root: { className: 'w-full' }
+      }}
+      style={{ height: '42px', width: '100%' }}
+      inputStyle={{ height: '42px', width: '100%' }}
+    />
+  );
+};
+
+CalendarDateTimeWrapper.propTypes = {
+  selected: PropTypes.instanceOf(Date),
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+  hasError: PropTypes.bool
+};
+
+const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
   const { 
     airports,
     airportLoading,
@@ -23,8 +56,6 @@ const SearchDetailsForm = ({ onFormChange }) => {
     updateItinerary,
     getOptionsbyItineraryId
   } = useContext(SellerMarketContext);
-
-  console.log(airports + " airports");
   
   
   const [flightDetails, setFlightDetails] = useState([{
@@ -43,14 +74,12 @@ const SearchDetailsForm = ({ onFormChange }) => {
     toShiftMins: 0,
     flightCategory: ''
   }]);
-  const [tripCategory, setTripCategory] = useState('Trip Category');
-  const [equipmentCategory, setEquipmentCategory] = useState('Equipment');
+  const [tripCategory, setTripCategory] = useState('Select');
+  const [equipmentCategory, setEquipmentCategory] = useState('Select');
   
   const [categories, setCategories] = useState([]);
   const [equipments, setEquipments] = useState([]);
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const [showEquipmentDropdown, setShowEquipmentDropdown] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [, setIsLoading] = useState(false);
   const [dataFetched, setDataFetched] = useState({
     categories: false,
     equipments: false
@@ -77,9 +106,14 @@ const SearchDetailsForm = ({ onFormChange }) => {
 
   // Add state for Places/Airport toggle
   const [usePlacesMode, setUsePlacesMode] = useState(isGooglePlacesEnabled);
+  // Add state for using arrival time
+  const [useArrivalTime, setUseArrivalTime] = useState(false);
 
   // Add state for itineraryId
   const [itineraryId, setItineraryId] = useState(null);
+
+  // Add state for searching
+  const [isSearching, setIsSearching] = useState(false);
 
   // Fetch aircraft types when needed
   const fetchAircraftTypes = async () => {
@@ -292,22 +326,12 @@ const SearchDetailsForm = ({ onFormChange }) => {
     }
   };
 
-  const handleCategoryDropdown = async () => {
-    const newState = !showCategoryDropdown;
-    setShowCategoryDropdown(newState);
-    
-    if (newState) {
-      await fetchCategories();
-    }
+  const handleCategoryDropdown = () => {
+    fetchCategories();
   };
 
-  const handleEquipmentDropdown = async () => {
-    const newState = !showEquipmentDropdown;
-    setShowEquipmentDropdown(newState);
-    
-    if (newState) {
-      await fetchEquipment();
-    }
+  const handleEquipmentDropdown = () => {
+    fetchEquipment();
   };
 
   // Handle search change for airports
@@ -323,6 +347,13 @@ const SearchDetailsForm = ({ onFormChange }) => {
       searchAirportByITA(value);
     }
   };
+
+  // Add useEffect to fetch categories and equipment on component mount
+  useEffect(() => {
+    // Fetch categories and equipment options on component mount
+    fetchCategories();
+    fetchEquipment();
+  }, []);
 
   // Add this function after the handleInputChange function
   const calculateDistanceAndFlightTime = (fromCoords, toCoords, aircraftData) => {
@@ -443,6 +474,10 @@ const SearchDetailsForm = ({ onFormChange }) => {
   // Add useEffect to handle prefill data
   useEffect(() => {
     if (searchFormPrefillData) {
+      // Fetch categories and equipment options immediately when prefill data is received
+      fetchCategories();
+      fetchEquipment();
+      
       // Set trip category
       if (searchFormPrefillData.tripCategory) {
         setTripCategory(searchFormPrefillData.tripCategory);
@@ -592,7 +627,7 @@ const SearchDetailsForm = ({ onFormChange }) => {
     const errors = {};
     let isValid = true;
     
-    if (tripCategory === 'Trip Category') {
+    if (tripCategory === 'Select') {
       errors.tripCategory = true;
       isValid = false;
     }
@@ -625,33 +660,41 @@ const SearchDetailsForm = ({ onFormChange }) => {
       return;
     }
     
+    // Set searching state to true
+    setIsSearching(true);
+    
     // Prepare form data for notification
     const itineraryData = prepareItineraryData();
     
-    // If we have an itineraryId, update the existing itinerary
-    if (itineraryId) {
-      try {
-        // Add the itineraryId to the payload
-        const updatePayload = {
-          ...itineraryData,
-          id: itineraryId
-        };
-        
-        // Call updateItinerary
-        const response = await updateItinerary(updatePayload);
-        
-        if (response) {
-          // After updating, immediately fetch the options for this itinerary
-          await getOptionsbyItineraryId(itineraryId);
+    try {
+      // If we have an itineraryId, update the existing itinerary
+      if (itineraryId) {
+        try {
+          // Add the itineraryId to the payload
+          const updatePayload = {
+            ...itineraryData,
+            id: itineraryId
+          };
+          
+          // Call updateItinerary
+          const response = await updateItinerary(updatePayload);
+          
+          if (response) {
+            // After updating, immediately fetch the options for this itinerary
+            await getOptionsbyItineraryId(itineraryId);
+          }
+        } catch (error) {
+          console.error('Error updating itinerary:', error);
         }
-      } catch (error) {
-        console.error('Error updating itinerary:', error);
+      } else {
+        // If no itineraryId, just notify the parent component
+        if (onFormChange) {
+          onFormChange(itineraryData);
+        }
       }
-    } else {
-      // If no itineraryId, just notify the parent component
-      if (onFormChange) {
-        onFormChange(itineraryData);
-      }
+    } finally {
+      // Set searching state back to false when search completes
+      setTimeout(() => setIsSearching(false), 800); // Adding slight delay to ensure UI feedback is noticeable
     }
   };
 
@@ -725,12 +768,10 @@ const SearchDetailsForm = ({ onFormChange }) => {
 
   const setTripCategoryWithNotify = (category) => {
     setTripCategory(category);
-    setShowCategoryDropdown(false);
   };
 
   const setEquipmentCategoryWithNotify = (equipment) => {
     setEquipmentCategory(equipment);
-    setShowEquipmentDropdown(false);
     
     // Clear search terms when switching modes
     setSearchTerms({});
@@ -739,87 +780,6 @@ const SearchDetailsForm = ({ onFormChange }) => {
     const isHelicopter = equipment === 'Helicopter';
     toggleGooglePlaces(isHelicopter);
     setUsePlacesMode(isHelicopter);
-  };
-
-  // Add function to toggle date time mode
-  const toggleDateTimeMode = (id) => {
-    // Get the current detail
-    const detail = flightDetails.find(d => d.id === id);
-    if (!detail) return;
-    
-    // Get the current mode
-    const currentMode = dateTimeMode[id] || 'departure';
-    const newMode = currentMode === 'departure' ? 'arrival' : 'departure';
-    
-    // Update the mode
-    setDateTimeMode(prev => ({
-      ...prev,
-      [id]: newMode
-    }));
-    
-    // If we have aircraft data, flight time, and both dates are set,
-    // we don't need to recalculate anything
-    if (detail.aircraftData && 
-        detail.flightTime && 
-        detail.flightTime !== '-- hrs' && 
-        detail.fromDateTime && 
-        detail.toDateTime) {
-      return;
-    }
-    
-    // If we have aircraft data and flight time, and one of the dates is set,
-    // calculate the other date
-    if (detail.aircraftData && 
-        detail.flightTime && 
-        detail.flightTime !== '-- hrs') {
-      
-      // If switching to arrival mode and we have departure date
-      if (newMode === 'arrival' && detail.fromDateTime) {
-        const calculatedDetail = updateTooltipTimes(
-          detail,
-          detail.fromDateTime,
-          null,
-          detail.flightTime,
-          detail.aircraftData
-        );
-        
-        // Update the flight details
-        setFlightDetails(prevDetails =>
-          prevDetails.map(d => {
-            if (d.id === id) {
-              return {
-                ...d,
-                toDateTime: calculatedDetail.toDateTime
-              };
-            }
-            return d;
-          })
-        );
-      }
-      // If switching to departure mode and we have arrival date
-      else if (newMode === 'departure' && detail.toDateTime) {
-        const calculatedDetail = updateTooltipTimes(
-          detail,
-          null,
-          detail.toDateTime,
-          detail.flightTime,
-          detail.aircraftData
-        );
-        
-        // Update the flight details
-        setFlightDetails(prevDetails =>
-          prevDetails.map(d => {
-            if (d.id === id) {
-              return {
-                ...d,
-                fromDateTime: calculatedDetail.fromDateTime
-              };
-            }
-            return d;
-          })
-        );
-      }
-    }
   };
 
   // Add function to get the current date time based on mode
@@ -874,244 +834,250 @@ const SearchDetailsForm = ({ onFormChange }) => {
     }
   };
 
-  // Add function to toggle Places/Airport mode
+  // Toggle Places/Airport mode
   const togglePlacesAirport = () => {
     const newMode = !usePlacesMode;
     setUsePlacesMode(newMode);
     toggleGooglePlaces(newMode);
   };
 
+  // Toggle arrival time mode
+  const toggleArrivalTime = () => {
+    setUseArrivalTime(!useArrivalTime);
+    // Update date time mode for all flight details
+    if (!useArrivalTime) {
+      const newDateTimeMode = {};
+      flightDetails.forEach(detail => {
+        newDateTimeMode[detail.id] = 'arrival';
+      });
+      setDateTimeMode(newDateTimeMode);
+    } else {
+      const newDateTimeMode = {};
+      flightDetails.forEach(detail => {
+        newDateTimeMode[detail.id] = 'departure';
+      });
+      setDateTimeMode(newDateTimeMode);
+    }
+  };
+
+  // Transform categories and equipments for PrimeReact dropdown
+  const categoryOptions = categories.map(cat => ({ label: cat, value: cat }));
+  const equipmentOptions = equipments.map(eq => ({ label: eq, value: eq }));
+
   return (
-    <div>
-      <div className="relative -mt-6">
-        <div className="flex flex-wrap justify-end items-center gap-4 mb-[-10px] z-10 relative">
-          <div className="relative">
-            <button 
-              className={`px-4 py-2 border-2 ${validationErrors.tripCategory ? 'border-red-600 text-red-600' : 'border-black'} rounded-lg hover:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 flex items-center gap-2`}
-              onClick={handleCategoryDropdown}
-            >
-              <ListFilter className="w-4 h-4" />
-              {tripCategory}
-              <ChevronDown className="ml-2" size={18} />
-            </button>
-            <span className="text-red-600 text-lg absolute -top-4 right-0">*</span>
-            {validationErrors.tripCategory && (
-              <div className="absolute left-0 -bottom-5 text-red-600 text-xs">Required field</div>
-            )}
-            
-            {showCategoryDropdown && (
-              <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
-                {isLoading && !dataFetched.categories ? (
-                  <div className="px-4 py-2 text-gray-500">Loading categories...</div>
-                ) : categories.length > 0 ? (
-                  categories.map((category, index) => (
-                    <div 
-                      key={index} 
-                      className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
-                      onClick={() => setTripCategoryWithNotify(category)}
-                    >
-                      {category}
-                    </div>
-                  ))
-                ) : (
-                  <div className="px-4 py-2 text-gray-500">No categories found</div>
-                )}
-              </div>
-            )}
+    <div className="bg-white">
+      <div className="grid grid-cols-12 gap-6">
+        {/* Top row with dropdowns and checkboxes */}
+        <div className=" bg-[#f4f4f4] col-span-12 flex flex-wrap items-center mb-6 p-6">
+          {/* Checkboxes on the left */}
+          <div className="flex space-x-6 mr-6">
+            <div className="flex items-center">
+              <Checkbox
+                inputId="usePlaces"
+                checked={usePlacesMode}
+                onChange={() => togglePlacesAirport()}
+              />
+              <label htmlFor="usePlaces" className="ml-3 text-sm font-medium">Use Places</label>
+            </div>
+
+            <div className="flex items-center">
+              <Checkbox
+                inputId="useArrivalTime"
+                checked={useArrivalTime}
+                onChange={() => toggleArrivalTime()}
+              />
+              <label htmlFor="useArrivalTime" className="ml-3 text-sm font-medium">Use Arrival Time</label>
+            </div>
           </div>
           
-          <div className="relative">
-            <button 
-              className={`px-4 py-2 border-2 ${validationErrors.equipmentCategory ? 'border-red-600 text-red-600' : 'border-black'} rounded-lg hover:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 flex items-center gap-2`}
-              onClick={handleEquipmentDropdown}
-            >
-              <ListFilter className="w-4 h-4" />
-              {equipmentCategory}
-              <ChevronDown className="ml-2" size={18} />
-            </button>
-            {validationErrors.equipmentCategory && (
-              <div className="absolute left-0 -bottom-5 text-red-600 text-xs">Required field</div>
-            )}
-            
-            {showEquipmentDropdown && (
-              <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
-                {isLoading && !dataFetched.equipments ? (
-                  <div className="px-4 py-2 text-gray-500">Loading equipment options...</div>
-                ) : equipments.length > 0 ? (
-                  equipments.map((equipment, index) => (
-                    <div 
-                      key={index} 
-                      className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
-                      onClick={() => setEquipmentCategoryWithNotify(equipment)}
-                    >
-                      {equipment}
-                    </div>
-                  ))
-                ) : (
-                  <div className="px-4 py-2 text-gray-500">No equipment options found</div>
-                )}
-              </div>
-            )}
+          {/* Category dropdowns in the middle */}
+          <div className="flex-1 flex space-x-12">
+            <div className="flex flex-col" style={{ width: '280px' }}>
+              <label className="block text-sm font-medium mb-2">Trip Category</label>
+              <Dropdown
+                value={tripCategory}
+                options={categories.length > 0 ? 
+                  (tripCategory === 'Select' ? 
+                    [{ label: 'Select', value: 'Select' }, ...categoryOptions] : 
+                    categoryOptions) : 
+                  [{ label: 'Select', value: 'Select' }]
+                }
+                onChange={(e) => setTripCategoryWithNotify(e.value)}
+                placeholder="Select"
+                className="w-full"
+                onShow={handleCategoryDropdown}
+              />
+            </div>
+
+            <div className="flex flex-col" style={{ width: '280px' }}>
+              <label className="block text-sm font-medium mb-2">Preferred Aircraft Category</label>
+              <Dropdown
+                value={equipmentCategory}
+                options={equipments.length > 0 ? 
+                  (equipmentCategory === 'Select' ? 
+                    [{ label: 'Select', value: 'Select' }, ...equipmentOptions] : 
+                    equipmentOptions) : 
+                  [{ label: 'Select', value: 'Select' }]
+                }
+                onChange={(e) => setEquipmentCategoryWithNotify(e.value)}
+                placeholder="Select"
+                className="w-full"
+                onShow={handleEquipmentDropdown}
+              />
+            </div>
           </div>
           
-          <button 
-            className="px-6 py-2 bg-[#39B7FF] text-white rounded-md border-2 border-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center gap-2 transition-colors w-[150px] hover:bg-[#2da8f0]"
-            onClick={handleSave}
-          >
-            Search
-          </button>
+          {/* Recent Search button on the right */}
+          <div className="relative -left-14 flex">
+            <Button
+              label="Recent Search"
+              severity="info"
+              onClick={onShowRecentSearches}
+              style={{ 
+                width: '140px', 
+                height: '42px', 
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: '#5486f3'
+              }}
+            />
+          </div>
         </div>
-        <div className="bg-[#f4f4f4] rounded-lg pt-8">
-          <div className="px-6 pb-6">
-            <div className="flex mb-1">
-              <div className="w-[250px]">
-                <div className="text-sm font-medium">
-                  <span className="cursor-pointer" onClick={togglePlacesAirport}>
-                    {usePlacesMode ? (
-                      <span><span className="font-bold text-blue-600">Places</span> / Airport</span>
-                    ) : (
-                      <span>Places / <span className="font-bold text-blue-600">Airport</span></span>
-                    )}
-                  </span>
+
+        {/* EEF3FE background flight details section - Updated to match image layout */}
+        <div className="col-span-12 -mt-10">
+          <div className="bg-[#EEF3FE] p-6">
+            {/* Header row */}
+            <div className="flex mb-3 px-2">
+              <div className="w-[250px] mr-10">
+                <div className="text-sm font-medium text-gray-700">From</div>
+              </div>
+              <div className="w-[250px] mr-10">
+                <div className="text-sm font-medium text-gray-700">To</div>
+              </div>
+              <div className="w-[250px] mr-10">
+                <div className="text-sm font-medium text-gray-700">
+                  {useArrivalTime ? "Arrival Date & Time" : "Departure Date & Time"}
                 </div>
               </div>
-              <div className="w-[250px] ml-4">
-                {/* Empty space for alignment */}
+              <div className="w-[150px] mr-10">
+                <div className="text-sm font-medium text-gray-700">Passengers</div>
               </div>
-              <div className="w-56 ml-4">
-                {/* Empty space for alignment */}
-              </div>
-              <div className="w-[100px] ml-4">
-                <div className="text-sm font-medium">Pax</div>
-              </div>
+              <div className="flex-1"></div>
             </div>
+
+            {/* Flight details */}
             {flightDetails.map((detail) => (
-              <div key={detail.id} className="mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="relative w-[250px]">
-                    <AirpotSelector
-                      id={`${detail.id}_from`}
-                      selectedAirport={detail.from}
-                      searchTerm={searchTerms[`${detail.id}_from`] || ''}
-                      handleSearchChange={(e) => handleSearchChange(`${detail.id}_from`, e)}
-                      airports={airports}
-                      airportLoading={airportLoading}
-                      airportError={airportError}
-                      onSelectAirport={onSelectAirport}
-                      placeholder="From"
-                      hasError={hasError(detail.id, 'from')}
-                    />
-                    <span className="text-red-600 text-lg absolute -top-4 right-0">*</span>
-                  </div>
-                  <div className="relative w-[250px]">
-                    <AirpotSelector
-                      id={`${detail.id}_to`}
-                      selectedAirport={detail.to}
-                      searchTerm={searchTerms[`${detail.id}_to`] || ''}
-                      handleSearchChange={(e) => handleSearchChange(`${detail.id}_to`, e)}
-                      airports={airports}
-                      airportLoading={airportLoading}
-                      airportError={airportError}
-                      onSelectAirport={onSelectAirport}
-                      placeholder="To"
-                      hasError={hasError(detail.id, 'to')}
-                    />
-                    <span className="text-red-600 text-lg absolute -top-4 right-0">*</span>
-                  </div>
-                                      <div className="relative w-56">
-                      <div className="text-sm font-medium absolute -top-6">
-                        <span 
-                          className="cursor-pointer" 
-                          onClick={() => toggleDateTimeMode(detail.id)}
-                        >
-                          {dateTimeMode[detail.id] === 'departure' ? (
-                            <span><span className="font-bold text-blue-600">Departure</span> / Arrival</span>
-                          ) : (
-                            <span>Departure / <span className="font-bold text-blue-600">Arrival</span></span>
-                          )}
-                        </span>
-                      </div>
-                      <DateAndTime
-                        selected={getCurrentDateTime(detail)}
-                        onChange={(date) => handleDateTimeChange(detail.id, date)}
-                        placeholder={`${dateTimeMode[detail.id] === 'departure' ? 'Departure' : 'Arrival'} Date & Time`}
-                        hasError={hasError(detail.id, dateTimeMode[detail.id] === 'departure' ? 'fromDateTime' : 'toDateTime')}
+              <div key={detail.id} className="mb-4 flex items-center">
+                <div className="w-[250px] mr-10">
+                  <AirpotSelector
+                    id={`${detail.id}_from`}
+                    selectedAirport={detail.from}
+                    searchTerm={searchTerms[`${detail.id}_from`] || ''}
+                    handleSearchChange={(e) => handleSearchChange(`${detail.id}_from`, e)}
+                    airports={airports}
+                    airportLoading={airportLoading}
+                    airportError={airportError}
+                    onSelectAirport={onSelectAirport}
+                    placeholder="Search"
+                    hasError={hasError(detail.id, 'from')}
+                    height="42px"
+                  />
+                </div>
+                <div className="w-[250px] mr-10">
+                  <AirpotSelector
+                    id={`${detail.id}_to`}
+                    selectedAirport={detail.to}
+                    searchTerm={searchTerms[`${detail.id}_to`] || ''}
+                    handleSearchChange={(e) => handleSearchChange(`${detail.id}_to`, e)}
+                    airports={airports}
+                    airportLoading={airportLoading}
+                    airportError={airportError}
+                    onSelectAirport={onSelectAirport}
+                    placeholder="Search"
+                    hasError={hasError(detail.id, 'to')}
+                    height="42px"
+                  />
+                </div>
+                <div className="w-[250px] mr-10 relative">
+                  <CalendarDateTimeWrapper
+                    selected={getCurrentDateTime(detail)}
+                    onChange={(date) => handleDateTimeChange(detail.id, date)}
+                    placeholder="Date Time"
+                    hasError={hasError(detail.id, useArrivalTime ? 'toDateTime' : 'fromDateTime')}
+                  />
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                </div>
+                <div className="w-[140px] mr-10">
+                  <InputNumber
+                    placeholder="Pax"
+                    value={detail.pax ? parseInt(detail.pax) : null}
+                    onValueChange={(e) => handleInputChange(detail.id, 'pax', e.value?.toString() || '')}
+                    className={`w-full ${hasError(detail.id, 'pax') ? 'p-error' : ''}`}
+                    useGrouping={false}
+                    inputStyle={{ width: '100%', textAlign: 'start', height: '42px' }}
+                  />
+                </div>
+                <div className="flex items-center space-x-4 mr-10">
+                  <button 
+                    className="w-8 h-8 flex items-center justify-center"
+                    onClick={addFlightDetail}
+                    title="Add Flight"
+                  >
+                    <i className="pi pi-plus-circle text-black w-5 h-5"></i>
+                  </button>
+                  <button 
+                    className="w-8 h-8 flex items-center justify-center"
+                    onClick={() => duplicateAndReverse(detail.id)}
+                    title="Sync"
+                  >
+                    <ArrowUpDown className="w-5 h-5 text-black" />
+                  </button>
+                  <button 
+                    className="w-8 h-8 flex items-center justify-center"
+                    onClick={() => removeFlightDetail(detail.id)}
+                    title="Remove Flight"
+                  >
+                    <Trash2 className="w-5 h-5 text-red-500 " />
+                  </button>
+                  <button 
+                    className="w-8 h-8 flex items-center justify-center relative"
+                    onClick={() => handleClockClick(detail.id)}
+                    title="Time Details"
+                  >
+                    <Clock className="w-5 h-5 text-black" />
+                    
+                    {showTooltip === detail.id && (
+                      <FlightDetailsTooltip
+                        tooltipRef={tooltipRef}
+                        detailId={detail.id}
+                        selectedAircraft={selectedAircraft[detail.id]}
+                        showAircraftDropdown={showAircraftDropdown === detail.id}
+                        handleAircraftDropdown={handleAircraftDropdown}
+                        aircraftTypes={aircraftTypes}
+                        aircraftLoading={aircraftLoading}
+                        aircraftError={aircraftError}
+                        onSelectAircraft={handleAircraftSelect}
+                        fromDateTime={detail.fromDateTime}
+                        toDateTime={detail.toDateTime}
+                        onTimeChange={handleTimeChange}
+                        detail={detail}
+                        dateTimeMode={dateTimeMode[detail.id]}
                       />
-                    </div>
-                  <div className="flex items-center gap-2">
-                    <div className="relative w-[100px]">
-                      <div className={`w-full border-2 ${hasError(detail.id, 'pax') ? 'border-red-600 bg-red-50' : 'border-black'} rounded bg-white text-black`}>
-                        <div className="flex items-center h-[36px]">
-                          <div className="flex items-center justify-center ml-2">
-                            <User2 className="w-5 h-5 text-gray-600" />
-                          </div>
-                          <input
-                            type="text"
-                            placeholder="Pax"
-                            value={detail.pax}
-                            onChange={(e) => handleInputChange(detail.id, 'pax', e.target.value)}
-                            className="w-full border-none outline-none px-2 py-[0.375rem] text-sm bg-transparent placeholder-gray-500"
-                          />
-                        </div>
-                      </div>
-                      {tripCategory === 'Passenger' && <span className="text-red-600 text-lg absolute -top-4 right-0">*</span>}
-                      {hasError(detail.id, 'pax') && (
-                        <div className="text-red-600 text-xs mt-1">Required</div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="relative">
-                        <button 
-                          className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-full transition-colors"
-                          onClick={() => handleClockClick(detail.id)}
-                        >
-                          <Clock className="w-5 h-5" />
-                        </button>
-                        
-                        {showTooltip === detail.id && (
-                          <FlightDetailsTooltip
-                            tooltipRef={tooltipRef}
-                            detailId={detail.id}
-                            selectedAircraft={selectedAircraft[detail.id]}
-                            showAircraftDropdown={showAircraftDropdown === detail.id}
-                            handleAircraftDropdown={handleAircraftDropdown}
-                            aircraftTypes={aircraftTypes}
-                            aircraftLoading={aircraftLoading}
-                            aircraftError={aircraftError}
-                            onSelectAircraft={handleAircraftSelect}
-                            fromDateTime={detail.fromDateTime}
-                            toDateTime={detail.toDateTime}
-                            onTimeChange={handleTimeChange}
-                            detail={detail}
-                            dateTimeMode={dateTimeMode[detail.id]}
-                          />
-                        )}
-                      </div>
-                      <button 
-                        className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded-full transition-colors"
-                        onClick={() => duplicateAndReverse(detail.id)}
-                      >
-                        <ArrowUpDown className="w-5 h-5" strokeWidth={2.5} />
-                      </button>
-                      <button 
-                        onClick={addFlightDetail}
-                        className="p-1 bg-green-500 text-white hover:bg-green-600 rounded-full transition-colors"
-                      >
-                        <Plus className="w-5 h-5" />
-                      </button>
-                      <button 
-                        onClick={() => removeFlightDetail(detail.id)}
-                        className="p-2 text-red-500 hover:text-red-600 hover:bg-red-100 rounded-full transition-colors"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                      <button 
-                        className="p-2 text-black hover:text-gray-800 hover:bg-gray-200 rounded-full transition-colors"
-                      >
-                        <MoreHorizontal className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
+                    )}
+                  </button>
+                </div>
+                <div>
+                  <Button
+                    label={isSearching ? "Searching..." : "Search"}
+                    className={`custom-search-btn ${isSearching ? 'bg-blue-500' : 'bg-green-500'} text-white hover:${isSearching ? 'bg-blue-600' : 'bg-green-600'} rounded flex items-center justify-center`}
+                    style={{ width: '100px', height: '42px' }}
+                    onClick={handleSave}
+                    disabled={isSearching}
+                    icon={isSearching ? "pi pi-spin pi-spinner" : ""}
+                  />
                 </div>
               </div>
             ))}
@@ -1123,7 +1089,8 @@ const SearchDetailsForm = ({ onFormChange }) => {
 };
 
 SearchDetailsForm.propTypes = {
-  onFormChange: PropTypes.func
+  onFormChange: PropTypes.func,
+  onShowRecentSearches: PropTypes.func
 };
 
 export default SearchDetailsForm;

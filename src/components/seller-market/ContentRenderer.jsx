@@ -24,7 +24,7 @@ const ContentRenderer = ({ activeTab, activeSubTab }) => {
 
       'Company-Profile': Profile,
       'Company-Teams': Teams,
-      'Company-Reviews': Reviews
+      'Company-Reviews': Reviews,
       
       // Add other components as they are implemented
     };
@@ -37,7 +37,7 @@ const ContentRenderer = ({ activeTab, activeSubTab }) => {
     
     // Default content for other tabs
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
           {activeTab} - {activeSubTab}
         </h2>
@@ -49,7 +49,7 @@ const ContentRenderer = ({ activeTab, activeSubTab }) => {
   };
 
   return (
-    <div className="flex-1 p-6 bg-gray-50 overflow-y-auto">
+    <div className="flex-1 bg-white overflow-y-auto p-0">
       {getContent()}
     </div>
   );

@@ -1,0 +1,45 @@
+/* ✅ Remove spacing and background for Fluent theme compatibility */
+
+/* Hide empty panels that may create visual gaps */
+.p-tabview .p-tabview-panel:empty {
+  display: none !important;
+}
+
+/* ✅ Remove extra padding/margin from panel container */
+.p-tabview-panels {
+  background-color: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+
+/* ✅ Remove inner panel spacing for all tabs */
+.p-tabview-panel {
+  padding: 0 !important;
+  margin: 0 !important;
+  background-color: transparent !important;
+  border: none !important;
+}
+
+/* ✅ Ensure consistent spacing below the tab headers */
+.p-tabview .p-tabview-nav {
+  margin-bottom: 4px !important; /* Fluent usually uses 4–8px spacing */
+  border-bottom: 1px solid var(--surface-border, #ccc); /* Fluent-style divider */
+}
+
+/* ✅ Make sure there's no residual spacing from internal divs */
+div[class*="p-tabview-panels"] {
+  background-color: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Optional: slightly round tabs for Fluent feel */
+.p-tabview .p-tabview-nav li .p-tabview-nav-link {
+  border-radius: 4px 4px 0 0 !important;
+}
+
+/* Optional: subtle hover effect for tabs (Fluent-like interaction) */
+.p-tabview .p-tabview-nav li .p-tabview-nav-link:hover {
+  background-color: rgba(0, 120, 212, 0.05) !important;
+}

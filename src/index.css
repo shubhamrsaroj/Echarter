@@ -1,10 +1,35 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@layer tailwind-base, primereact, tailwind-utilities;
+
+/* IMPORTANT: In "styled" mode you must add the PrimeReact Theme here. Do NOT include in "unstyled" mode */
+@import 'primereact/resources/themes/fluent-light/theme.css' layer(primereact);
+
+@layer tailwind-base {
+  @tailwind base;
+}
+
+@layer tailwind-utilities {
+  @tailwind components;
+  @tailwind utilities;
+}
 
 body {
   @apply font-sans; /* Applies Poppins globally */
   overflow: hidden;
+}
+
+/* Custom styling for single line tabs */
+.single-line-tabs .p-tabview-nav {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.single-line-tabs .p-tabview-nav li {
+  margin-right: 4px;
+}
+
+.single-line-tabs .p-tabview-nav li .p-tabview-nav-link {
+  padding: 0.75rem 1rem;
 }
 
 /* Hide scrollbars for all elements */

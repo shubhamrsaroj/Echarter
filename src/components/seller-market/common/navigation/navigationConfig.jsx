@@ -1,6 +1,6 @@
 export const navigationConfig = {
   Market: {
-    subtabs: ['Search', 'Directory', 'Needs', 'Manage Haves', 'Airports'],
+    subtabs: ['Search', 'Directory', 'Manage Haves'],
     defaultTab: 'Search'
   },
   CRM: {

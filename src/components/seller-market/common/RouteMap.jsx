@@ -27,50 +27,6 @@ const RouteMap = ({ itineraryData, hoveredFlightCoords }) => {
     googleMapsApiKey,
   });
 
-  // Create city labels using custom overlays for the hovered path
-  const createHoveredCityLabel = useCallback((position, city) => {
-    if (!map || !window.google) return null;
-    
-    const label = document.createElement('div');
-    label.className = 'city-label';
-    label.style.position = 'absolute';
-    label.style.backgroundColor = '#FF6200';
-    label.style.color = '#FFFFFF';
-    label.style.fontSize = '12px';
-    label.style.fontWeight = '500';
-    label.style.padding = '3px 8px';
-    label.style.borderRadius = '2px';
-    label.style.whiteSpace = 'nowrap';
-    label.style.textAlign = 'center';
-    label.style.userSelect = 'none';
-    label.textContent = city;
-    
-    const overlay = new window.google.maps.OverlayView();
-    overlay.onAdd = function() {
-      const panes = this.getPanes();
-      panes.overlayMouseTarget.appendChild(label);
-    };
-    
-    overlay.draw = function() {
-      const projection = this.getProjection();
-      const point = projection.fromLatLngToDivPixel(position);
-      if (point) {
-        label.style.left = point.x + 'px';
-        label.style.top = (point.y - 30) + 'px';
-        label.style.transform = 'translateX(-50%)';
-      }
-    };
-    
-    overlay.onRemove = function() {
-      if (label.parentNode) {
-        label.parentNode.removeChild(label);
-      }
-    };
-    
-    overlay.setMap(map);
-    return overlay;
-  }, [map]);
-
   const calculateCurvedPath = useCallback((start, end) => {
     try {
       if (isNaN(start.lat) || isNaN(start.lng) || isNaN(end.lat) || isNaN(end.lng)) {
@@ -236,9 +192,6 @@ const RouteMap = ({ itineraryData, hoveredFlightCoords }) => {
       lng: Number(hoveredFlightCoords.toLong),
     };
 
-    const fromCity = hoveredFlightCoords.fromCity || 'Origin';
-    const toCity = hoveredFlightCoords.toCity || 'Destination';
-
     if (
       isNaN(fromCoords.lat) ||
       isNaN(fromCoords.lng) ||
@@ -289,7 +242,7 @@ const RouteMap = ({ itineraryData, hoveredFlightCoords }) => {
       const hoverPolyline = new window.google.maps.Polyline({
         path: pathPoints,
         strokeColor: '#FF6200',
-        strokeWeight: 4,
+        strokeWeight: 1.8,
         strokeOpacity: 1.0,
         zIndex: 20,
         map: map,
@@ -339,12 +292,9 @@ const RouteMap = ({ itineraryData, hoveredFlightCoords }) => {
       });
       hoveredToMarkerRef.current = toMarker;
       
-      // Add city labels to the hovered markers
-      const fromLabel = createHoveredCityLabel(fromCoords, fromCity);
-      const toLabel = createHoveredCityLabel(toCoords, toCity);
-      
-      hoveredFromLabelRef.current = fromLabel;
-      hoveredToLabelRef.current = toLabel;
+      // Remove city labels - don't create them on hover
+      hoveredFromLabelRef.current = null;
+      hoveredToLabelRef.current = null;
     }
 
     return () => {
@@ -369,7 +319,7 @@ const RouteMap = ({ itineraryData, hoveredFlightCoords }) => {
         hoveredToLabelRef.current = null;
       }
     };
-  }, [hoveredFlightCoords, calculateCurvedPath, map, createHoveredCityLabel]);
+  }, [hoveredFlightCoords, calculateCurvedPath, map]);
 
   const onMapLoad = useCallback((mapInstance) => {
     setMap(mapInstance);
