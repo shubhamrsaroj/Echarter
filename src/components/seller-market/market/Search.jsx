@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useEffect, useState, useRef, useCallback } from 'react';
 import SearchDetailsForm from './Search/ItinerarySearch/SearchDetailsForm';
 import BaseCard from './Search/ItinerarySearchDetails/BaseCard';
 import MatchCard from './Search/ItinerarySearchDetails/MatchCard';
@@ -30,6 +30,8 @@ const Search = () => {
   const [selectedBaseCategory, setSelectedBaseCategory] = useState(null);
   // State to track the hovered flight data for details card
   const [hoveredFlightData, setHoveredFlightData] = useState(null);
+  // State to track aircraft tail markers on the map
+  const [tailMarkers, setTailMarkers] = useState([]);
   // Timeout ref for debouncing hover state changes
   const hoverTimeoutRef = useRef(null);
 
@@ -113,6 +115,16 @@ const Search = () => {
       }
     }
   }, [activeTabIndex, optionsData]);
+
+  // Clear tail markers when changing tabs
+  useEffect(() => {
+    setTailMarkers([]);
+  }, [activeTabIndex]);
+
+  // Handle tail info updates for displaying on the map - memoized to prevent re-renders
+  const handleTailInfoUpdate = useCallback((tailInfo) => {
+    setTailMarkers(tailInfo || []);
+  }, []);
 
   // Enhanced setHoveredFlightCoords function with debounce to prevent blinking
   const handleFlightHover = (flightData) => {
@@ -238,6 +250,7 @@ const Search = () => {
                       }} 
                       isTabContent={true}
                       selectedCategory={selectedBaseCategory}
+                      onTailInfoUpdate={handleTailInfoUpdate}
                     />
                   </div>
                 </TabPanel>
@@ -249,10 +262,11 @@ const Search = () => {
           <div className="w-full md:w-[25%] h-full flex flex-col">
             <div className="sticky top-4 flex flex-col">
               {/* Route Map */}
-              <div className="h-[calc(100vh-350px)]">
+              <div className="h-[calc(100vh-350px)] overflow-hidden">
                 <RouteMap 
                   itineraryData={optionsData} 
-                  hoveredFlightCoords={hoveredFlightCoords} 
+                  hoveredFlightCoords={hoveredFlightCoords}
+                  tailMarkers={tailMarkers}
                 />
               </div>
               

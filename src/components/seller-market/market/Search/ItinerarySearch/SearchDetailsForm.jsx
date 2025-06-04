@@ -22,8 +22,9 @@ const CalendarDateTimeWrapper = ({ selected, onChange, placeholder, hasError }) 
       value={selected} 
       onChange={(e) => onChange(e.value)} 
       showTime 
-      hourFormat="24"
+      hourFormat="12"
       placeholder={placeholder}
+      position="bottom"
       className={`w-full ${hasError ? 'p-invalid' : ''}`}
       pt={{
         input: { className: 'h-full w-full' },
@@ -342,8 +343,8 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
       [id]: value
     }));
     
-    // Only perform airport search if value is long enough and not in helicopter mode
-    if (value.length >= 2 && !isGooglePlacesEnabled) {
+    // Only perform airport search if value is at least 3 characters and not in Google Places mode
+    if (value.length >= 3 && !isGooglePlacesEnabled) {
       searchAirportByITA(value);
     }
   };
@@ -486,10 +487,6 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
       // Set equipment category
       if (searchFormPrefillData.equipmentCategory) {
         setEquipmentCategory(searchFormPrefillData.equipmentCategory);
-        
-        // Toggle Google Places if Helicopter is selected
-        const isHelicopter = searchFormPrefillData.equipmentCategory === 'Helicopter';
-        toggleGooglePlaces(isHelicopter);
       }
       
       // Set flight details
@@ -512,7 +509,7 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
       // Clear the prefill data after using it
       clearSearchFormPrefillData();
     }
-  }, [searchFormPrefillData, toggleGooglePlaces, clearSearchFormPrefillData]);
+  }, [searchFormPrefillData, clearSearchFormPrefillData]);
 
   // Add useEffect to keep usePlacesMode in sync with isGooglePlacesEnabled
   useEffect(() => {
@@ -552,7 +549,10 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
   };
 
   const removeFlightDetail = (id) => {
-    setFlightDetails(flightDetails.filter(detail => detail.id !== id));
+    // Only remove if there's more than one flight detail
+    if (flightDetails.length > 1) {
+      setFlightDetails(flightDetails.filter(detail => detail.id !== id));
+    }
   };
 
   const handleInputChange = (id, field, value) => {
@@ -627,8 +627,14 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
     const errors = {};
     let isValid = true;
     
-    if (tripCategory === 'Select') {
-      errors.tripCategory = true;
+    // Trip category is no longer required per client request
+    // if (tripCategory === 'Select') {
+    //   errors.tripCategory = true;
+    //   isValid = false;
+    // }
+    
+    if (equipmentCategory === 'Select') {
+      errors.equipmentCategory = true;
       isValid = false;
     }
     
@@ -642,6 +648,15 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
       
       if (!detail.to) {
         errors[detail.id].to = true;
+        isValid = false;
+      }
+      
+      // Check for date time based on useArrivalTime setting
+      if (useArrivalTime && !detail.toDateTime) {
+        errors[detail.id].toDateTime = true;
+        isValid = false;
+      } else if (!useArrivalTime && !detail.fromDateTime) {
+        errors[detail.id].fromDateTime = true;
         isValid = false;
       }
       
@@ -775,11 +790,6 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
     
     // Clear search terms when switching modes
     setSearchTerms({});
-    
-    // Toggle Google Places when Helicopter is selected
-    const isHelicopter = equipment === 'Helicopter';
-    toggleGooglePlaces(isHelicopter);
-    setUsePlacesMode(isHelicopter);
   };
 
   // Add function to get the current date time based on mode
@@ -910,7 +920,7 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
             </div>
 
             <div className="flex flex-col" style={{ width: '280px' }}>
-              <label className="block text-sm font-medium mb-2">Preferred Aircraft Category</label>
+              <label className="block text-sm font-medium mb-2">Preferred Aircraft Category <span className="text-red-500">*</span></label>
               <Dropdown
                 value={equipmentCategory}
                 options={equipments.length > 0 ? 
@@ -921,9 +931,12 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
                 }
                 onChange={(e) => setEquipmentCategoryWithNotify(e.value)}
                 placeholder="Select"
-                className="w-full"
+                className={`w-full ${validationErrors.equipmentCategory ? 'p-invalid' : ''}`}
                 onShow={handleEquipmentDropdown}
               />
+              {validationErrors.equipmentCategory && (
+                <div className="text-red-600 text-xs mt-1">Required field</div>
+              )}
             </div>
           </div>
           
@@ -931,7 +944,6 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
           <div className="relative -left-14 flex">
             <Button
               label="Recent Search"
-              severity="info"
               onClick={onShowRecentSearches}
               style={{ 
                 width: '140px', 
@@ -940,7 +952,8 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
-                backgroundColor: '#5486f3'
+                backgroundColor: '#5486f3',
+                border: 'none'
               }}
             />
           </div>
@@ -952,14 +965,14 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
             {/* Header row */}
             <div className="flex mb-3 px-2">
               <div className="w-[250px] mr-10">
-                <div className="text-sm font-medium text-gray-700">From</div>
+                <div className="text-sm font-medium text-gray-700">From <span className="text-red-500">*</span></div>
               </div>
               <div className="w-[250px] mr-10">
-                <div className="text-sm font-medium text-gray-700">To</div>
+                <div className="text-sm font-medium text-gray-700">To <span className="text-red-500">*</span></div>
               </div>
               <div className="w-[250px] mr-10">
                 <div className="text-sm font-medium text-gray-700">
-                  {useArrivalTime ? "Arrival Date & Time" : "Departure Date & Time"}
+                  {useArrivalTime ? "Arrival Date & Time" : "Departure Date & Time"} <span className="text-red-500">*</span>
                 </div>
               </div>
               <div className="w-[150px] mr-10">
@@ -1009,6 +1022,9 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
                     hasError={hasError(detail.id, useArrivalTime ? 'toDateTime' : 'fromDateTime')}
                   />
                   <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
+                  {hasError(detail.id, useArrivalTime ? 'toDateTime' : 'fromDateTime') && (
+                    <div className="text-red-600 text-xs mt-1">Required field</div>
+                  )}
                 </div>
                 <div className="w-[140px] mr-10">
                   <InputNumber
@@ -1017,8 +1033,17 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
                     onValueChange={(e) => handleInputChange(detail.id, 'pax', e.value?.toString() || '')}
                     className={`w-full ${hasError(detail.id, 'pax') ? 'p-error' : ''}`}
                     useGrouping={false}
-                    inputStyle={{ width: '100%', textAlign: 'start', height: '42px' }}
+                    showButtons
+                    buttonLayout="horizontal"
+                    decrementButtonClassName="p-button-secondary"
+                    incrementButtonClassName="p-button-secondary"
+                    incrementButtonIcon="pi pi-plus"
+                    decrementButtonIcon="pi pi-minus"
+                    inputStyle={{ width: '100%', textAlign: 'center', height: '42px' }}
                   />
+                  {hasError(detail.id, 'pax') && (
+                    <div className="text-red-600 text-xs mt-1">Required field</div>
+                  )}
                 </div>
                 <div className="flex items-center space-x-4 mr-10">
                   <button 

@@ -125,7 +125,8 @@ const AirpotSelector = ({
   const handleGooglePlaceSearch = async (event) => {
     const query = event.query;
     
-    if (!query || query.length < 2 || !isLoaded || !window.google || !window.google.maps || !window.google.maps.places) {
+    if (!query || query.length < 3 || !isLoaded || !window.google || !window.google.maps || !window.google.maps.places) {
+      setFilteredSuggestions([]);
       return;
     }
     
@@ -148,6 +149,7 @@ const AirpotSelector = ({
       setFilteredSuggestions(predictions);
     } catch (error) {
       console.error('Error fetching place predictions:', error);
+      setFilteredSuggestions([]);
     }
   };
 
@@ -174,11 +176,17 @@ const AirpotSelector = ({
       handleSearchChange({ target: { value: query } });
     }
     
+    // Clear suggestions if query is too short
+    if (!query || query.length < 3) {
+      setFilteredSuggestions([]);
+      return;
+    }
+    
     // Get airport data safely, whether the input is an array or an object with a data property
     const airportData = Array.isArray(airports) ? airports : airports?.data || [];
     
     // Filter airports based on the query
-    if (query.length >= 2 && !isGooglePlacesEnabled) {
+    if (!isGooglePlacesEnabled && airportData.length > 0) {
       setFilteredSuggestions(airportData);
     } else {
       setFilteredSuggestions([]);

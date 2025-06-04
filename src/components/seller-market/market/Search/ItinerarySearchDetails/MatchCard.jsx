@@ -160,7 +160,7 @@ const CompanyDetails = ({ company, sortDirection, filters, setHoveredFlightCoord
       {isExpanded && (
         <div className="overflow-x-auto border-gray-200">
           <table className="min-w-full bg-white text-sm">
-            <thead className="bg-[#bdf5f8] text-xs">
+            <thead className="bg-[#EAE5FE] text-xs">
               <tr>
                 <th className="py-2 px-3 text-left font-medium text-black tracking-wider">Aircraft Type</th>
                 <th className="py-2 px-3 text-left font-medium text-black tracking-wider">Cat</th>
@@ -509,7 +509,7 @@ const MatchCard = ({
         allFlights.length > 0 ? (
           <div className="overflow-x-auto border-gray-200" ref={tableRef}>
             <table className="min-w-full bg-white text-sm">
-              <thead className="bg-[#bdf5f8] text-xs">
+              <thead className="bg-[#EAE5FE] text-xs">
                 <tr>
                   <th className="py-2 px-3 text-left font-medium text-black tracking-wider">Company</th>
                   <th className="py-2 px-3 text-left font-medium text-black tracking-wider">Aircraft Type</th>

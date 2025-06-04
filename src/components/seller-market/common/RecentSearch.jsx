@@ -45,14 +45,14 @@ const RecentSearch = ({ standalone = false, onCloseModal }) => {
             className="flex items-start justify-between py-2 border-b border-gray-50 last:border-b-0"
           >
             <div className="flex-1 pr-2">
-              <p className="text-xs text-black leading-relaxed">{itinerary.itineraryText}</p>
+              <p className="text-sm text-black leading-relaxed">{itinerary.itineraryText}</p>
             </div>
             <div className="flex items-center space-x-2 text-xs whitespace-nowrap">
               <button 
                 className="p-1 hover:bg-gray-100 rounded-full text-black"
                 onClick={(e) => handleEditClick(e, itinerary.itineraryID)}
               >
-                <i className="pi pi-copy" style={{ fontSize: '14px' }}></i>
+                <i className="pi pi-copy" style={{ fontSize: '20px' }}></i>
               </button>
             </div>
           </div>

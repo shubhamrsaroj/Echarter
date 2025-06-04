@@ -30,7 +30,7 @@ const Teams = () => {
       {isExpanded && (
         <div className="overflow-x-auto border-t border-gray-200">
           <table className="min-w-full bg-white text-sm">
-            <thead className="bg-[#bdf5f8] text-xs uppercase font-medium text-black">
+            <thead className="bg-[#EAE5FE] text-xs uppercase font-medium text-black">
               <tr>
                 {headers.map((header) => (
                   <th key={header} className="py-2 px-3 text-left tracking-wider">

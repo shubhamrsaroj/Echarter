@@ -27,7 +27,7 @@ const FlightDetailsCard = ({ flightData }) => {
   );
 
   return (
-    <Card className="w-full shadow-md border rounded-lg p-3">
+    <Card className="w-full shadow-md border rounded-lg p-3 -mt-14">
       <div className="flex flex-col space-y-3 text-sm">
         {renderRow('From', flightData.fromCity)}
         {renderRow('To', flightData.toCity)}

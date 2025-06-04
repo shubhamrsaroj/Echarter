@@ -4,7 +4,13 @@ import { useState, useContext, useEffect, useRef } from 'react';
 import { SellerMarketContext } from '../../../../../context/seller-market/SellerMarketContext';
 
 // Company Row component for displaying company details in a table
-const CompanyRow = ({ company }) => {
+const CompanyRow = ({ company, onTailInfoUpdate }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [companyDetails, setCompanyDetails] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { getCompanyById } = useContext(SellerMarketContext);
+  const hasSentTailInfoRef = useRef(false);
+  
   // Extract data from the company object safely with defaults
   const name = company?.name || '';
   const fleet = company?.fleet || 0;
@@ -13,6 +19,9 @@ const CompanyRow = ({ company }) => {
   const certificates = company?.certificates || [];
   const userCount = company?.userCount || 0;
   const responseRate = company?.responseRate || 0;
+  const companyId = company?.id;
+  const startDis = company?.startDis || '-';
+  const endDis = company?.endDis || '-';
   
   // Check if company has valid data
   if (!company) return null;
@@ -21,60 +30,171 @@ const CompanyRow = ({ company }) => {
   const showNoChat = userCount === 0;
   const showFlash = responseRate > 0.5;
 
-  return (
-    <tr className="hover:bg-gray-50">
-      <td className="py-2 px-3">
-        <div className="text-blue-600 text-xs">{name}</div>
-      </td>
-      <td className="py-2 px-3">
-        <div className="font-medium text-black text-xs">{city}</div>
-      </td>
-      <td className="py-2 px-3">
-        <div className="flex items-center space-x-1">
-          {certificates && certificates.length > 0 ? (
-            certificates.map((cert, index) => (
-              <img 
-                key={index} 
-                src={cert.logo} 
-                alt={cert.name} 
-                title={cert.name}
-                className="h-5 w-auto object-contain" 
-              />
-            ))
-          ) : null}
-        </div>
-      </td>
-      <td className="py-2 px-3">
-        <div className="text-xs font-medium text-black">{fleet}</div>
-      </td>
-      <td className="py-2 px-3 flex items-center justify-between">
-        <div>
-          {trustScore ? (
-            <div className="text-xs font-medium text-blue-600">{trustScore}</div>
-          ) : (
-            <div className="text-xs font-medium text-transparent">-</div>
-          )}
-        </div>
+  const toggleExpand = async () => {
+    // If collapsing, clear tail info first
+    if (expanded && onTailInfoUpdate) {
+      onTailInfoUpdate([]);
+      hasSentTailInfoRef.current = false;
+    }
+    
+    // Toggle the expanded state
+    setExpanded(!expanded);
+    
+    // If expanding and we don't have details yet, fetch them
+    if (!expanded && companyId && !companyDetails) {
+      setLoading(true);
+      try {
+        const result = await getCompanyById(companyId);
+        setCompanyDetails(result);
         
-        <div className="flex items-center space-x-1">
-          {!showNoChat && (
-            <div className="p-1 rounded-md" >
-              <MessageSquareOff size={18} className="text-black" strokeWidth={2} />
+        // Notify parent to update tail info on map when expanding
+        if (result && result.tailInfo && result.tailInfo.length > 0 && onTailInfoUpdate && !hasSentTailInfoRef.current) {
+          onTailInfoUpdate(result.tailInfo);
+          hasSentTailInfoRef.current = true;
+        }
+      } catch (error) {
+        console.error("Error fetching company details:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  return (
+    <>
+      <tr className="hover:bg-gray-50 cursor-pointer" onClick={toggleExpand}>
+        <td className="py-2 px-3">
+          <div className="flex items-center space-x-2">
+            <div className="p-1 rounded-md">
+              {expanded ? (
+                <ChevronUp size={18} className="text-black" strokeWidth={2} />
+              ) : (
+                <ChevronDown size={18} className="text-black" strokeWidth={2} />
+              )}
             </div>
-          )}
-          {showFlash && (
-            <div className="p-1 rounded-md" title="Fast response">
-              <Zap size={18} className="text-black" strokeWidth={2} />
-            </div>
-          )}
-        </div>
-      </td>
-    </tr>
+            <div className="text-blue-600 text-xs">{name}</div>
+          </div>
+        </td>
+        <td className="py-2 px-3">
+          <div className="font-medium text-black text-xs">{city}</div>
+        </td>
+        <td className="py-2 px-3">
+          <div className="text-xs font-medium text-black">{fleet}</div>
+        </td>
+        <td className="py-2 px-3">
+          <div className="text-xs font-medium text-black">{parseInt(startDis) || '-'}</div>
+        </td>
+        <td className="py-2 px-3">
+          <div className="text-xs font-medium text-black">{parseInt(endDis) || '-'}</div>
+        </td>
+        <td className="py-2 px-3">
+          <div className="flex items-center space-x-1">
+            {certificates && certificates.length > 0 ? (
+              certificates.map((cert, index) => (
+                <img 
+                  key={index} 
+                  src={cert.logo} 
+                  alt={cert.name} 
+                  title={cert.name}
+                  className="h-5 w-auto object-contain" 
+                />
+              ))
+            ) : null}
+          </div>
+        </td>
+        <td className="py-2 px-3 flex items-center justify-between">
+          <div>
+            {trustScore ? (
+              <div className="text-xs font-medium text-blue-600">{trustScore}</div>
+            ) : (
+              <div className="text-xs font-medium text-transparent">-</div>
+            )}
+          </div>
+          
+          <div className="flex items-center space-x-1">
+            {!showNoChat && (
+              <div className="p-1 rounded-md" >
+                <MessageSquareOff size={18} className="text-black" strokeWidth={2} />
+              </div>
+            )}
+            {showFlash && (
+              <div className="p-1 rounded-md" title="Fast response">
+                <Zap size={18} className="text-black" strokeWidth={2} />
+              </div>
+            )}
+          </div>
+        </td>
+      </tr>
+      
+      {/* Expandable content for tail information */}
+      {expanded && (
+        <tr>
+          <td colSpan="7" className="bg-gray-50 px-4 py-2 w-full">
+            {loading ? (
+              <div className="text-center py-2">Loading tail information...</div>
+            ) : companyDetails && companyDetails.tailInfo && companyDetails.tailInfo.length > 0 ? (
+              <div className="overflow-x-auto w-full">
+                <table className="min-w-full w-full bg-white text-sm border-t border-gray-200 table-fixed">
+                  <thead className="bg-[#EAE5FE] text-xs">
+                    <tr>
+                      <th className="py-2 px-3 text-left font-medium text-black">Reg</th>
+                      <th className="py-2 px-3 text-left font-medium text-black">Type</th>
+                      <th className="py-2 px-3 text-left font-medium text-black">Seats</th>
+                      <th className="py-2 px-3 text-left font-medium text-black">Cat</th>
+                      <th className="py-2 px-3 text-left font-medium text-black">YOM</th>
+                      <th className="py-2 px-3 text-left font-medium text-black">FT</th>
+                      <th className="py-2 px-3 text-left font-medium text-black">Base</th>
+                      <th className="py-2 px-3 text-left font-medium text-black">Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {companyDetails.tailInfo.map((tail) => {
+                      // Extract first category if there are multiple categories separated by commas
+                      const category = tail.tailCategory || '';
+                      return (
+                        <tr key={tail.id} className="hover:bg-gray-50">
+                          <td className="py-2 px-3">
+                            <div className="text-blue-600 text-xs">{tail.tail}</div>
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="text-xs font-medium">{tail.aircraft_Type_Name || '-'}</div>
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="text-xs font-medium">{tail.tail_Max_Pax || '-'}</div>
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="text-xs">{category || '-'}</div>
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="text-xs font-medium">-</div>
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="text-xs font-medium">-</div>
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="text-xs font-medium">{tail.base || '-'}</div>
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="text-xs font-medium">{tail.rate || '-'}</div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-2 text-gray-500">No tail information available</div>
+            )}
+          </td>
+        </tr>
+      )}
+    </>
   );
 };
 
 // Company Table component for displaying multiple companies
-const CompanyTable = ({ companiesData, loading, error }) => {
+const CompanyTable = ({ companiesData, loading, error, onTailInfoUpdate }) => {
   if (loading) {
     return (
       <div className="p-4 text-center">
@@ -102,18 +222,20 @@ const CompanyTable = ({ companiesData, loading, error }) => {
   return (
     <div className="overflow-x-auto border border-gray-200 rounded-lg">
       <table className="min-w-full bg-white text-sm">
-        <thead className="bg-[#bdf5f8] text-xs">
+        <thead className="bg-[#EAE5FE] text-xs">
           <tr>
-            <th className="py-2 px-3 text-left font-medium text-black uppercase tracking-wider">Company</th>
-            <th className="py-2 px-3 text-left font-medium text-black uppercase tracking-wider">City</th>
-            <th className="py-2 px-3"></th> {/* No heading for certificates */}
-            <th className="py-2 px-3 text-left font-medium text-black uppercase tracking-wider">Fleet Size</th>
-            <th className="py-2 px-3 text-left font-medium text-black uppercase tracking-wider">Trust Score</th>
+            <th className="py-2 px-3 text-left font-medium text-black">Company</th>
+            <th className="py-2 px-3 text-left font-medium text-black">City</th>
+            <th className="py-2 px-3 text-left font-medium text-black">Fleet</th>
+            <th className="py-2 px-3 text-left font-medium text-black uppercase">SD</th>
+            <th className="py-2 px-3 text-left font-medium text-black uppercase">ED</th>
+            <th className="py-2 px-3 text-left font-medium text-black">Certificates</th>
+            <th className="py-2 px-3 text-left font-medium text-black">Trust Score</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
           {companiesData.companyData.map((company, idx) => (
-            <CompanyRow key={idx} company={company} />
+            <CompanyRow key={idx} company={company} onTailInfoUpdate={onTailInfoUpdate} />
           ))}
         </tbody>
       </table>
@@ -122,7 +244,7 @@ const CompanyTable = ({ companiesData, loading, error }) => {
 };
 
 // Category Card component for displaying a single category with expandable details
-const CategoryCard = ({ option, index, isExpanded, toggleExpand, companiesData, loading, error }) => {
+const CategoryCard = ({ option, isExpanded, toggleExpand, companiesData, loading, error, onTailInfoUpdate }) => {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Main card content - reduced height */}
@@ -176,18 +298,20 @@ const CategoryCard = ({ option, index, isExpanded, toggleExpand, companiesData, 
           ) : companiesData && companiesData.companyData && companiesData.companyData.length > 0 ? (
             <div className="overflow-x-auto border-gray-200">
               <table className="min-w-full bg-white text-sm">
-                <thead className="bg-[#bdf5f8] text-xs">
+                <thead className="bg-[#EAE5FE] text-xs">
                   <tr>
-                    <th className="py-2 px-3 text-left font-medium text-black uppercase tracking-wider">Company</th>
-                    <th className="py-2 px-3 text-left font-medium text-black uppercase tracking-wider">City</th>
-                    <th className="py-2 px-3"></th> {/* No heading for certificates */}
-                    <th className="py-2 px-3 text-left font-medium text-black uppercase tracking-wider">Fleet Size</th>
-                    <th className="py-2 px-3 text-left font-medium text-black uppercase tracking-wider">Trust Score</th>
+                    <th className="py-2 px-3 text-left font-medium text-black">Company</th>
+                    <th className="py-2 px-3 text-left font-medium text-black">City</th>
+                    <th className="py-2 px-3 text-left font-medium text-black">Fleet</th>
+                    <th className="py-2 px-3 text-left font-medium text-black uppercase">SD</th>
+                    <th className="py-2 px-3 text-left font-medium text-black uppercase">ED</th>
+                    <th className="py-2 px-3 text-left font-medium text-black">Certificates</th>
+                    <th className="py-2 px-3 text-left font-medium text-black">Trust Score</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {companiesData.companyData.map((company, idx) => (
-                    <CompanyRow key={idx} company={company} />
+                    <CompanyRow key={idx} company={company} onTailInfoUpdate={onTailInfoUpdate} />
                   ))}
                 </tbody>
               </table>
@@ -213,11 +337,12 @@ const CategoryCard = ({ option, index, isExpanded, toggleExpand, companiesData, 
 };
 
 // Main BaseCard component
-const BaseCard = ({ itineraryData = {}, isTabContent = false, selectedCategory = null }) => {
+const BaseCard = ({ itineraryData = {}, isTabContent = false, selectedCategory = null, onTailInfoUpdate }) => {
   const [expandedCards, setExpandedCards] = useState({});
   const [dataFetched, setDataFetched] = useState(false);
   const isMountedRef = useRef(false);
   const previousCategoryRef = useRef(null);
+  const tailInfoClearedRef = useRef(false);
   
   const { 
     getCompaniesByCategory, 
@@ -234,6 +359,17 @@ const BaseCard = ({ itineraryData = {}, isTabContent = false, selectedCategory =
     }
   }, [selectedCategory]);
   
+  // Clear tail info when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clear any tail markers when component unmounts
+      if (onTailInfoUpdate && !tailInfoClearedRef.current) {
+        onTailInfoUpdate([]);
+        tailInfoClearedRef.current = true;
+      }
+    };
+  }, [onTailInfoUpdate]);
+  
   // Fetch data when component mounts if it's a tab content
   useEffect(() => {
     // Set mounted flag
@@ -242,9 +378,8 @@ const BaseCard = ({ itineraryData = {}, isTabContent = false, selectedCategory =
     const fetchData = async () => {
       // Only fetch if we're in tab content mode, have the necessary data, and haven't fetched yet
       if (isTabContent && 
-          itineraryData.itineraryResponseNewdata && 
-          itineraryData.base && 
-          itineraryData.base.length > 0 && 
+          itineraryData?.itineraryResponseNewdata && 
+          itineraryData?.base?.length > 0 && 
           !dataFetched && 
           isMountedRef.current) {
         
@@ -284,9 +419,14 @@ const BaseCard = ({ itineraryData = {}, isTabContent = false, selectedCategory =
     return () => {
       isMountedRef.current = false;
     };
-  }, [isTabContent, itineraryData, getCompaniesByCategory, dataFetched]);
+  }, [isTabContent, dataFetched, getCompaniesByCategory]);
   
   const toggleCard = async (index, option) => {
+    // If card is already expanded, clear tail markers before toggling
+    if (expandedCards[index] && onTailInfoUpdate) {
+      onTailInfoUpdate([]);
+    }
+    
     const newExpandedState = !expandedCards[index];
     setExpandedCards(prev => ({
       ...prev,
@@ -294,7 +434,7 @@ const BaseCard = ({ itineraryData = {}, isTabContent = false, selectedCategory =
     }));
     
     // Fetch companies data when expanding the card
-    if (newExpandedState && itineraryData.itineraryResponseNewdata) {
+    if (newExpandedState && itineraryData?.itineraryResponseNewdata) {
       try {
         const fromCoords = itineraryData.itineraryResponseNewdata.fromCoordinates;
         const toCoords = itineraryData.itineraryResponseNewdata.toCoordinates;
@@ -342,6 +482,7 @@ const BaseCard = ({ itineraryData = {}, isTabContent = false, selectedCategory =
           companiesData={companiesByCategory}
           loading={loading}
           error={error}
+          onTailInfoUpdate={onTailInfoUpdate}
         />
       </div>
     );
@@ -355,12 +496,12 @@ const BaseCard = ({ itineraryData = {}, isTabContent = false, selectedCategory =
           <CategoryCard 
             key={index}
             option={option}
-            index={index}
             isExpanded={expandedCards[index]}
             toggleExpand={() => toggleCard(index, option)}
             companiesData={companiesByCategory}
             loading={loading}
             error={error}
+            onTailInfoUpdate={onTailInfoUpdate}
           />
         ))
       )}
@@ -385,8 +526,11 @@ CompanyRow.propTypes = {
       })
     ),
     userCount: PropTypes.number,
-    responseRate: PropTypes.number
-  })
+    responseRate: PropTypes.number,
+    startDis: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    endDis: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  }),
+  onTailInfoUpdate: PropTypes.func
 };
 
 CompanyTable.propTypes = {
@@ -394,7 +538,8 @@ CompanyTable.propTypes = {
     companyData: PropTypes.array
   }),
   loading: PropTypes.bool,
-  error: PropTypes.oneOfType([PropTypes.string, PropTypes.object])
+  error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  onTailInfoUpdate: PropTypes.func
 };
 
 CategoryCard.propTypes = {
@@ -403,14 +548,14 @@ CategoryCard.propTypes = {
     message: PropTypes.string,
     image: PropTypes.string
   }),
-  index: PropTypes.number,
   isExpanded: PropTypes.bool,
   toggleExpand: PropTypes.func,
   companiesData: PropTypes.shape({
     companyData: PropTypes.array
   }),
   loading: PropTypes.bool,
-  error: PropTypes.oneOfType([PropTypes.string, PropTypes.object])
+  error: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  onTailInfoUpdate: PropTypes.func
 };
 
 BaseCard.propTypes = {
@@ -434,7 +579,8 @@ BaseCard.propTypes = {
     })
   }),
   isTabContent: PropTypes.bool,
-  selectedCategory: PropTypes.string
+  selectedCategory: PropTypes.string,
+  onTailInfoUpdate: PropTypes.func
 };
 
 export default BaseCard;

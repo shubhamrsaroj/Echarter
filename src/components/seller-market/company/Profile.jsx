@@ -233,7 +233,7 @@ const Profile = () => {
         {isCertificatesExpanded && (
           <div className="overflow-x-auto border-t border-gray-300">
             <table className="min-w-full bg-white text-sm rounded-b-md">
-              <thead className="bg-[#bdf5f8] text-xs uppercase font-medium text-black tracking-wider">
+              <thead className="bg-[#EAE5FE] text-xs uppercase font-medium text-black tracking-wider">
                 <tr>
                   {/* <th className="py-2 px-4 text-left">Certificate Name</th> */}
                   {/* Add more headers if needed */}
@@ -314,7 +314,7 @@ const Profile = () => {
         {isPublicFilesExpanded && (
           <div className="overflow-x-auto border-t border-gray-300">
             <table className="min-w-full bg-white text-sm rounded-b-md">
-              <thead className="bg-[#bdf5f8] text-xs uppercase font-medium text-black tracking-wider"></thead>
+              <thead className="bg-[#EAE5FE] text-xs uppercase font-medium text-black tracking-wider"></thead>
               <tbody>
                 {companyData.publicFiles.map((file, index) => (
                   <tr
@@ -397,7 +397,7 @@ const Profile = () => {
         {isPrivateFilesExpanded && (
           <div className="overflow-x-auto border-t border-gray-300">
             <table className="min-w-full bg-white text-sm rounded-b-md">
-              <thead className="bg-[#bdf5f8] text-xs uppercase font-medium text-black tracking-wider"></thead>
+              <thead className="bg-[#EAE5FE] text-xs uppercase font-medium text-black tracking-wider"></thead>
               <tbody>
                 {companyData.privateFiles.map((file, index) => (
                   <tr
