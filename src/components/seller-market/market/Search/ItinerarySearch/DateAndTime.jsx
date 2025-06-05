@@ -70,6 +70,14 @@ const DateAndTime = ({
         overflow-x: hidden;
         height: 100%;
         margin: 0;
+        background-color: #f8f9fa;
+      }
+      .react-datepicker__time-container .react-datepicker__time {
+        background-color: #f8f9fa;
+        height: 100%;
+      }
+      .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list {
+        background-color: #f8f9fa;
       }
       .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item {
         padding: 4px 10px;
@@ -78,6 +86,7 @@ const DateAndTime = ({
         display: flex;
         align-items: center;
         justify-content: center;
+        background-color: #f8f9fa;
       }
       .react-datepicker__month {
         margin: 0.4rem;
@@ -228,6 +237,7 @@ const DateAndTime = ({
       }
       .react-datepicker__time-box {
         border-radius: 0;
+        background-color: #f8f9fa;
       }
       
       /* Title row with month and time header */
@@ -254,6 +264,7 @@ const DateAndTime = ({
       /* AM/PM indicator */
       .react-datepicker__time-list-item {
         position: relative;
+        background-color: #f8f9fa;
       }
       .react-datepicker__time-list-item::after {
         content: attr(data-ampm);
