@@ -513,7 +513,8 @@ const AirpotSelector = ({
             pt={{
               root: { className: 'h-full w-full' },
               input: { className: 'h-full w-full' },
-              container: { className: 'h-full w-full' }
+              container: { className: 'h-full w-full' },
+              dropdownButton: { className: 'bg-transparent' }
             }}
             minLength={2}
             delay={300}
@@ -555,7 +556,8 @@ const AirpotSelector = ({
           pt={{
             root: { className: 'h-full w-full' },
             input: { className: 'h-full w-full' },
-            container: { className: 'h-full w-full' }
+            container: { className: 'h-full w-full' },
+            dropdownButton: { className: 'bg-transparent' }
           }}
           minLength={2}
           delay={300}
