@@ -607,11 +607,11 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
     const errors = {};
     let isValid = true;
     
-    // Trip category is no longer required per client request
-    // if (tripCategory === 'Select') {
-    //   errors.tripCategory = true;
-    //   isValid = false;
-    // }
+    // Trip category is required
+    if (tripCategory === 'Select') {
+      errors.tripCategory = true;
+      isValid = false;
+    }
     
     // Equipment category is no longer required per client request
     // if (equipmentCategory === 'Select') {
@@ -882,44 +882,49 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
           </div>
           
           {/* Category dropdowns in the middle */}
-          <div className="flex-1 flex space-x-12">
-            <div className="flex flex-col" style={{ width: '280px' }}>
-              <label className="block text-sm font-medium mb-2">Trip Category</label>
-              <Dropdown
-                value={tripCategory}
-                options={categories.length > 0 ? 
-                  (tripCategory === 'Select' ? 
-                    [{ label: 'Select', value: 'Select' }, ...categoryOptions] : 
-                    categoryOptions) : 
-                  [{ label: 'Select', value: 'Select' }]
-                }
-                onChange={(e) => setTripCategoryWithNotify(e.value)}
-                placeholder="Select"
-                className="w-full"
-                onShow={handleCategoryDropdown}
-              />
-            </div>
+          <div className="flex-1 flex items-end">
+            <div className="flex space-x-12">
+              <div className="flex flex-col" style={{ width: '280px' }}>
+                <label className="block text-sm font-medium mb-2">Trip Category <span className="text-red-500">*</span></label>
+                <Dropdown
+                  value={tripCategory}
+                  options={categories.length > 0 ? 
+                    (tripCategory === 'Select' ? 
+                      [{ label: 'Select', value: 'Select' }, ...categoryOptions] : 
+                      categoryOptions) : 
+                    [{ label: 'Select', value: 'Select' }]
+                  }
+                  onChange={(e) => setTripCategoryWithNotify(e.value)}
+                  placeholder="Select"
+                  className={`w-full ${validationErrors.tripCategory ? 'p-invalid' : ''}`}
+                  onShow={handleCategoryDropdown}
+                />
+                {validationErrors.tripCategory && (
+                  <div className="text-red-600 text-xs mt-1">Required field</div>
+                )}
+              </div>
 
-            <div className="flex flex-col" style={{ width: '280px' }}>
-              <label className="block text-sm font-medium mb-2">Preferred Aircraft Category</label>
-              <Dropdown
-                value={equipmentCategory}
-                options={equipments.length > 0 ? 
-                  (equipmentCategory === 'Select' ? 
-                    [{ label: 'Select', value: 'Select' }, ...equipmentOptions] : 
-                    equipmentOptions) : 
-                  [{ label: 'Select', value: 'Select' }]
-                }
-                onChange={(e) => setEquipmentCategoryWithNotify(e.value)}
-                placeholder="Select"
-                className="w-full"
-                onShow={handleEquipmentDropdown}
-              />
+              <div className="flex flex-col" style={{ width: '280px' }}>
+                <label className="block text-sm font-medium mb-2">Preferred Aircraft Category</label>
+                <Dropdown
+                  value={equipmentCategory}
+                  options={equipments.length > 0 ? 
+                    (equipmentCategory === 'Select' ? 
+                      [{ label: 'Select', value: 'Select' }, ...equipmentOptions] : 
+                      equipmentOptions) : 
+                    [{ label: 'Select', value: 'Select' }]
+                  }
+                  onChange={(e) => setEquipmentCategoryWithNotify(e.value)}
+                  placeholder="Select"
+                  className="w-full"
+                  onShow={handleEquipmentDropdown}
+                />
+              </div>
             </div>
           </div>
           
-          {/* Recent Search button on the right */}
-          <div className="relative -left-14 flex">
+          {/* Recent Search button moved to the far right */}
+          <div>
             <Button
               label="Recent Search"
               onClick={onShowRecentSearches}
@@ -931,7 +936,9 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 backgroundColor: '#5486f3',
-                border: 'none'
+                border: 'none',
+                marginRight: '17px',
+                marginTop: '25px'
               }}
             />
           </div>

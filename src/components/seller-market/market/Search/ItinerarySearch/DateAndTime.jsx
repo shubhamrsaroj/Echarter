@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import DatePicker from 'react-datepicker';
 import { Calendar } from 'lucide-react';
@@ -12,6 +12,22 @@ const DateAndTime = ({
   minDate = null,
   hasError = false
 }) => {
+  const datePickerRef = useRef(null);
+  
+  // Generate all times for the day in 30-minute intervals
+  const allTimes = useMemo(() => {
+    const times = [];
+    const date = new Date();
+    date.setHours(0, 0, 0, 0); // Start at midnight
+    
+    for (let i = 0; i < 48; i++) { // 48 half-hours in a day
+      const newDate = new Date(date);
+      times.push(newDate);
+      date.setMinutes(date.getMinutes() + 30);
+    }
+    
+    return times;
+  }, []);
   
   useEffect(() => {
     // Add custom styles for date picker
@@ -20,7 +36,7 @@ const DateAndTime = ({
       .react-datepicker {
         font-family: inherit;
         border: none;
-        border-radius: 0.75rem;
+        border-radius: 0.5rem;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         display: flex !important;
         padding: 0;
@@ -29,14 +45,14 @@ const DateAndTime = ({
       .react-datepicker__header {
         background-color: white;
         border-bottom: none;
-        border-top-left-radius: 0.75rem;
+        border-top-left-radius: 0.5rem;
         border-top-right-radius: 0;
         padding: 0.75rem 0 0.5rem;
         margin: 0;
       }
       .react-datepicker__month-container {
         background-color: white;
-        border-radius: 0.75rem 0 0 0.75rem;
+        border-radius: 0.5rem 0 0 0.5rem;
         padding: 0;
         margin: 0;
       }
@@ -59,7 +75,7 @@ const DateAndTime = ({
       .react-datepicker__time-container {
         border-left: 1px solid #ddd;
         width: 100px;
-        border-radius: 0 0.75rem 0.75rem 0;
+        border-radius: 0 0.5rem 0.5rem 0;
         overflow: hidden;
         margin: 0;
         padding: 0;
@@ -124,24 +140,24 @@ const DateAndTime = ({
         border-bottom-color: white;
       }
       .react-datepicker__day--selected {
-        background-color: #38b6ff;
-        color: white;
+        background-color: #EEF3FE;
+        color: #333;
         font-weight: 500;
       }
       .react-datepicker__day:hover {
-        background-color: #bce0fd;
+        background-color: #EEF3FE;
       }
       .react-datepicker__day--today {
         font-weight: 600;
-        color: #38b6ff;
+        color: #333;
       }
       .react-datepicker__time-list-item--selected {
-        background-color: #38b6ff !important;
-        color: white !important;
+        background-color: #EEF3FE !important;
+        color: #333 !important;
         font-weight: 500 !important;
       }
       .react-datepicker__time-list-item:hover {
-        background-color: #bce0fd !important;
+        background-color: #EEF3FE !important;
       }
       .react-datepicker-left {
         z-index: 100;
@@ -168,7 +184,7 @@ const DateAndTime = ({
         height: 42px;
         padding: 0.375rem 0.75rem;
         border: 1px solid #000;
-        border-radius: 4px 0 0 4px;
+        border-radius: 3px 0 0 3px;
         font-size: 1rem;
         color: #495057;
         background-color: #fff;
@@ -179,8 +195,8 @@ const DateAndTime = ({
         color: #495057;
         background-color: #fff;
         outline: 0;
-        border-color: #0071e3;
-        box-shadow: 0 0 0 1px #0071e3;
+        border-color: #0078d4;
+        box-shadow: 0 0 0 1px #0078d4;
       }
       .date-picker-error {
         border-color: #dc2626 !important;
@@ -192,13 +208,14 @@ const DateAndTime = ({
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #0071e3;
+        background-color: #0078d4;
         color: white;
         height: 42px;
         width: 42px;
         border: 1px solid #000;
         border-left: none;
-        border-radius: 0 4px 4px 0;
+        border-radius: 0 3px 3px 0;
+        cursor: pointer;
       }
       /* ScrollBar styling */
       .react-datepicker__time-list::-webkit-scrollbar {
@@ -219,7 +236,7 @@ const DateAndTime = ({
       .side-time-calendar {
         display: flex;
         background-color: white;
-        border-radius: 0.75rem;
+        border-radius: 0.5rem;
       }
       /* Fix for vertical alignment */
       .react-datepicker__time-container, 
@@ -261,17 +278,18 @@ const DateAndTime = ({
         top: 20px;
       }
       
-      /* AM/PM indicator */
+      /* AM/PM indicator - remove this section since we're displaying it directly in the text */
       .react-datepicker__time-list-item {
         position: relative;
         background-color: #f8f9fa;
       }
-      .react-datepicker__time-list-item::after {
+      /* Remove the ::after pseudo-element that was adding the AM/PM indicator */
+      /*.react-datepicker__time-list-item::after {
         content: attr(data-ampm);
         font-size: 0.7rem;
         margin-left: 3px;
         color: #666;
-      }
+      }*/
     `;
     document.head.appendChild(styleTag);
 
@@ -281,27 +299,22 @@ const DateAndTime = ({
     };
   }, []); // Empty dependency array means this runs once on mount
 
-  // Function to add AM/PM indicators to time list items
-  const addAmPmAttributes = () => {
-    setTimeout(() => {
-      const timeItems = document.querySelectorAll('.react-datepicker__time-list-item');
-      timeItems.forEach(item => {
-        const time = item.textContent.trim();
-        const hour = parseInt(time.split(':')[0], 10);
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        item.setAttribute('data-ampm', ampm);
-      });
-    }, 100);
+  // Handle calendar icon click
+  const handleCalendarClick = () => {
+    if (datePickerRef.current) {
+      datePickerRef.current.setOpen(true);
+    }
   };
 
   return (
     <div className="date-time-wrapper">
       <DatePicker
+        ref={datePickerRef}
         selected={selected}
         onChange={onChange}
         showTimeSelect
-        timeFormat="hh:mm"
-        timeIntervals={15}
+        timeFormat="h:mm aa"
+        timeIntervals={30}
         timeCaption="Time"
         dateFormat="MMM d, yyyy h:mm aa"
         placeholderText={placeholder}
@@ -315,11 +328,9 @@ const DateAndTime = ({
             className={`w-full h-[42px] ${hasError ? 'date-picker-error' : ''}`}
           />
         }
-        onCalendarOpen={addAmPmAttributes}
-        onMonthChange={addAmPmAttributes}
-        onYearChange={addAmPmAttributes}
+        includeTimes={allTimes}
       />
-      <div className="calendar-button">
+      <div className="calendar-button" onClick={handleCalendarClick}>
         <Calendar className="w-5 h-5 text-white" />
       </div>
       {hasError && (
