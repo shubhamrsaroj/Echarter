@@ -19,18 +19,19 @@ const DateAndTime = ({
     styleTag.textContent = `
       .react-datepicker {
         font-family: inherit;
-        border: 1px solid #000;
+        border: none;
         border-radius: 0.75rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         display: flex !important;
         padding: 0;
+        background-color: white;
       }
       .react-datepicker__header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #000;
+        background-color: white;
+        border-bottom: none;
         border-top-left-radius: 0.75rem;
         border-top-right-radius: 0;
-        padding: 0.5rem 0;
+        padding: 0.75rem 0 0.5rem;
         margin: 0;
       }
       .react-datepicker__month-container {
@@ -40,28 +41,29 @@ const DateAndTime = ({
         margin: 0;
       }
       .react-datepicker__day-name {
-        color: #000;
+        color: #666;
         font-weight: 500;
-        width: 1.8rem;
-        margin: 0.1rem;
+        width: 2rem;
+        margin: 0.2rem;
         font-size: 0.8rem;
       }
       .react-datepicker__day {
-        width: 1.9rem;
-        height: 1.8rem;
-        line-height: 1.8rem;
-        margin: 0.1rem;
+        width: 2rem;
+        height: 2rem;
+        line-height: 2rem;
+        margin: 0.2rem;
         border-radius: 50%;
-        color: #000;
-        font-size: 0.85rem;
+        color: #333;
+        font-size: 0.9rem;
       }
       .react-datepicker__time-container {
-        border-left: 1px solid #000;
-        width: 80px;
+        border-left: 1px solid #ddd;
+        width: 100px;
         border-radius: 0 0.75rem 0.75rem 0;
         overflow: hidden;
         margin: 0;
         padding: 0;
+        background-color: #f8f9fa;
       }
       .react-datepicker__time-container .react-datepicker__time-box {
         width: 100px;
@@ -70,41 +72,47 @@ const DateAndTime = ({
         margin: 0;
       }
       .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item {
-        padding: 2px 6px;
-        height: 24px;
-        font-size: 0.85rem;
+        padding: 4px 10px;
+        height: 30px;
+        font-size: 0.9rem;
         display: flex;
         align-items: center;
         justify-content: center;
       }
       .react-datepicker__month {
-        margin: 0.2rem;
+        margin: 0.4rem;
       }
       .react-datepicker__current-month {
-        font-size: 0.9rem;
+        font-size: 1rem;
         font-weight: 600;
-        color: #000;
-        margin-bottom: 0.2rem;
+        color: #333;
+        margin-bottom: 0.5rem;
       }
       .react-datepicker__navigation {
-        top: 0.6rem;
+        top: 1rem;
       }
       .react-datepicker__navigation--next--with-time:not(.react-datepicker__navigation--next--with-today-button) {
-        right: 90px;
+        right: 110px;
       }
       .react-datepicker__time-list {
         padding: 0 !important;
         height: 220px !important;
       }
       .react-datepicker__header--time {
-        padding: 0.4rem 0;
+        padding: 0.75rem 0 0.5rem;
+        background-color: #f8f9fa;
+        border-bottom: none;
       }
       .react-datepicker-time__header {
-        font-size: 0.8rem;
-        padding: 0.2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #333;
+        padding: 0;
+        margin-bottom: 0.5rem;
       }
-      .react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::before {
-        border-bottom-color: #000;
+      .react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::before,
+      .react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle::after {
+        border-bottom-color: white;
       }
       .react-datepicker__day--selected {
         background-color: #38b6ff;
@@ -116,7 +124,7 @@ const DateAndTime = ({
       }
       .react-datepicker__day--today {
         font-weight: 600;
-        background-color: #f3f4f6;
+        color: #38b6ff;
       }
       .react-datepicker__time-list-item--selected {
         background-color: #38b6ff !important;
@@ -135,6 +143,7 @@ const DateAndTime = ({
       .date-time-wrapper {
         width: 100%;
         position: relative;
+        display: flex;
       }
       .date-time-wrapper .react-datepicker-wrapper {
         width: 100%;
@@ -147,8 +156,22 @@ const DateAndTime = ({
       .date-time-wrapper .react-datepicker__input-container input {
         width: 100%;
         box-sizing: border-box;
-        height: 36px;
-        padding: 0.375rem 0.75rem 0.375rem 2rem;
+        height: 42px;
+        padding: 0.375rem 0.75rem;
+        border: 1px solid #000;
+        border-radius: 4px 0 0 4px;
+        font-size: 1rem;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      }
+      .date-time-wrapper .react-datepicker__input-container input:focus {
+        color: #495057;
+        background-color: #fff;
+        outline: 0;
+        border-color: #0071e3;
+        box-shadow: 0 0 0 1px #0071e3;
       }
       .date-picker-error {
         border-color: #dc2626 !important;
@@ -156,13 +179,17 @@ const DateAndTime = ({
         color: #dc2626 !important;
       }
       /* Calendar icon styling */
-      .calendar-icon {
-        position: absolute;
-        left: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 1;
-        pointer-events: none;
+      .calendar-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #0071e3;
+        color: white;
+        height: 42px;
+        width: 42px;
+        border: 1px solid #000;
+        border-left: none;
+        border-radius: 0 4px 4px 0;
       }
       /* ScrollBar styling */
       .react-datepicker__time-list::-webkit-scrollbar {
@@ -182,6 +209,8 @@ const DateAndTime = ({
       /* Fix for the overall layout */
       .side-time-calendar {
         display: flex;
+        background-color: white;
+        border-radius: 0.75rem;
       }
       /* Fix for vertical alignment */
       .react-datepicker__time-container, 
@@ -195,9 +224,42 @@ const DateAndTime = ({
       /* Fix borders of time section */
       .react-datepicker__time {
         border-radius: 0;
+        background-color: #f8f9fa;
       }
       .react-datepicker__time-box {
         border-radius: 0;
+      }
+      
+      /* Title row with month and time header */
+      .react-datepicker__header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      /* Date and time sections positioned exactly */
+      .react-datepicker__month-container {
+        background: white;
+      }
+      .react-datepicker__time-container {
+        background: #f8f9fa;
+      }
+      
+      /* Month navigation arrows */
+      .react-datepicker__navigation--previous,
+      .react-datepicker__navigation--next {
+        top: 20px;
+      }
+      
+      /* AM/PM indicator */
+      .react-datepicker__time-list-item {
+        position: relative;
+      }
+      .react-datepicker__time-list-item::after {
+        content: attr(data-ampm);
+        font-size: 0.7rem;
+        margin-left: 3px;
+        color: #666;
       }
     `;
     document.head.appendChild(styleTag);
@@ -208,26 +270,49 @@ const DateAndTime = ({
     };
   }, []); // Empty dependency array means this runs once on mount
 
+  // Function to add AM/PM indicators to time list items
+  const addAmPmAttributes = () => {
+    setTimeout(() => {
+      const timeItems = document.querySelectorAll('.react-datepicker__time-list-item');
+      timeItems.forEach(item => {
+        const time = item.textContent.trim();
+        const hour = parseInt(time.split(':')[0], 10);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        item.setAttribute('data-ampm', ampm);
+      });
+    }, 100);
+  };
+
   return (
     <div className="date-time-wrapper">
-      <Calendar className="calendar-icon w-4 h-4 text-gray-600" />
       <DatePicker
         selected={selected}
         onChange={onChange}
         showTimeSelect
-        timeFormat="HH:mm"
+        timeFormat="hh:mm"
         timeIntervals={15}
         timeCaption="Time"
         dateFormat="MMM d, yyyy h:mm aa"
         placeholderText={placeholder}
-        className={`w-full p-2 border-2 border-black rounded bg-white text-black placeholder-gray-500 ${hasError ? 'date-picker-error' : ''}`}
+        className={`w-full ${hasError ? 'date-picker-error' : ''}`}
         popperClassName={popperClassName}
         minDate={minDate}
         showPopperArrow={false}
         calendarClassName="side-time-calendar"
+        customInput={
+          <input
+            className={`w-full h-[42px] ${hasError ? 'date-picker-error' : ''}`}
+          />
+        }
+        onCalendarOpen={addAmPmAttributes}
+        onMonthChange={addAmPmAttributes}
+        onYearChange={addAmPmAttributes}
       />
+      <div className="calendar-button">
+        <Calendar className="w-5 h-5 text-white" />
+      </div>
       {hasError && (
-        <div className="text-red-600 text-xs mt-1">Required field</div>
+        <div className="text-red-600 text-xs mt-1 absolute -bottom-5 left-0">Required field</div>
       )}
     </div>
   );

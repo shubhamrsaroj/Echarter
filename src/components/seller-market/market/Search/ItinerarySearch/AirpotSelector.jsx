@@ -23,8 +23,10 @@ const AirpotSelector = ({
   const [displayValue, setDisplayValue] = useState(selectedAirport || '');
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const [currentQuery, setCurrentQuery] = useState('');
+  const [hasSelected, setHasSelected] = useState(!!selectedAirport);
   const { isGooglePlacesEnabled } = useContext(SellerMarketContext);
   const autoCompleteRef = useRef(null);
+  const userTypingRef = useRef(false);
   
   // Determine if this is a "from" or "to" field based on the id
   const isFromField = id.toString().includes('_from');
@@ -43,17 +45,16 @@ const AirpotSelector = ({
   // Update display value when selectedAirport changes
   useEffect(() => {
     setDisplayValue(selectedAirport || '');
+    // Set hasSelected based on whether selectedAirport has a value
+    setHasSelected(!!selectedAirport);
   }, [selectedAirport]);
 
-  // Direct reaction to airports prop changes
+  // Direct reaction to airports prop changes - ONLY show dropdown if user is actively typing
   useEffect(() => {
-    if (!isGooglePlacesEnabled && airports && currentQuery) {
+    if (!isGooglePlacesEnabled && airports && currentQuery && !hasSelected) {
       // Extract airport data, handling both array and object formats
       const airportData = Array.isArray(airports) ? airports : 
                          (airports.data ? airports.data : []);
-      
-      // Log the airport data for debugging
-      console.log('Airport data received:', airportData);
       
       if (airportData.length > 0) {
         // Case insensitive search
@@ -107,106 +108,24 @@ const AirpotSelector = ({
           return 0;
         });
         
-        // Log results
-        console.log(`Found ${filteredAirports.length} airports matching "${currentQuery}"`, filteredAirports);
-        
         if (filteredAirports.length > 0) {
           // Update the filtered suggestions
           setFilteredSuggestions(filteredAirports);
           
-          // Force show dropdown if we have results
-          if (autoCompleteRef.current) {
+          // Show dropdown if we have results and user is typing
+          if (userTypingRef.current && autoCompleteRef.current) {
             setTimeout(() => {
               try {
                 autoCompleteRef.current.show();
-                console.log("Showing dropdown programmatically");
-              } catch (err) {
-                console.error("Error showing dropdown:", err);
+              } catch {
+                // Error handling without console.error
               }
             }, 0);
           }
         }
       }
     }
-  }, [airports, isGooglePlacesEnabled, currentQuery]);
-
-  // Extract the filtering logic to a separate function
-  const filterAirports = (query) => {
-    if (!query || query.length < 2) {
-      setFilteredSuggestions([]);
-      return;
-    }
-    
-    // Get airport data safely, whether the input is an array or an object with a data property
-    const airportData = Array.isArray(airports) ? airports : airports?.data || [];
-    
-    if (!isGooglePlacesEnabled && airportData.length > 0) {
-      // Case insensitive search
-      const queryLower = query.toLowerCase();
-      
-      // Simple filter approach that searches across all relevant fields
-      const filteredAirports = airportData.filter(airport => {
-        // Check ICAO code (case insensitive)
-        if (airport.icao && airport.icao.toLowerCase().includes(queryLower)) {
-          return true;
-        }
-        
-        // Check IATA code (case insensitive)
-        if (airport.iata && airport.iata.toLowerCase().includes(queryLower)) {
-          return true;
-        }
-        
-        // Check city name (case insensitive)
-        if (airport.city && airport.city.toLowerCase().includes(queryLower)) {
-          return true;
-        }
-        
-        // Check airport name (case insensitive)
-        if (airport.airportName && airport.airportName.toLowerCase().includes(queryLower)) {
-          return true;
-        }
-        
-        return false;
-      });
-      
-      // Sort results giving priority to exact IATA/ICAO matches
-      filteredAirports.sort((a, b) => {
-        // Exact ICAO match gets highest priority
-        if (a.icao && a.icao.toLowerCase() === queryLower) return -1;
-        if (b.icao && b.icao.toLowerCase() === queryLower) return 1;
-        
-        // Exact IATA match gets next priority
-        if (a.iata && a.iata.toLowerCase() === queryLower) return -1;
-        if (b.iata && b.iata.toLowerCase() === queryLower) return 1;
-        
-        // Exact city name match gets next priority
-        if (a.city && a.city.toLowerCase() === queryLower) return -1;
-        if (b.city && b.city.toLowerCase() === queryLower) return 1;
-        
-        // Default to unsorted
-        return 0;
-      });
-      
-      // Log for debugging
-      console.log(`Found ${filteredAirports.length} airports matching "${query}"`);
-      
-      setFilteredSuggestions(filteredAirports);
-
-      // Immediately try to show dropdown if we have results
-      if (filteredAirports.length > 0 && autoCompleteRef.current) {
-        setTimeout(() => {
-          try {
-            autoCompleteRef.current.show();
-            console.log("Showing dropdown after filtering");
-          } catch (err) {
-            console.error("Error showing dropdown:", err);
-          }
-        }, 0);
-      }
-    } else {
-      setFilteredSuggestions([]);
-    }
-  };
+  }, [airports, isGooglePlacesEnabled, currentQuery, hasSelected]);
 
   const getPlaceDetails = useCallback((placeId) => {
     if (!window.google) return null;
@@ -277,7 +196,14 @@ const AirpotSelector = ({
     };
 
     setDisplayValue(displayName);
+    setHasSelected(true);
+    userTypingRef.current = false;
     onSelectAirport(id, placeData);
+    
+    // Close dropdown if it's open
+    if (autoCompleteRef.current) {
+      autoCompleteRef.current.hide();
+    }
     
     // Generate a new session token after successful selection
     if (window.google?.maps?.places) {
@@ -285,57 +211,17 @@ const AirpotSelector = ({
     }
   }, [id, onSelectAirport]);
 
-  const handleGooglePlaceSearch = async (event) => {
-    const query = event.query;
-    setCurrentQuery(query);
-    
-    if (!query || query.length < 2 || !isLoaded || !window.google || !window.google.maps || !window.google.maps.places) {
-      setFilteredSuggestions([]);
-      return;
-    }
-    
-    try {
-      const predictions = await new Promise((resolve) => {
-        const service = new window.google.maps.places.AutocompleteService();
-        service.getPlacePredictions({
-          input: query,
-          types: ['establishment', 'geocode'],
-          sessionToken: sessionToken
-        }, (predictions, status) => {
-          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-            resolve(predictions);
-          } else {
-            resolve([]);
-          }
-        });
-      });
-      
-      setFilteredSuggestions(predictions);
-    } catch (error) {
-      console.error('Error fetching place predictions:', error);
-      setFilteredSuggestions([]);
-    }
-  };
-
-  const handlePlaceSelect = async (event) => {
-    const selectedPlace = event.value;
-    
-    if (!selectedPlace || !selectedPlace.place_id) return;
-    
-    try {
-      const placeDetails = await getPlaceDetails(selectedPlace.place_id);
-      if (placeDetails) {
-        processPlace(placeDetails);
-      }
-    } catch (error) {
-      console.error('Error getting place details:', error);
-    }
-  };
-
-  // Simplified and improved airport search function
   const handleAirportSearch = (event) => {
     const query = event.query;
+    
+    // Always set userTypingRef to true when user is typing in the search box
+    userTypingRef.current = true;
     setCurrentQuery(query);
+    
+    // Only reset hasSelected if the user is typing a new query
+    if (query && query !== displayValue) {
+      setHasSelected(false);
+    }
     
     // Update the search term in the parent component
     if (handleSearchChange) {
@@ -365,24 +251,100 @@ const AirpotSelector = ({
       setFilteredSuggestions([]);
     }
   };
-  
-  const handleAirportSelect = (event) => {
-    const airport = event.value;
-    if (airport) {
-      onSelectAirport(id, airport);
+
+  const handleGooglePlaceSearch = async (event) => {
+    const query = event.query;
+    
+    // Always set userTypingRef to true when user is typing in the search box
+    userTypingRef.current = true;
+    setCurrentQuery(query);
+    
+    // Only reset hasSelected if the user is typing a new query
+    if (query && query !== displayValue) {
+      setHasSelected(false);
+    }
+    
+    if (!query || query.length < 2 || !isLoaded || !window.google || !window.google.maps || !window.google.maps.places) {
+      setFilteredSuggestions([]);
+      return;
+    }
+    
+    try {
+      const predictions = await new Promise((resolve) => {
+        const service = new window.google.maps.places.AutocompleteService();
+        service.getPlacePredictions({
+          input: query,
+          types: ['(cities)'], // Restrict to only cities
+          sessionToken: sessionToken
+        }, (predictions, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+            resolve(predictions);
+          } else {
+            resolve([]);
+          }
+        });
+      });
+      
+      setFilteredSuggestions(predictions);
+    } catch {
+      // Error handling without console.error
+      setFilteredSuggestions([]);
     }
   };
 
+  const handlePlaceSelect = async (event) => {
+    const selectedPlace = event.value;
+    
+    if (!selectedPlace || !selectedPlace.place_id) return;
+    
+    try {
+      const placeDetails = await getPlaceDetails(selectedPlace.place_id);
+      if (placeDetails) {
+        processPlace(placeDetails);
+        // Close dropdown after selection
+        if (autoCompleteRef.current) {
+          autoCompleteRef.current.hide();
+        }
+      }
+    } catch {
+      // Error handling without console.error
+    }
+  };
+
+  const handleAirportSelect = (event) => {
+    const airport = event.value;
+    if (airport) {
+      setHasSelected(true);
+      userTypingRef.current = false;
+      onSelectAirport(id, airport);
+      // Close dropdown after selection
+      if (autoCompleteRef.current) {
+        autoCompleteRef.current.hide();
+      }
+    }
+  };
+
+  // Handle blur event to ensure dropdown doesn't show when clicking away and back
+  const handleBlur = () => {
+    userTypingRef.current = false;
+  };
+
+  // Handle focus - show dropdown if there are suggestions and user is typing
   const handleFocus = () => {
-    // When input gets focus, show dropdown if we have a query and suggestions
-    if (currentQuery && currentQuery.length >= 2 && filteredSuggestions.length > 0) {
+    // Never show dropdown on focus if we already have a selection
+    if (hasSelected || displayValue) {
+      return;
+    }
+
+    // Show dropdown if we have suggestions and user is actively typing
+    if (filteredSuggestions.length > 0 && currentQuery && currentQuery.length >= 2) {
+      userTypingRef.current = true;
       if (autoCompleteRef.current) {
         setTimeout(() => {
           try {
             autoCompleteRef.current.show();
-            console.log("Showing dropdown on focus");
-          } catch (err) {
-            console.error("Error showing dropdown on focus:", err);
+          } catch {
+            // Error handling without console.error
           }
         }, 0);
       }
@@ -393,7 +355,6 @@ const AirpotSelector = ({
   const airportItemTemplate = (airport) => {
     // Create a more comprehensive display for airports
     const iataDisplay = airport.iata ? `(${airport.iata})` : '';
-    const icaoDisplay = airport.icao ? `ICAO: ${airport.icao}` : '';
     
     // Format the city and country
     const cityCountry = airport.city && airport.country 
@@ -407,21 +368,38 @@ const AirpotSelector = ({
         </div>
         <div className="text-xs text-gray-600 flex justify-between">
           <span>{cityCountry}</span>
-          {icaoDisplay && <span className="text-xs text-gray-500">{icaoDisplay}</span>}
         </div>
       </div>
     );
   };
 
   const googlePlaceItemTemplate = (prediction) => {
-    return (
-      <div>
-        <div className="font-medium">{prediction.description || prediction.structured_formatting?.main_text}</div>
-        {prediction.structured_formatting?.secondary_text && (
-          <div className="text-xs text-gray-600">{prediction.structured_formatting.secondary_text}</div>
-        )}
-      </div>
-    );
+    // Extract just the main city/place name from the prediction
+    // For airports, we'll still show the full name
+    const isAirport = prediction.description && 
+      (prediction.description.toLowerCase().includes('airport') || 
+       (prediction.structured_formatting?.main_text && 
+        prediction.structured_formatting.main_text.toLowerCase().includes('airport')));
+    
+    if (isAirport) {
+      // For airports, keep the full description
+      return (
+        <div>
+          <div className="font-medium">{prediction.description || prediction.structured_formatting?.main_text}</div>
+        </div>
+      );
+    } else {
+      // For non-airports, just show the main text (city name)
+      const mainText = prediction.structured_formatting?.main_text || 
+                      prediction.description?.split(',')[0] || 
+                      prediction.description;
+      
+      return (
+        <div>
+          <div className="font-medium">{mainText}</div>
+        </div>
+      );
+    }
   };
 
   // Define custom styles with height if provided
@@ -502,7 +480,18 @@ const AirpotSelector = ({
             value={displayValue}
             suggestions={filteredSuggestions}
             completeMethod={handleGooglePlaceSearch}
-            onChange={(e) => setDisplayValue(e.value)}
+            onChange={(e) => {
+              setDisplayValue(e.value);
+              if (e.value === '') {
+                setHasSelected(false);
+                userTypingRef.current = true;
+              } else if (displayValue && e.value === displayValue) {
+                // If the value hasn't changed and we already have a display value,
+                // maintain the selected state
+                setHasSelected(true);
+                userTypingRef.current = false;
+              }
+            }}
             onSelect={handlePlaceSelect}
             field="description"
             itemTemplate={googlePlaceItemTemplate}
@@ -519,6 +508,7 @@ const AirpotSelector = ({
             minLength={2}
             delay={300}
             onFocus={handleFocus}
+            onBlur={handleBlur}
             dropdown
           />
         </span>
@@ -541,6 +531,15 @@ const AirpotSelector = ({
           completeMethod={handleAirportSearch}
           onChange={(e) => {
             setDisplayValue(e.value);
+            if (e.value === '') {
+              setHasSelected(false);
+              userTypingRef.current = true;
+            } else if (displayValue && e.value === displayValue) {
+              // If the value hasn't changed and we already have a display value,
+              // maintain the selected state
+              setHasSelected(true);
+              userTypingRef.current = false;
+            }
             if (handleSearchChange) {
               handleSearchChange({ target: { value: e.value } });
             }
@@ -550,7 +549,7 @@ const AirpotSelector = ({
           itemTemplate={airportItemTemplate}
           placeholder={placeholder || "Search airport..."}
           className={`w-full ${hasError ? 'p-invalid' : ''}`}
-          loading={airportLoading}
+          loading={airportLoading ? "true" : undefined}
           style={customStyles}
           inputStyle={customInputStyles}
           pt={{
@@ -563,6 +562,7 @@ const AirpotSelector = ({
           delay={300}
           forceSelection={false}
           onFocus={handleFocus}
+          onBlur={handleBlur}
           dropdown
           appendTo="self"
         />

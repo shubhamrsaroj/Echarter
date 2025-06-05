@@ -7,42 +7,13 @@ import FlightDetailsTooltip from './FlightDetailsTooltip';
 import { getTripCategoryService, getEquipmentService } from '../../../../../api/GetInfo/GetInfo.service';
 import { calculateDistance, calculateFlightTime, calculateDateTimes } from './SearchCalculations';
 import { calculateTooltipFlightData, updateTooltipTimes, formatUTCOffset } from './tooltipCalculations';
+import DateAndTime from './DateAndTime';
 
 // Import PrimeReact components
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { InputNumber } from 'primereact/inputnumber'; 
-import { Calendar } from 'primereact/calendar';
 import { Checkbox } from 'primereact/checkbox';
-
-// Create a wrapper component for DateAndTime using PrimeReact Calendar
-const CalendarDateTimeWrapper = ({ selected, onChange, placeholder, hasError }) => {
-  return (
-    <Calendar 
-      value={selected} 
-      onChange={(e) => onChange(e.value)} 
-      showTime 
-      hourFormat="12"
-      placeholder={placeholder}
-      position="bottom"
-      className={`w-full ${hasError ? 'p-invalid' : ''}`}
-      pt={{
-        input: { className: 'h-full w-full' },
-        root: { className: 'w-full' }
-      }}
-      style={{ height: '42px', width: '100%' }}
-      inputStyle={{ height: '42px', width: '100%' }}
-      manualInput={true}
-    />
-  );
-};
-
-CalendarDateTimeWrapper.propTypes = {
-  selected: PropTypes.instanceOf(Date),
-  onChange: PropTypes.func.isRequired,
-  placeholder: PropTypes.string,
-  hasError: PropTypes.bool
-};
 
 const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
   const { 
@@ -338,7 +309,7 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
 
   // Handle search change for airports
   const handleSearchChange = (id, e) => {
-    const value = e.target.value;
+    const value = typeof e.target.value === 'string' ? e.target.value : '';
     setSearchTerms(prev => ({
       ...prev,
       [id]: value
@@ -969,21 +940,21 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
         {/* EEF3FE background flight details section - Updated to match image layout */}
         <div className="col-span-12 -mt-10">
           <div className="bg-[#EEF3FE] p-6">
-            {/* Header row */}
-            <div className="flex mb-3 px-2">
+            {/* Header row - positioned to match input fields exactly */}
+            <div className="flex mb-3 px-0">
               <div className="w-[250px] mr-10">
-                <div className="text-sm font-medium text-gray-700">From <span className="text-red-500">*</span></div>
+                <div className="text-sm font-medium text-gray-700" style={{ paddingLeft: '1px' }}>From <span className="text-red-500">*</span></div>
               </div>
               <div className="w-[250px] mr-10">
-                <div className="text-sm font-medium text-gray-700">To <span className="text-red-500">*</span></div>
+                <div className="text-sm font-medium text-gray-700" style={{ paddingLeft: '1px' }}>To <span className="text-red-500">*</span></div>
               </div>
               <div className="w-[250px] mr-10">
-                <div className="text-sm font-medium text-gray-700">
+                <div className="text-sm font-medium text-gray-700" style={{ paddingLeft: '1px' }}>
                   {useArrivalTime ? "Arrival Date & Time" : "Departure Date & Time"} <span className="text-red-500">*</span>
                 </div>
               </div>
-              <div className="w-[150px] mr-10">
-                <div className="text-sm font-medium text-gray-700">Passengers</div>
+              <div className="w-[140px] mr-10">
+                <div className="text-sm font-medium text-gray-700" style={{ paddingLeft: '1px' }}>Passengers</div>
               </div>
               <div className="flex-1"></div>
             </div>
@@ -995,7 +966,7 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
                   <AirpotSelector
                     id={`${detail.id}_from`}
                     selectedAirport={detail.from}
-                    searchTerm={searchTerms[`${detail.id}_from`] || ''}
+                    searchTerm={typeof searchTerms[`${detail.id}_from`] === 'string' ? searchTerms[`${detail.id}_from`] : ''}
                     handleSearchChange={(e) => handleSearchChange(`${detail.id}_from`, e)}
                     airports={airports}
                     airportLoading={airportLoading}
@@ -1010,7 +981,7 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
                   <AirpotSelector
                     id={`${detail.id}_to`}
                     selectedAirport={detail.to}
-                    searchTerm={searchTerms[`${detail.id}_to`] || ''}
+                    searchTerm={typeof searchTerms[`${detail.id}_to`] === 'string' ? searchTerms[`${detail.id}_to`] : ''}
                     handleSearchChange={(e) => handleSearchChange(`${detail.id}_to`, e)}
                     airports={airports}
                     airportLoading={airportLoading}
@@ -1019,16 +990,16 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
                     placeholder="Search"
                     hasError={hasError(detail.id, 'to')}
                     height="42px"
-                  />
+                  >
+                  </AirpotSelector>
                 </div>
                 <div className="w-[250px] mr-10 relative">
-                  <CalendarDateTimeWrapper
+                  <DateAndTime
                     selected={getCurrentDateTime(detail)}
                     onChange={(date) => handleDateTimeChange(detail.id, date)}
                     placeholder="Date Time"
                     hasError={hasError(detail.id, useArrivalTime ? 'toDateTime' : 'fromDateTime')}
                   />
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
                   {hasError(detail.id, useArrivalTime ? 'toDateTime' : 'fromDateTime') && (
                     <div className="text-red-600 text-xs mt-1">Required field</div>
                   )}
