@@ -343,9 +343,17 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
       [id]: value
     }));
     
-    // Only perform airport search if value is at least 3 characters and not in Google Places mode
-    if (value.length >= 3 && !isGooglePlacesEnabled) {
-      searchAirportByITA(value);
+    // Call the API if we have at least 2 characters and not in Google Places mode
+    if (value.length >= 2 && !isGooglePlacesEnabled) {
+      // Directly trigger the API search without delays here
+      // The debouncing is handled in the context
+      searchAirportByITA(value)
+        .then(results => {
+          console.log(`Search for ${value} returned ${results.length} results`);
+        })
+        .catch(err => {
+          console.error(`Search error for ${value}:`, err);
+        });
     }
   };
 
