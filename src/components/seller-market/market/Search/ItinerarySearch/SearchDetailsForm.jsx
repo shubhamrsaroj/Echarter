@@ -32,6 +32,7 @@ const CalendarDateTimeWrapper = ({ selected, onChange, placeholder, hasError }) 
       }}
       style={{ height: '42px', width: '100%' }}
       inputStyle={{ height: '42px', width: '100%' }}
+      manualInput={true}
     />
   );
 };
@@ -633,10 +634,11 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
     //   isValid = false;
     // }
     
-    if (equipmentCategory === 'Select') {
-      errors.equipmentCategory = true;
-      isValid = false;
-    }
+    // Equipment category is no longer required per client request
+    // if (equipmentCategory === 'Select') {
+    //   errors.equipmentCategory = true;
+    //   isValid = false;
+    // }
     
     flightDetails.forEach(detail => {
       errors[detail.id] = {};
@@ -920,7 +922,7 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
             </div>
 
             <div className="flex flex-col" style={{ width: '280px' }}>
-              <label className="block text-sm font-medium mb-2">Preferred Aircraft Category <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium mb-2">Preferred Aircraft Category</label>
               <Dropdown
                 value={equipmentCategory}
                 options={equipments.length > 0 ? 
@@ -931,12 +933,9 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
                 }
                 onChange={(e) => setEquipmentCategoryWithNotify(e.value)}
                 placeholder="Select"
-                className={`w-full ${validationErrors.equipmentCategory ? 'p-invalid' : ''}`}
+                className="w-full"
                 onShow={handleEquipmentDropdown}
               />
-              {validationErrors.equipmentCategory && (
-                <div className="text-red-600 text-xs mt-1">Required field</div>
-              )}
             </div>
           </div>
           
@@ -1032,14 +1031,15 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
                     value={detail.pax ? parseInt(detail.pax) : null}
                     onValueChange={(e) => handleInputChange(detail.id, 'pax', e.value?.toString() || '')}
                     className={`w-full ${hasError(detail.id, 'pax') ? 'p-error' : ''}`}
-                    useGrouping={false}
+                    mode="decimal"
+                    min={1}
+                    max={100}
                     showButtons
-                    buttonLayout="horizontal"
-                    decrementButtonClassName="p-button-secondary"
-                    incrementButtonClassName="p-button-secondary"
-                    incrementButtonIcon="pi pi-plus"
-                    decrementButtonIcon="pi pi-minus"
-                    inputStyle={{ width: '100%', textAlign: 'center', height: '42px' }}
+                    inputStyle={{ width: '100%', height: '42px' }}
+                    pt={{
+                      input: { className: 'h-full w-full' },
+                      root: { className: 'w-full' }
+                    }}
                   />
                   {hasError(detail.id, 'pax') && (
                     <div className="text-red-600 text-xs mt-1">Required field</div>
@@ -1098,10 +1098,15 @@ const SearchDetailsForm = ({ onFormChange, onShowRecentSearches }) => {
                   <Button
                     label={isSearching ? "Searching..." : "Search"}
                     className={`custom-search-btn ${isSearching ? 'bg-blue-500' : 'bg-green-500'} text-white hover:${isSearching ? 'bg-blue-600' : 'bg-green-600'} rounded flex items-center justify-center`}
-                    style={{ width: '100px', height: '42px' }}
+                    style={{ 
+                      width: '100px', 
+                      height: '42px',
+                      outline: 'none',
+                      boxShadow: 'none',
+                      border: 'none'
+                    }}
                     onClick={handleSave}
                     disabled={isSearching}
-                    icon={isSearching ? "pi pi-spin pi-spinner" : ""}
                   />
                 </div>
               </div>

@@ -177,7 +177,7 @@ const AirpotSelector = ({
     }
     
     // Clear suggestions if query is too short
-    if (!query || query.length < 3) {
+    if (!query || query.length < 2) {
       setFilteredSuggestions([]);
       return;
     }
@@ -187,7 +187,14 @@ const AirpotSelector = ({
     
     // Filter airports based on the query
     if (!isGooglePlacesEnabled && airportData.length > 0) {
-      setFilteredSuggestions(airportData);
+      const lowercaseQuery = query.toLowerCase();
+      const filtered = airportData.filter(airport => 
+        (airport.iata && airport.iata.toLowerCase().includes(lowercaseQuery)) ||
+        (airport.icao && airport.icao.toLowerCase().includes(lowercaseQuery)) ||
+        (airport.city && airport.city.toLowerCase().includes(lowercaseQuery)) ||
+        (airport.airportName && airport.airportName.toLowerCase().includes(lowercaseQuery))
+      );
+      setFilteredSuggestions(filtered);
     } else {
       setFilteredSuggestions([]);
     }
