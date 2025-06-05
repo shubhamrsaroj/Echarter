@@ -32,6 +32,8 @@ export const PipelineProvider = ({ children }) => {
   const [airports, setAirports] = useState([]);
   const [airportLoading, setAirportLoading] = useState(false);
   const [airportError, setAirportError] = useState(null);
+  const airportSearchTimeoutRef = useRef(null);
+  const lastSearchQuery = useRef('');
 
   // Add states for user itineraries
   const [userItineraries, setUserItineraries] = useState([]);
@@ -149,21 +151,51 @@ export const PipelineProvider = ({ children }) => {
     }
   };
 
+  // Improved searchAirportByITA with debouncing and better result handling
   const searchAirportByITA = async (query) => {
-    if (!query || query.length < 3) return [];
-    
-    setAirportLoading(true);
-    setAirportError(null);
-    try {
-      const data = await SellerMarketService.searchAirportByITAService(query);
-      setAirports(data);
-      return data;
-    } catch (err) {
-      setAirportError(err.message || 'Failed to search airports');
+    // Only run search if query is at least 2 characters
+    if (!query || query.length < 2) {
       return [];
-    } finally {
-      setAirportLoading(false);
     }
+
+    // Skip if this is the same as the last query (to avoid duplicate calls)
+    if (query === lastSearchQuery.current) {
+      return airports;
+    }
+    
+    // Save current query
+    lastSearchQuery.current = query;
+    
+    // Clear any pending searches
+    if (airportSearchTimeoutRef.current) {
+      clearTimeout(airportSearchTimeoutRef.current);
+    }
+    
+    // Set loading state
+    setAirportLoading(true);
+    
+    // Debounce the API call with 300ms delay
+    return new Promise((resolve) => {
+      airportSearchTimeoutRef.current = setTimeout(async () => {
+        try {
+          const data = await SellerMarketService.searchAirportByITAService(query);
+          
+          // Process the results to ensure they're usable
+          const processedData = Array.isArray(data) ? data : data?.data || [];
+          
+          // Set airports state with the results
+          setAirports(processedData);
+          setAirportError(null);
+          resolve(processedData);
+        } catch (err) {
+          setAirportError(err.message || 'Failed to search airports');
+          setAirports([]);
+          resolve([]);
+        } finally {
+          setAirportLoading(false);
+        }
+      }, 300); // 300ms debounce delay
+    });
   };
 
   const addItinerary = async (itineraryData) => {
@@ -270,17 +302,24 @@ export const PipelineProvider = ({ children }) => {
     if (requestTimeoutRef.current) {
       clearTimeout(requestTimeoutRef.current);
     }
+    if (airportSearchTimeoutRef.current) {
+      clearTimeout(airportSearchTimeoutRef.current);
+    }
     setOptionsData(null);
     setOptionsError(null);
     setOptionsLoading(false);
     setSelectedItineraryId(null);
     pendingRequestId.current = null;
+    lastSearchQuery.current = '';
   }, []);
 
   useEffect(() => {
     return () => {
       if (requestTimeoutRef.current) {
         clearTimeout(requestTimeoutRef.current);
+      }
+      if (airportSearchTimeoutRef.current) {
+        clearTimeout(airportSearchTimeoutRef.current);
       }
     };
   }, []);
