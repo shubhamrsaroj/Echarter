@@ -1,6 +1,7 @@
 {
   "buildCommand": "npm install --legacy-peer-deps && npm run build",
   "rewrites": [
+    { "source": "/widget/(.*)", "destination": "/widget.html" },
     { "source": "/(.*)", "destination": "/" }
   ],
   "headers": [
@@ -20,12 +21,6 @@
           "value": "X-Requested-With, Content-Type, Accept"
         }
       ]
-    }
-  ],
-  "routes": [
-    {
-      "src": "/widget/(.*)",
-      "dest": "/widget.html"
     }
   ]
 }
