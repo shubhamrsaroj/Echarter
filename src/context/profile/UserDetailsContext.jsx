@@ -13,6 +13,7 @@ const UserDetailsContext = createContext({
   fetchCompanyDetails: async () => {},
   searchCompanies: async () => {},
   clearUserDetails: () => {},
+  checkAdminAccess: () => {},
 });
 
 export const UserDetailsProvider = ({ children }) => {
@@ -60,27 +61,56 @@ export const UserDetailsProvider = ({ children }) => {
         throw new Error("No valid authentication token found");
       }
 
-      const user = tokenHandler.parseUserFromToken(token);
-      if (!user || !user.id) {
-        throw new Error("Unable to extract user ID from token");
+      // Ensure we have a valid ID in the payload
+      if (!updatedData.id) {
+        const user = tokenHandler.parseUserFromToken(token);
+        if (!user || !user.id) {
+          throw new Error("Unable to extract user ID from token");
+        }
+        updatedData.id = user.id;
       }
 
-      const profileUpdatePayload = {
-        id: user.id,
-        ...updatedData,
-      };
+      console.log('Sending update profile request with data:', updatedData);
+      
+      // Send the update request with the properly formatted payload
+      const response = await userService.updateUserProfile(updatedData);
+      
+      if (!response.success) {
+        throw new Error(response.message || "Failed to update user profile");
+      }
 
-      const updatedDetails = await userService.updateUserProfile(
-        profileUpdatePayload
-      );
+      console.log('Profile update response:', response);
 
-      // Update local state with the server response
-      setUserDetails((prevDetails) => ({
-        ...prevDetails,
-        ...updatedDetails.data, // Use the updated data from the server response
-      }));
+      // Update local state with the updated data
+      setUserDetails((prevDetails) => {
+        // Create a new object with the previous details as base
+        const newDetails = { ...prevDetails };
+        
+        // Handle address specially to ensure it's properly updated
+        if (updatedData.address) {
+          if (!newDetails.fullAddress) {
+            newDetails.fullAddress = {};
+          }
+          newDetails.fullAddress.address = updatedData.address;
+        }
+        
+        // Handle country specially to ensure it's properly updated
+        if (updatedData.country) {
+          if (!newDetails.fullAddress) {
+            newDetails.fullAddress = {};
+          }
+          newDetails.fullAddress.country = updatedData.country;
+          newDetails.country = updatedData.country;
+        }
+        
+        // Update all other fields
+        return {
+          ...newDetails,
+          ...updatedData,
+        };
+      });
 
-      return updatedDetails; // Return the full response for toast messages
+      return response;
     } catch (error) {
       console.error("Failed to update user details:", error);
       setError(error.message);
@@ -134,11 +164,51 @@ export const UserDetailsProvider = ({ children }) => {
     }
   }, []);
 
+  const addCompany = useCallback(async (companyData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Check if user has permission to add a company
+      const token = tokenHandler.getToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+      
+      const userData = tokenHandler.parseUserFromToken(token);
+      console.log("User data from token:", userData);
+      
+      // Check if the user has a role that can add companies
+      // This is just a check - the backend will make the final authorization decision
+      if (!userData || (!userData.Role && !userData.role)) {
+        console.warn("User role information is missing from the token");
+      }
+      
+      const response = await userService.addCompany(companyData);
+      
+      // Refresh company list after adding a new company
+      if (response && response.success) {
+        await fetchCompanyDetails();
+      }
+      
+      return response;
+    } catch (error) {
+      console.error("Failed to add company:", error);
+      setError(error.message);
+      throw error; // Propagate the error for toast handling
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchCompanyDetails]);
 
   const clearUserDetails = useCallback(() => {
     setUserDetails(null);
     setCompany(null);
     setError(null);
+  }, []);
+
+  const checkAdminAccess = useCallback(() => {
+    return tokenHandler.hasRole('admin');
   }, []);
 
   return (
@@ -154,6 +224,8 @@ export const UserDetailsProvider = ({ children }) => {
         fetchCompanyDetails,
         clearUserDetails,
         searchCompanies,
+        addCompany,
+        checkAdminAccess,
       }}
     >
       {children}

@@ -20,6 +20,9 @@ import BuyerPage from '../pages/buyer/BuyerPage';
 
 import UserProfilePage from '../pages/profile/UserProfilePage';
 
+// Import the OperatorProfile component
+import OperatorProfile from '../components/profile/operators/OperatorProfile';
+
 // Common Layout import
 import CommonLayout from '../layouts/CommonLayout';
 
@@ -155,6 +158,9 @@ export const routes = [
 
   // Protected Routes with User Details Provider
   { path: "/profile", element: wrapWithProvider(UserDetailsProvider, <UserProfilePage />) },
+
+  // New route for Operator Profile - publicly accessible
+  { path: "/operator", element: <CommonLayout><OperatorProfile /></CommonLayout> },
 
   // Redirect root based on role
   { path: "/", element: <ProtectedRoute><RoleBasedLanding /></ProtectedRoute> },

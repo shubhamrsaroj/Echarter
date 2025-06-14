@@ -1,0 +1,152 @@
+/* Operators Component Styles */
+
+/* Tab Menu Styling */
+.operators-tab-menu .p-tabmenu .p-tabmenu-nav {
+  border: none;
+  background: transparent;
+}
+
+.operators-tab-menu .p-tabmenu .p-tabmenu-nav .p-tabmenuitem .p-menuitem-link {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  padding: 1rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.operators-tab-menu .p-tabmenu .p-tabmenu-nav .p-tabmenuitem.p-highlight .p-menuitem-link {
+  border-bottom: 2px solid #5D5FEF;
+  color: #5D5FEF;
+  background: transparent;
+}
+
+.operators-tab-menu .p-tabmenu .p-tabmenu-nav .p-tabmenuitem:not(.p-highlight):not(.p-disabled):hover .p-menuitem-link {
+  background: transparent;
+  border-color: transparent;
+  color: #5D5FEF;
+}
+
+/* DataTable Styling */
+.fleet-table .p-datatable .p-datatable-thead > tr > th {
+  background-color: #f8f9fa;
+  color: #1e293b;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-color: #e9ecef;
+}
+
+.fleet-table .p-datatable .p-datatable-tbody > tr {
+  transition: background-color 0.2s;
+}
+
+.fleet-table .p-datatable .p-datatable-tbody > tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.fleet-table .p-datatable .p-datatable-tbody > tr:hover {
+  background-color: #f1f5f9;
+}
+
+.fleet-table .p-datatable .p-datatable-tbody > tr > td {
+  padding: 0.75rem 1rem;
+  border-color: #e9ecef;
+}
+
+/* Button Styling */
+.fleet-add-button.p-button {
+  background-color: #22c55e;
+  border-color: #22c55e;
+}
+
+.fleet-add-button.p-button:hover {
+  background-color: #16a34a;
+  border-color: #16a34a;
+}
+
+.p-button.p-button-success {
+  background-color: #22c55e;
+  border-color: #22c55e;
+}
+
+.p-button.p-button-success:hover {
+  background-color: #16a34a;
+  border-color: #16a34a;
+}
+
+/* Frequently Edited Row Styling */
+.frequently-edited-row {
+  background-color: #f0f9ff !important;
+}
+
+/* Dialog Styling */
+.fleet-dialog .p-dialog-header {
+  background-color: #f8f9fa;
+  padding: 1.25rem 1.5rem;
+}
+
+.fleet-dialog .p-dialog-content {
+  padding: 1.5rem;
+}
+
+.fleet-dialog .p-dialog-footer {
+  padding: 1.25rem 1.5rem;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+}
+
+/* Input Styling */
+.fleet-form .p-inputtext:enabled:focus {
+  border-color: #5D5FEF;
+  box-shadow: 0 0 0 1px rgba(93, 95, 239, 0.2);
+}
+
+/* Checkbox Styling */
+.fleet-form .p-checkbox .p-checkbox-box.p-highlight {
+  background-color: #5D5FEF;
+  border-color: #5D5FEF;
+}
+
+/* Step Indicator Styling */
+.step-indicator .step {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+
+.step-indicator .step.active {
+  background-color: #5D5FEF;
+  color: white;
+}
+
+.step-indicator .step.inactive {
+  background-color: #e2e8f0;
+  color: #64748b;
+}
+
+.step-indicator .line {
+  flex: 1;
+  height: 2px;
+  background-color: #e2e8f0;
+}
+
+/* Sidebar Styling */
+.fleet-sidebar {
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Primary Button Styling */
+.p-button.p-button-primary {
+  background-color: #5D5FEF;
+  border-color: #5D5FEF;
+  color: white;
+}
+
+.p-button.p-button-primary:hover {
+  background-color: #4B4DCB;
+  border-color: #4B4DCB;
+} 

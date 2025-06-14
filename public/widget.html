@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>InstaCharter Widget</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    .widget-container {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+      background-color: #f9fafb;
+    }
+    .loading-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+  <script>
+    // Clear browser cache on load
+    window.onload = function() {
+      // Force clear cache
+      if (window.location.href.indexOf('?') === -1) {
+        const timestamp = new Date().getTime();
+        window.location.href = window.location.href + '?_t=' + timestamp;
+        return;
+      }
+      
+      // Extract company ID from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const companyId = urlParams.get('companyid');
+      
+      if (!companyId) {
+        document.getElementById('loading-text').innerText = 'Error: Missing company ID';
+        return;
+      }
+      
+      // Redirect to the main app with parameters
+      setTimeout(function() {
+        // Get the current hostname to determine if we're on the widget subdomain
+        const isWidgetDomain = window.location.hostname.includes('widget.instacharter');
+        
+        if (isWidgetDomain) {
+          // If we're on the widget subdomain, keep the full path but add the search params
+          window.location.href = window.location.origin + '/?' + window.location.search.substring(1);
+        } else {
+          // Otherwise, use relative path
+          window.location.href = '/?' + window.location.search.substring(1);
+        }
+      }, 1000);
+    };
+  </script>
+</head>
+<body>
+  <div class="widget-container">
+    <div class="loading">
+      <div class="loading-spinner"></div>
+      <p id="loading-text">Loading InstaCharter Widget...</p>
+    </div>
+  </div>
+  
+  <!-- Register service worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/widget-service-worker.js')
+          .then(function(registration) {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            
+            // Update and activate immediately
+            registration.update();
+            
+            if (registration.waiting) {
+              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+          })
+          .catch(function(err) {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+      });
+    }
+  </script>
+</body>
+</html> 

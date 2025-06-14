@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InstaCharter API Proxy</title>
+  <script>
+    // Simple JSONP-style API proxy to help with CORS issues
+    window.fetchCompanyData = function(companyId, callback) {
+      const script = document.createElement('script');
+      const callbackName = 'jsonpCallback_' + Math.random().toString(36).substring(2, 15);
+      
+      // Create global callback function
+      window[callbackName] = function(data) {
+        // Clean up
+        document.body.removeChild(script);
+        delete window[callbackName];
+        
+        // Return data to caller
+        callback(data);
+      };
+      
+      // Create script URL with callback parameter
+      script.src = `https://instacharterapp-server-cgfqgug5f2fsaeag.centralus-01.azurewebsites.net/api/SinglePoint/GetCompaniesById?Id=${companyId}&callback=${callbackName}`;
+      
+      // Add error handler
+      script.onerror = function() {
+        // Clean up
+        document.body.removeChild(script);
+        delete window[callbackName];
+        
+        // Return error to caller
+        callback({ error: 'Failed to load data' });
+      };
+      
+      // Add script to page to start request
+      document.body.appendChild(script);
+    };
+    
+    // Listen for messages from parent window
+    window.addEventListener('message', function(event) {
+      // Verify sender origin for security
+      if (event.origin !== window.location.origin && 
+          event.origin !== 'https://widget.instacharter.app' &&
+          !event.origin.includes('instacharter')) {
+        return;
+      }
+      
+      const data = event.data;
+      
+      // Handle API requests
+      if (data.type === 'fetchCompany') {
+        fetchCompanyData(data.companyId, function(result) {
+          // Send result back to parent window
+          event.source.postMessage({
+            type: 'companyData',
+            requestId: data.requestId,
+            data: result
+          }, event.origin);
+        });
+      }
+    });
+    
+    // Notify parent that proxy is ready
+    window.parent.postMessage({ type: 'proxyReady' }, '*');
+  </script>
+</head>
+<body>
+  <h1>InstaCharter API Proxy</h1>
+  <p>This page serves as a CORS proxy for the InstaCharter API.</p>
+</body>
+</html> 

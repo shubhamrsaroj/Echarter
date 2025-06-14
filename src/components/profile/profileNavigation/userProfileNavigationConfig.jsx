@@ -1,9 +1,7 @@
 export const UserProfileNavigationConfig = {
     Profile: {},
+    Plans: {},
     Account: {},
-    History: {},
-    Favorites: {},
-    Support: {},
-    Preferences: {}
+    Operators: {}
   };
   

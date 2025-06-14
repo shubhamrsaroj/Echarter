@@ -9,7 +9,18 @@ export const AddressDisplay = ({ userDetails }) => {
   const city = userDetails?.fullAddress?.city || "";
   const state = userDetails?.fullAddress?.state || "";
   const postalCode = userDetails?.fullAddress?.postalCode || "";
-  const country = userDetails?.fullAddress?.country || "";
+  const country = userDetails?.fullAddress?.country || userDetails?.country || "";
+
+  // For debugging
+  console.log("Address display data:", {
+    addressLine1,
+    city,
+    state,
+    postalCode,
+    country,
+    fullAddress: userDetails?.fullAddress,
+    userDetails
+  });
 
   const cityStatePostal = [city, state, postalCode]
     .filter(Boolean)
@@ -48,7 +59,8 @@ const AddressEditForm = ({ userDetails, onSave, onCancel }) => {
 
   const onPlaceChanged = (autocomplete) => {
     const place = autocomplete.getPlace();
-    if (place.geometry) {
+    if (place && place.geometry) {
+      console.log("Place selected:", place);
       const addressComponents = place.address_components;
       let countryName = "";
 
@@ -63,17 +75,33 @@ const AddressEditForm = ({ userDetails, onSave, onCancel }) => {
       setAddress(place.formatted_address);
       setCountry(countryName);
       setTimeZoneOffset(timeZone);
+    } else {
+      console.warn("No place details available from autocomplete");
     }
   };
 
   const handleSaveAddress = async () => {
     try {
       setIsLoading(true);
+      
+      // Ensure we have all required address fields
+      if (!address) {
+        console.error("Address is required");
+        return;
+      }
+      
+      console.log("Saving address with data:", {
+        address,
+        country,
+        timeZoneOffset
+      });
+      
       const updatedData = {
         address: address,
         country: country,
         timeZoneOffset: timeZoneOffset
       };
+      
       await onSave("address", updatedData);
     } catch (error) {
       console.error("Error saving address:", error);

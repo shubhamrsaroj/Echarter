@@ -16,29 +16,34 @@ const UserProfilePage = () => {
     setActiveTab(tab);
   };
 
-    // Handler to go back
-    const handleBack = () => {
-      navigate(-1); 
-    };
+  // Handler to go back
+  const handleBack = () => {
+    navigate(-1); 
+  };
 
   return (
-    <div>
-    <div className="p-2">
-        <ArrowLeft onClick={handleBack}/>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <div className="p-3 flex items-center">
+        <button 
+          onClick={handleBack} 
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <ArrowLeft size={20} />
+        </button>
       </div>
-    <div className="h-screen flex flex-col bg-gray-100">
-       
-      {/* Header Navigation */}
-      <UserProfileTopNavigation
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
+      
+      <div className="container mx-auto px-4 pb-8">
+        {/* Header Navigation */}
+        <UserProfileTopNavigation
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+        />
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
-        <UserProfileContentRender activeTab={activeTab} />
+        {/* Main Content Area */}
+        <div className="mt-4">
+          <UserProfileContentRender activeTab={activeTab} />
+        </div>
       </div>
-    </div>
     </div>
   );
 };

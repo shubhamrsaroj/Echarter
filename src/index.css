@@ -140,5 +140,10 @@ hr {
   margin-left: 10px;
 }
 
+/* Google Places Autocomplete Dropdown */
+.pac-container {
+  z-index: 9999 !important; /* Ensure it appears above dialogs */
+}
+
 
 

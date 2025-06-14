@@ -1,15 +1,59 @@
-import React, { useState } from "react";
-import { Phone, Edit2, Save, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Phone, Edit2, Save, X, Check } from "lucide-react";
 import { userService } from "../../api/profile/user.service";
+import { countryService } from "../../api/profile/countryService";
 import { useUserDetails } from "../../context/profile/UserDetailsContext";
+import { Dropdown } from 'primereact/dropdown';
+import { InputText } from 'primereact/inputtext';
+import { Button } from 'primereact/button';
+import { Toast } from 'primereact/toast';
+import { useRef } from "react";
 
 const PhoneNumber = ({ userDetails, editSection, setEditSection, handleSave }) => {
   const [phoneNumber, setPhoneNumber] = useState(userDetails?.phoneNumber || "");
   const [isVerifying, setIsVerifying] = useState(false);
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // New loading state
+  const [isLoading, setIsLoading] = useState(false);
+  const [countries, setCountries] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState(null);
   const { fetchUserDetails } = useUserDetails();
+  const toast = useRef(null);
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const data = await countryService.getAllCountries();
+        if (data && Array.isArray(data.data)) {
+          const formattedCountries = data.data.map(country => ({
+            name: country.name,
+            code: country.dialCode || country.code,
+            flag: country.flag
+          }));
+          setCountries(formattedCountries);
+          
+          // Try to determine the current country from the phone number
+          if (phoneNumber && phoneNumber.startsWith('+')) {
+            const countryCode = phoneNumber.split(' ')[0];
+            const country = formattedCountries.find(c => countryCode.includes(c.code));
+            if (country) {
+              setSelectedCountry(country);
+            } else {
+              setSelectedCountry(formattedCountries[0]);
+            }
+          } else {
+            setSelectedCountry(formattedCountries[0]);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch countries:", error);
+      }
+    };
+
+    if (editSection === "phone") {
+      fetchCountries();
+    }
+  }, [editSection, phoneNumber]);
 
   const handleEditClick = () => {
     setEditSection("phone");
@@ -31,10 +75,13 @@ const PhoneNumber = ({ userDetails, editSection, setEditSection, handleSave }) =
     try {
       setIsLoading(true);
       setError("");
-      await userService.sendMobileVerificationOTP(phoneNumber);
+      const formattedPhone = selectedCountry ? `${selectedCountry.code} ${phoneNumber}` : phoneNumber;
+      await userService.sendMobileVerificationOTP(formattedPhone);
       setIsVerifying(true);
+      toast.current.show({ severity: 'info', summary: 'OTP Sent', detail: 'Verification code has been sent to your phone', life: 3000 });
     } catch (err) {
       setError("Failed to send verification OTP. Please try again.");
+      toast.current.show({ severity: 'error', summary: 'Error', detail: 'Failed to send verification OTP', life: 3000 });
     } finally {
       setIsLoading(false);
     }
@@ -44,14 +91,17 @@ const PhoneNumber = ({ userDetails, editSection, setEditSection, handleSave }) =
     try {
       setIsLoading(true);
       setError("");
-      await userService.verifyMobileOTP(phoneNumber, otp);
-      await handleSave("phone", { phoneNumber });
+      const formattedPhone = selectedCountry ? `${selectedCountry.code} ${phoneNumber}` : phoneNumber;
+      await userService.verifyMobileOTP(formattedPhone, otp);
+      await handleSave("phone", { phoneNumber: formattedPhone });
       await fetchUserDetails();
       setEditSection(null);
       setIsVerifying(false);
       setOtp("");
+      toast.current.show({ severity: 'success', summary: 'Success', detail: 'Phone number verified and saved successfully', life: 3000 });
     } catch (err) {
       setError("Invalid OTP. Please try again.");
+      toast.current.show({ severity: 'error', summary: 'Error', detail: 'Invalid OTP. Please try again.', life: 3000 });
     } finally {
       setIsLoading(false);
     }
@@ -63,42 +113,81 @@ const PhoneNumber = ({ userDetails, editSection, setEditSection, handleSave }) =
     } else if (phoneNumber !== (userDetails?.phoneNumber || "")) {
       sendVerificationOTP();
     } else {
-      handleSave("phone", { phoneNumber });
+      const formattedPhone = selectedCountry ? `${selectedCountry.code} ${phoneNumber}` : phoneNumber;
+      handleSave("phone", { phoneNumber: formattedPhone });
       setEditSection(null);
+      toast.current.show({ severity: 'success', summary: 'Success', detail: 'Phone number saved successfully', life: 3000 });
     }
+  };
+
+  const countryTemplate = (option) => {
+    return (
+      <div className="flex align-items-center">
+        {option.flag && <img src={option.flag} alt={option.name} style={{ width: '18px', marginRight: '8px' }} />}
+        <span>{option.name} ({option.code})</span>
+      </div>
+    );
+  };
+
+  const selectedCountryTemplate = (option) => {
+    if (option) {
+      return (
+        <div className="flex align-items-center">
+          {option.flag && <img src={option.flag} alt={option.name} style={{ width: '18px', marginRight: '8px' }} />}
+          <span>{option.code}</span>
+        </div>
+      );
+    }
+    return <span>Select Country</span>;
   };
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm w-full">
+      <Toast ref={toast} />
       <div className="p-5 border-b border-gray-200 flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-800 flex items-center">
           <Phone className="mr-2 w-5 h-5" /> Phone Number
         </h2>
-        <Edit2
-          className="w-4 h-4 text-gray-500 cursor-pointer hover:text-blue-500 transition-colors"
-          onClick={handleEditClick}
-        />
+        {editSection !== "phone" && (
+          <Button 
+            icon="pi pi-pencil" 
+            className="p-button-text p-button-rounded" 
+            onClick={handleEditClick}
+            aria-label="Edit"
+          />
+        )}
       </div>
       {editSection === "phone" ? (
         <div className="p-5">
           <div className="space-y-4">
-            <div className="flex items-center">
-              <input
+            <div className="flex items-center gap-2">
+              {countries.length > 0 && (
+                <Dropdown
+                  value={selectedCountry}
+                  options={countries}
+                  onChange={(e) => setSelectedCountry(e.value)}
+                  optionLabel="name"
+                  placeholder="Select Country"
+                  valueTemplate={selectedCountryTemplate}
+                  itemTemplate={countryTemplate}
+                  className="w-40"
+                />
+              )}
+              <InputText
                 type="tel"
                 value={phoneNumber}
                 onChange={handlePhoneChange}
-                className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter phone number with country code (e.g. +91XXXXXXXXXX)"
-
+                className="flex-1"
+                placeholder="Enter phone number"
               />
             </div>
             {isVerifying && (
               <div className="flex items-center">
-                <input
+                <InputText
                   type="text"
                   value={otp}
                   onChange={handleOtpChange}
-                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1"
                   placeholder="Enter verification code"
                 />
               </div>
@@ -106,33 +195,31 @@ const PhoneNumber = ({ userDetails, editSection, setEditSection, handleSave }) =
             {error && <div className="text-red-500 text-sm">{error}</div>}
           </div>
           <div className="mt-4 flex justify-end gap-2">
-            <button
+            <Button
+              label="Cancel"
+              icon="pi pi-times"
+              className="p-button-outlined p-button-secondary"
               onClick={() => {
                 setEditSection(null);
                 setIsVerifying(false);
                 setOtp("");
                 setError("");
               }}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center transition-colors"
-            >
-              <X className="mr-2 w-4 h-4" /> Cancel
-            </button>
-            <button
-  onClick={handleSavePhone}
-  disabled={isLoading}
-  className={`px-4 py-2 flex items-center rounded-lg transition-all duration-200 ${
-    isLoading ? "bg-blue-700 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
-  } text-white`}
->
-  <Save className="mr-2 w-4 h-4" />
-  {isLoading
-    ? isVerifying
-      ? "Verifying OTP..."
-      : "Sending OTP..."
-    : isVerifying
-      ? "Verify"
-      : "Save"}
-</button>
+            />
+            <Button
+              label={isLoading
+                ? isVerifying
+                  ? "Verifying OTP..."
+                  : "Sending OTP..."
+                : isVerifying
+                  ? "Verify"
+                  : "Save"}
+              icon={isVerifying ? "pi pi-check" : "pi pi-save"}
+              onClick={handleSavePhone}
+              disabled={isLoading}
+              loading={isLoading}
+              className="p-button-primary"
+            />
           </div>
         </div>
       ) : (

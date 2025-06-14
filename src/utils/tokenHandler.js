@@ -89,6 +89,53 @@ export const tokenHandler = {
     }
   },
 
+  getCompanyId: () => {
+    const token = Cookies.get('auth_token');
+    if (!token) {
+      console.error('No token available to extract company ID');
+      return null;
+    }
+
+    try {
+      const decoded = jwtDecode.jwtDecode(token);
+      const companyId = decoded.ComId || decoded.comId || decoded.companyId || '';
+      
+      if (!companyId) {
+        console.error('Company ID not found in token');
+        return 2757; // Fallback to default company ID for testing
+      }
+      
+      return companyId;
+    } catch (error) {
+      console.error('Error extracting company ID from token:', error.message, error.stack);
+      return 2757; // Fallback to default company ID for testing
+    }
+  },
+
+  hasRole: (role) => {
+    const token = Cookies.get('auth_token');
+    if (!token) {
+      console.error('No token available to check role');
+      return false;
+    }
+
+    try {
+      const userData = tokenHandler.parseUserFromToken(token);
+      if (!userData || !userData.role) {
+        return false;
+      }
+      
+      // Convert both to lowercase and check if the user's role contains the specified role
+      const userRoles = userData.role.toLowerCase();
+      const checkRole = role.toLowerCase();
+      
+      return userRoles.includes(checkRole);
+    } catch (error) {
+      console.error('Error checking user role:', error.message, error.stack);
+      return false;
+    }
+  },
+
   ensureValidToken: async () => {
     if (tokenHandler.isTokenValid()) return tokenHandler.getToken();
     throw new Error('Token invalid, refresh required'); // Let AuthContext handle refresh

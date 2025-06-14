@@ -2,5 +2,30 @@
   "buildCommand": "npm install --legacy-peer-deps && npm run build",
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Accept"
+        }
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "src": "/widget/(.*)",
+      "dest": "/widget.html"
+    }
   ]
 }
